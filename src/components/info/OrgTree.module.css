@@ -1,0 +1,163 @@
+/* Tree Layout */
+.tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+  overflow-x: auto;
+}
+
+.nodeWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Member Card */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 10;
+  transition: var(--transition-spring);
+  box-shadow: var(--shadow-sm);
+}
+
+.rootCard {
+  width: 180px;
+  background: linear-gradient(135deg, var(--surface-elevated), var(--surface));
+  border-color: var(--card-border-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  border-color: var(--card-border-hover);
+  box-shadow: var(--shadow-xl);
+}
+
+.rootCard:hover {
+  box-shadow: var(--shadow-2xl);
+}
+
+/* Avatar Circle */
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(
+    180deg,
+    var(--text-secondary),
+    var(--overlay-strong)
+  );
+}
+
+.placeholderImg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--surface-hover);
+  border: 3px solid var(--background);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");
+  background-size: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.5;
+}
+
+.rootCard .placeholderImg {
+  border-color: var(--surface-elevated);
+}
+
+/* Info Text */
+.info {
+  text-align: center;
+  width: 100%;
+}
+
+.role {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.rootCard .role {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.name {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Connector Lines - Cybernetic Neon */
+.line {
+  width: 2px; /* Slightly thicker */
+  height: 30px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow); /* Neon Glow */
+}
+
+.children {
+  display: grid;
+  gap: 1.5rem;
+  position: relative;
+  padding-top: 20px;
+}
+
+.childContainer {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.childContainer::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 2px;
+  height: 20px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* Horizontal Line spanning children */
+.children::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 150px);
+  height: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* Hide horizontal line if only one child */
+.children:only-child::before {
+  display: none;
+}

@@ -1,0 +1,346 @@
+.section {
+  margin-top: 24px;
+}
+
+/* 섹션 헤더 */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.headerIcon {
+  color: #d4af37;
+  opacity: 0.85;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.messageCount {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(212, 175, 55, 0.12);
+  color: #d4af37;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.sectionDivider {
+  flex: 1;
+  height: 1px;
+  background: rgba(212, 175, 55, 0.15);
+  margin-left: 6px;
+}
+
+/* 작성 버튼 */
+.writeBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 8px;
+  color: #d4af37;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.writeBtn:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.35);
+}
+
+/* 메시지 가로 스크롤 */
+.messagesRow {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.messagesRow::-webkit-scrollbar {
+  height: 4px;
+}
+
+.messagesRow::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2px;
+}
+
+.messagesRow::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 2px;
+}
+
+.messagesRow::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.4);
+}
+
+/* 카드 크기 조정 (가로 스크롤용) */
+.messagesRow > * {
+  flex: 0 0 180px;
+  min-width: 160px;
+  max-width: 200px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 900px) {
+  .messagesRow > * {
+    flex: 0 0 160px;
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 600px) {
+  .messagesRow > * {
+    flex: 0 0 140px;
+    min-width: 130px;
+  }
+}
+
+/* 로딩 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 20px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: #d4af37;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 빈 상태 */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.emptyIcon {
+  color: rgba(212, 175, 55, 0.35);
+}
+
+.emptyText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+.writeFirstBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #d4af37;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.writeFirstBtn:hover {
+  background: #e5c04b;
+}
+
+/* 플레이스홀더 카드 */
+.placeholderRow {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.placeholderCard {
+  flex: 0 0 160px;
+  min-width: 140px;
+  max-width: 180px;
+  padding: 14px;
+  background: rgba(212, 175, 55, 0.02);
+  border: 1px dashed rgba(212, 175, 55, 0.15);
+  border-radius: 10px;
+}
+
+.placeholderAvatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(212, 175, 55, 0.08);
+  border-radius: 50%;
+  color: rgba(212, 175, 55, 0.35);
+  margin-bottom: 10px;
+}
+
+.placeholderContent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.placeholderLine {
+  height: 6px;
+  background: rgba(212, 175, 55, 0.06);
+  border-radius: 3px;
+}
+
+.placeholderText {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 10px 0 0;
+}
+
+/* 더 보기 / 접기 버튼 */
+.showMoreBtn,
+.showLessBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  margin-top: 16px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 8px;
+  color: #d4af37;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.showMoreBtn:hover,
+.showLessBtn:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.rotated {
+  transform: rotate(180deg);
+}
+
+/* 라이트 테마 */
+:global([data-theme="light"]) .sectionTitle {
+  color: #1a1a1a;
+}
+
+:global([data-theme="light"]) .headerIcon {
+  color: #b8860b;
+}
+
+:global([data-theme="light"]) .messageCount {
+  background: rgba(184, 134, 11, 0.15);
+  color: #b8860b;
+}
+
+:global([data-theme="light"]) .sectionDivider {
+  background: linear-gradient(to right, rgba(184, 134, 11, 0.3), transparent);
+}
+
+:global([data-theme="light"]) .writeBtn {
+  background: rgba(184, 134, 11, 0.1);
+  border-color: rgba(184, 134, 11, 0.3);
+  color: #b8860b;
+}
+
+:global([data-theme="light"]) .writeBtn:hover {
+  background: rgba(184, 134, 11, 0.2);
+  border-color: rgba(184, 134, 11, 0.5);
+}
+
+:global([data-theme="light"]) .messagesRow::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:global([data-theme="light"]) .messagesRow::-webkit-scrollbar-thumb {
+  background: rgba(184, 134, 11, 0.3);
+}
+
+:global([data-theme="light"]) .messagesRow::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 134, 11, 0.5);
+}
+
+:global([data-theme="light"]) .loading {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme="light"]) .emptyState {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+:global([data-theme="light"]) .emptyIcon {
+  color: rgba(184, 134, 11, 0.5);
+}
+
+:global([data-theme="light"]) .emptyText {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+:global([data-theme="light"]) .showMoreBtn,
+:global([data-theme="light"]) .showLessBtn {
+  background: rgba(184, 134, 11, 0.08);
+  border-color: rgba(184, 134, 11, 0.2);
+  color: #b8860b;
+}
+
+:global([data-theme="light"]) .showMoreBtn:hover,
+:global([data-theme="light"]) .showLessBtn:hover {
+  background: rgba(184, 134, 11, 0.15);
+  border-color: rgba(184, 134, 11, 0.4);
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+  .sectionHeader {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .sectionDivider {
+    display: none;
+  }
+
+  .writeBtn {
+    width: 100%;
+    justify-content: center;
+    order: 10;
+    margin-top: 4px;
+  }
+}

@@ -1,0 +1,129 @@
+/* Order Cell */
+.orderCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+.orderCell span {
+  font-weight: 600;
+}
+
+/* Preview Cell */
+.previewCell {
+  padding: 0.25rem 0;
+}
+
+.thumbnail {
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.noImage {
+  width: 100px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px dashed var(--glass-border);
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+
+/* Link */
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: opacity 0.2s ease;
+}
+
+.link:hover {
+  opacity: 0.8;
+}
+
+/* Status Button */
+.statusButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.statusButton.active {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.statusButton.active:hover {
+  background: var(--color-success-hover);
+}
+
+.statusButton.inactive {
+  background: var(--surface);
+  color: var(--text-muted);
+}
+
+.statusButton.inactive:hover {
+  background: var(--glass-border);
+}
+
+/* Delete Button */
+.deleteButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+/* Image Preview */
+.imagePreview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 5;
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.previewImage {
+  object-fit: cover;
+}
+
+.noPreview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+}

@@ -1,0 +1,291 @@
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
+}
+
+.header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.board {
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+  position: relative;
+}
+
+.board::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--highlight-line);
+}
+
+.vipBanner {
+  background: var(--surface);
+  color: var(--text-secondary);
+  padding: 0.625rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.boardHeader {
+  display: grid;
+  grid-template-columns: 1fr 140px 80px 100px 30px;
+  padding: 1rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--card-border);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.boardHeader span:first-child {
+  text-align: left;
+}
+
+.boardHeader span:not(:first-child) {
+  text-align: center;
+}
+
+.post {
+  display: grid;
+  grid-template-columns: 1fr 140px 80px 100px 30px;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  align-items: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.post::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--highlight-line);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.post:last-child {
+  border-bottom: none;
+}
+
+.post:hover {
+  background: var(--overlay-subtle);
+  transform: translateX(4px);
+}
+
+.post:hover::before {
+  opacity: 1;
+}
+
+.postTitle {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.post:hover .postTitle {
+  color: var(--text-primary);
+  color: var(--text-secondary);
+}
+
+.postAuthor {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-align: center;
+}
+
+.postViews {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.postDate {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.commentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--overlay-medium);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.arrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.post:hover .arrow {
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.writeBtn {
+  background: var(--text-primary);
+  color: var(--background);
+  border: none;
+  padding: 0.875rem 2rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.writeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--glass-border);
+  border-top-color: var(--text-tertiary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.locked h3 {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  margin-top: 0.5rem;
+}
+
+.locked p {
+  font-size: 0.875rem;
+}
+
+.loginBtn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.75rem 2rem;
+  background: var(--pink-gradient-primary);
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--pink-glow-sm);
+}
+
+.loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--pink-glow-lg);
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .boardHeader {
+    display: none;
+  }
+
+  .post {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .postAuthor,
+  .postDate,
+  .postViews {
+    font-size: 0.8rem;
+  }
+
+  .arrow {
+    display: none;
+  }
+}

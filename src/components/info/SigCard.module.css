@@ -1,0 +1,320 @@
+/* Signature Card - Clean Style */
+
+.card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+}
+
+/* Thumbnail - 4:3 aspect ratio to avoid cropping */
+.thumbnail {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image {
+  object-fit: contain;
+  background: var(--surface);
+  transition: transform 0.3s ease;
+}
+
+.card:hover .image {
+  transform: scale(1.03);
+}
+
+/* Facade Placeholder - 초기 로딩 상태 */
+.facadePlaceholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.facadeNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  opacity: 0.4;
+  font-family: var(--font-display);
+}
+
+/* Shimmer animation for loading state */
+.facadePlaceholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Image loading states */
+.imageLoading {
+  opacity: 0;
+}
+
+.imageLoaded {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Error placeholder */
+.placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+}
+
+.placeholderNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Number Badge */
+.numberBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 5;
+}
+
+.number {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(0, 0, 0, 0.3);
+  font-family: var(--font-display);
+}
+
+/* Group Badge */
+.groupBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  background: var(--color-primary-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-full);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  z-index: 5;
+}
+
+/* Play Button */
+.playButton {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  z-index: 10;
+  transition: transform 0.2s ease;
+}
+
+.card:hover .playButton {
+  transform: scale(1.1);
+}
+
+/* Hover Overlay */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.card:hover .overlay {
+  opacity: 1;
+}
+
+/* Info Section */
+.info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 0.5rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .playButton {
+    width: 24px;
+    height: 24px;
+  }
+
+  .info {
+    padding: 0.5rem;
+  }
+
+  .title {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .playButton {
+    width: 20px;
+    height: 20px;
+  }
+
+  .number {
+    font-size: 1rem;
+  }
+
+  .numberBadge {
+    bottom: 6px;
+    left: 6px;
+  }
+
+  .groupBadge {
+    top: 6px;
+    right: 6px;
+    padding: 2px 6px;
+    font-size: 0.5625rem;
+  }
+
+  .info {
+    padding: 0.375rem;
+  }
+
+  .title {
+    font-size: 0.75rem;
+  }
+
+  .facadeNumber,
+  .placeholderNumber {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .playButton {
+    width: 18px;
+    height: 18px;
+    bottom: 4px;
+    right: 4px;
+  }
+
+  .number {
+    font-size: 0.875rem;
+  }
+
+  .numberBadge {
+    bottom: 4px;
+    left: 4px;
+  }
+
+  .groupBadge {
+    top: 4px;
+    right: 4px;
+    padding: 2px 4px;
+    font-size: 0.5rem;
+  }
+
+  .info {
+    padding: 0.25rem;
+  }
+
+  .title {
+    font-size: 0.6875rem;
+  }
+
+  .facadeNumber,
+  .placeholderNumber {
+    font-size: 1rem;
+  }
+}
+
+/* =======================================
+   Light Mode
+   ======================================= */
+:global([data-theme="light"]) .card {
+  background: #ffffff;
+  border-color: #e5e5e5;
+}
+
+:global([data-theme="light"]) .card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+:global([data-theme="light"]) .thumbnail {
+  background: #f5f5f5;
+}
+
+:global([data-theme="light"]) .image {
+  background: #f5f5f5;
+}
+
+:global([data-theme="light"]) .facadePlaceholder {
+  background: #f5f5f5;
+}
+
+:global([data-theme="light"]) .placeholder {
+  background: #f5f5f5;
+}
+
+:global([data-theme="light"]) .title {
+  color: #1a1a1a;
+}
+
+:global([data-theme="light"]) .sigNumber {
+  color: #666;
+}

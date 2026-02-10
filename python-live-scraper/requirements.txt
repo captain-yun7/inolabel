@@ -1,0 +1,14 @@
+# PandaTV Live Status Checker
+# Python 3.10+
+
+# HTTP client
+httpx==0.27.2
+
+# Supabase client
+supabase>=2.10.0
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Scheduling (for local cron)
+schedule==1.2.2

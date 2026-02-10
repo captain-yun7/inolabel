@@ -1,0 +1,243 @@
+/* Footer Component */
+.footer {
+  width: 100%;
+  margin-top: 4rem;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--card-bg) 100%);
+  border-top: 1px solid var(--glass-border);
+  position: relative;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--color-pink-border) 50%, transparent 100%);
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1fr;
+  gap: 3rem;
+}
+
+/* Brand Section */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--color-pink) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.description {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.vipLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  width: fit-content;
+  background: linear-gradient(135deg, var(--metallic-gold-bg) 0%, rgba(180, 140, 45, 0.15) 100%);
+  border: 1px solid var(--metallic-gold-border);
+  border-radius: 20px;
+  color: var(--metallic-gold);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.vipLink:hover {
+  background: linear-gradient(135deg, var(--metallic-gold-bg) 0%, rgba(180, 140, 45, 0.3) 100%);
+  box-shadow: 0 0 12px var(--metallic-gold-glow);
+}
+
+.vipLink svg {
+  filter: drop-shadow(0 0 2px var(--metallic-gold-glow));
+}
+
+/* Links Section */
+.links {
+  display: flex;
+  gap: 4rem;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.linkTitle {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-pink);
+  margin: 0 0 0.5rem 0;
+}
+
+.link {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: var(--text-primary);
+}
+
+/* Social Section */
+.social {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.socialLinks {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.socialLink {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.socialLink:hover {
+  background: var(--color-pink-bg);
+  border-color: var(--color-pink-border);
+  color: var(--color-pink);
+  transform: translateY(-2px);
+}
+
+/* Bottom Bar */
+.bottom {
+  border-top: 1px solid var(--glass-border);
+  background: var(--card-bg);
+}
+
+.bottomInner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.copyright {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.legal {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.legalLink {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.legalLink:hover {
+  color: var(--color-pink);
+}
+
+.heartIcon {
+  display: inline-block;
+  color: var(--color-pink);
+  animation: heartBeat 1.5s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .social {
+    grid-column: span 2;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer {
+    margin-top: 2rem;
+  }
+
+  .container {
+    grid-template-columns: 1fr;
+    padding: 2rem 1rem;
+    gap: 1.5rem;
+  }
+
+  .links {
+    gap: 2rem;
+  }
+
+  .social {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .bottomInner {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .legal {
+    gap: 1rem;
+  }
+}

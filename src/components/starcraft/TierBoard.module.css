@@ -1,0 +1,16 @@
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary, #999);
+  font-size: 1rem;
+}

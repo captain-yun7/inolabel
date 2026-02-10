@@ -1,0 +1,333 @@
+.container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.viewToggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.toggleBtn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.toggleBtn.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.refreshBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  gap: 12px;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.subtext {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.peakInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(253, 104, 186, 0.1);
+  border: 1px solid rgba(253, 104, 186, 0.2);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.peakLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.peakValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.peakDetail {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.legendBar {
+  width: 16px;
+  height: 12px;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  border-radius: 2px;
+}
+
+.legendBar.peakLegend {
+  background: linear-gradient(180deg, var(--color-primary), #e054a0);
+}
+
+/* BJ별 뷰 */
+.perBjSection {
+  padding: 8px 0;
+}
+
+.bjSelector {
+  margin-bottom: 16px;
+}
+
+.bjSelect {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.bjSelect:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.emptyBj {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* 히트맵 */
+.heatmapSection {
+  padding: 8px 0;
+}
+
+.heatmapDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.heatmapWrapper {
+  overflow-x: auto;
+}
+
+.heatmapGrid {
+  display: grid;
+  gap: 1px;
+  min-width: 800px;
+}
+
+.heatmapHeader {
+  padding: 4px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.heatmapLabel {
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.heatmapCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 2px;
+  min-height: 28px;
+  transition: opacity 0.2s;
+}
+
+.heatmapCell:hover {
+  opacity: 0.8;
+}
+
+/* 후원자별 뷰 */
+.donorTimeSection {
+  padding: 8px 0;
+}
+
+.donorTimeList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.donorTimeCard {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.donorTimeHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.donorTimeHeader:hover {
+  background: rgba(253, 104, 186, 0.05);
+}
+
+.donorTimeName {
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--text-primary);
+  min-width: 120px;
+}
+
+.donorTimeHearts {
+  font-weight: 600;
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
+.donorTimePeak {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.donorTimeBars {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 16px 16px;
+  background: var(--bg-tertiary);
+}
+
+.donorTimeBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 16px;
+}
+
+.donorTimeBarFill {
+  height: 100%;
+  border-radius: 2px;
+  min-width: 2px;
+  transition: width 0.3s;
+}
+
+.donorTimeHour {
+  font-size: 10px;
+  color: var(--text-secondary);
+  min-width: 16px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .heatmapGrid {
+    min-width: 600px;
+  }
+
+  .donorTimeName {
+    min-width: 80px;
+  }
+}

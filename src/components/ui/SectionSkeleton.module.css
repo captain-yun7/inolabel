@@ -1,0 +1,148 @@
+.section {
+  width: 100%;
+  margin-top: 3rem;
+  padding-bottom: 4rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.titleSkeleton {
+  width: 150px;
+  height: 24px;
+  background: var(--surface);
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.line {
+  height: 1px;
+  width: 100%;
+  background: var(--glass-border);
+  flex: 1;
+}
+
+/* Shorts Skeleton */
+.shortsGrid {
+  display: flex;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.shortCard {
+  flex-shrink: 0;
+  width: 140px;
+}
+
+.shortThumb {
+  width: 100%;
+  aspect-ratio: 9/16;
+  background: var(--surface);
+  border-radius: 12px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.shortTitle {
+  margin-top: 0.5rem;
+  height: 14px;
+  width: 80%;
+  background: var(--surface);
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* VOD Skeleton */
+.vodGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2rem;
+}
+
+.vodFeatured {
+  aspect-ratio: 16/9;
+  background: var(--surface);
+  border-radius: 16px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.vodList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.vodItem {
+  display: flex;
+  gap: 1rem;
+  padding: 10px;
+}
+
+.vodThumb {
+  width: 160px;
+  height: 90px;
+  background: var(--surface);
+  border-radius: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.vodInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.vodTitle {
+  height: 16px;
+  width: 80%;
+  background: var(--surface);
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.vodDate {
+  height: 12px;
+  width: 50%;
+  background: var(--surface);
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Default Skeleton */
+.defaultContent {
+  height: 200px;
+  background: var(--surface);
+  border-radius: 16px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 1024px) {
+  .vodGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .shortCard {
+    width: 120px;
+  }
+
+  .vodThumb {
+    width: 120px;
+    height: 68px;
+  }
+}

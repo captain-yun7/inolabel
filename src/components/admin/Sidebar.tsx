@@ -1,0 +1,141 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  LayoutDashboard,
+  Users,
+  Building,
+  MessageSquare,
+  Image,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Home,
+  Medal,
+} from 'lucide-react'
+import { useAuthContext } from '@/lib/context'
+import styles from './Sidebar.module.css'
+
+const menuItems = [
+  { href: '/admin', icon: LayoutDashboard, label: '대시보드' },
+  { href: '/admin/members', icon: Users, label: '회원 관리' },
+  { href: '/admin/organization', icon: Building, label: '조직도 관리' },
+  { href: '/admin/starcraft-tier', icon: Medal, label: '스타크래프트 티어' },
+  { href: '/admin/posts', icon: MessageSquare, label: '게시글 관리' },
+  { href: '/admin/signatures', icon: Image, label: '시그니처 관리' },
+]
+
+export default function Sidebar() {
+  const pathname = usePathname()
+  const router = useRouter()
+  const { signOut } = useAuthContext()
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const isActive = (href: string) => {
+    if (href === '/admin') {
+      return pathname === '/admin'
+    }
+    return pathname.startsWith(href)
+  }
+
+  const handleLogout = async () => {
+    await signOut()
+    router.push('/login')
+  }
+
+  return (
+    <motion.aside
+      className={styles.sidebar}
+      animate={{ width: isCollapsed ? 80 : 260 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Logo */}
+      <div className={styles.logo}>
+        <AnimatePresence mode="wait">
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={styles.logoText}
+            >
+              Admin
+            </motion.span>
+          )}
+        </AnimatePresence>
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={styles.toggleButton}
+        >
+          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className={styles.nav}>
+        {menuItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`${styles.navItem} ${isActive(item.href) ? styles.active : ''}`}
+          >
+            <item.icon size={20} className={styles.icon} />
+            <AnimatePresence mode="wait">
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className={styles.label}
+                >
+                  {item.label}
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {isActive(item.href) && (
+              <motion.div
+                layoutId="activeIndicator"
+                className={styles.activeIndicator}
+              />
+            )}
+          </Link>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className={styles.footer}>
+        <Link href="/" className={styles.footerItem}>
+          <Home size={20} />
+          <AnimatePresence mode="wait">
+            {!isCollapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                홈으로
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+        <button onClick={handleLogout} className={styles.footerItem}>
+          <LogOut size={20} />
+          <AnimatePresence mode="wait">
+            {!isCollapsed && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                로그아웃
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </button>
+      </div>
+    </motion.aside>
+  )
+}

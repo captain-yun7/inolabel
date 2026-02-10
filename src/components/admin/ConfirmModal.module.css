@@ -1,0 +1,171 @@
+/* ConfirmModal.module.css - Custom Confirm Modal */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 300;
+}
+
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem 1.5rem 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.closeButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.iconWrapper.danger {
+  background: rgba(253, 104, 186, 0.15);
+  color: var(--color-primary);
+}
+
+.iconWrapper.warning {
+  background: rgba(253, 104, 186, 0.15);
+  color: var(--color-primary);
+}
+
+.iconWrapper.info {
+  background: rgba(253, 104, 186, 0.15);
+  color: var(--color-primary);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.message {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  white-space: pre-line;
+}
+
+.buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: var(--card-bg);
+  border-color: var(--text-muted);
+}
+
+.confirmButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirmButton.danger {
+  background: var(--color-primary);
+  color: white;
+}
+
+.confirmButton.danger:hover {
+  background: var(--color-primary-light);
+}
+
+.confirmButton.warning {
+  background: var(--color-primary);
+  color: white;
+}
+
+.confirmButton.warning:hover {
+  background: var(--color-primary-light);
+}
+
+.confirmButton.info {
+  background: var(--color-primary);
+  color: white;
+}
+
+.confirmButton.info:hover {
+  background: var(--color-primary-light);
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 1.5rem 1rem 1rem;
+    max-width: calc(100% - 2rem);
+  }
+
+  .iconWrapper {
+    width: 48px;
+    height: 48px;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+
+  .message {
+    font-size: 0.875rem;
+  }
+
+  .buttons {
+    flex-direction: column-reverse;
+  }
+}

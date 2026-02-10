@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Generated files
+*.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Supabase generated types
+src/types/database.ts
+
+# Cache
+.cache/
+.turbo/
+
+# Coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
+
+# Misc
+*.min.js
+*.min.css

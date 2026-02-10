@@ -1,0 +1,31 @@
+.container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 0.8rem 1.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+}
+
+.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--background);
+  box-shadow: var(--shadow-md);
+}

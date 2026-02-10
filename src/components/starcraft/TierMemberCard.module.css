@@ -1,0 +1,98 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--card-bg-hover, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.08));
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.card:hover {
+  border-color: #fd68ba;
+  background: rgba(253, 104, 186, 0.08);
+}
+
+/* 라이브 중인 카드 */
+.liveCard {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.08);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.liveCard:hover {
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.12);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, rgba(255, 255, 255, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #aaa);
+}
+
+/* 라이브 아바타 - 시안색 테두리 */
+.liveAvatar {
+  border: 2px solid #00d4ff;
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
+}
+
+/* 라이브 뱃지 */
+.liveBadge {
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0 4px;
+  background: #00d4ff;
+  border-radius: 2px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+}
+
+.race {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-tertiary, #888);
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+}

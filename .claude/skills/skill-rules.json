@@ -1,0 +1,188 @@
+{
+  "version": "1.0",
+  "description": "RG Family 프로젝트용 스킬 활성화 규칙",
+  "skills": {
+    "frontend-design": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "프리미엄 다크 UI 디자인 가이드라인",
+      "promptTriggers": {
+        "keywords": [
+          "디자인",
+          "design",
+          "UI",
+          "스타일",
+          "CSS",
+          "레이아웃",
+          "컴포넌트",
+          "핑크",
+          "다크 테마",
+          "프리미엄"
+        ],
+        "intentPatterns": [
+          "(만들|생성|추가|수정|개선).*(컴포넌트|UI|페이지|디자인)",
+          "(스타일|디자인).*(변경|개선|수정)",
+          "(how to|best practice).*(component|style|design)"
+        ]
+      }
+    },
+    "workthrough-v2": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "개발 작업 완료 후 자동 문서화",
+      "promptTriggers": {
+        "keywords": [
+          "완료",
+          "끝",
+          "정리",
+          "요약",
+          "workthrough"
+        ],
+        "intentPatterns": [
+          "(작업|개발|수정).*(완료|끝|마무리)",
+          "(정리|요약|문서화).*해"
+        ]
+      }
+    },
+    "kaizen": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "지속적 개선 및 코드 리팩토링",
+      "promptTriggers": {
+        "keywords": [
+          "리팩토링",
+          "refactor",
+          "개선",
+          "최적화",
+          "정리",
+          "cleanup"
+        ],
+        "intentPatterns": [
+          "(코드|구조).*(개선|정리|리팩토링)",
+          "(optimize|improve|refactor).*code"
+        ]
+      }
+    },
+    "software-architecture": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "소프트웨어 아키텍처 및 설계 패턴",
+      "promptTriggers": {
+        "keywords": [
+          "아키텍처",
+          "architecture",
+          "설계",
+          "구조",
+          "패턴",
+          "SOLID",
+          "클린 코드"
+        ],
+        "intentPatterns": [
+          "(설계|구조|아키텍처).*(검토|개선|변경)",
+          "(design pattern|architecture).*(review|implement)"
+        ]
+      }
+    },
+    "nextjs-dev": {
+      "type": "guardrail",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Next.js 16+ App Router 개발 가이드라인",
+      "promptTriggers": {
+        "keywords": [
+          "next.js",
+          "nextjs",
+          "app router",
+          "server component",
+          "client component",
+          "라우팅",
+          "페이지"
+        ],
+        "intentPatterns": [
+          "(만들|생성|추가).*(페이지|라우트|API)",
+          "(page|route|api).*(create|add|implement)"
+        ]
+      }
+    },
+    "supabase-integration": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "description": "Supabase Auth/Database/Storage 통합",
+      "promptTriggers": {
+        "keywords": [
+          "supabase",
+          "데이터베이스",
+          "database",
+          "인증",
+          "auth",
+          "스토리지",
+          "storage",
+          "쿼리"
+        ],
+        "intentPatterns": [
+          "(supabase|db).*(연동|쿼리|저장|조회)",
+          "(auth|login|signup).*(구현|수정)"
+        ]
+      }
+    },
+    "ranking-system": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "후원 랭킹 및 VIP 시스템 개발",
+      "promptTriggers": {
+        "keywords": [
+          "랭킹",
+          "ranking",
+          "후원",
+          "donation",
+          "VIP",
+          "게이지",
+          "포인트"
+        ],
+        "intentPatterns": [
+          "(랭킹|VIP|후원).*(페이지|시스템|기능)",
+          "(ranking|donation).*(implement|update)"
+        ]
+      }
+    },
+    "live-streaming": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "description": "라이브 스트리밍 상태 및 멤버 표시",
+      "promptTriggers": {
+        "keywords": [
+          "라이브",
+          "live",
+          "방송",
+          "스트리밍",
+          "LIVE 멤버",
+          "방송중"
+        ],
+        "intentPatterns": [
+          "(라이브|live|방송).*(상태|표시|업데이트)",
+          "(member|멤버).*(live|라이브)"
+        ]
+      }
+    }
+  },
+  "notes": {
+    "enforcement_types": {
+      "suggest": "스킬 제안 (실행 차단 안 함)",
+      "block": "스킬 사용 필수 (guardrail)",
+      "warn": "경고 표시 후 진행 허용"
+    },
+    "priority_levels": {
+      "critical": "항상 트리거",
+      "high": "대부분 트리거",
+      "medium": "명확한 매칭 시 트리거",
+      "low": "명시적 매칭만 트리거"
+    }
+  }
+}

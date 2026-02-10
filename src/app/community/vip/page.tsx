@@ -1,0 +1,438 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { MessageSquare, Eye, Crown, Lock, Search, ChevronDown, Trash2, CheckSquare, Square } from 'lucide-react'
+import { PageLayout } from '@/components/layout'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import { InlineError } from '@/components/common/InlineError'
+import { useAuthContext } from '@/lib/context'
+import { useVipStatus } from '@/lib/hooks'
+import { getPosts, deleteMultiplePosts } from '@/lib/actions/posts'
+import { formatShortDate } from '@/lib/utils/format'
+import TabFilter from '@/components/community/TabFilter'
+import styles from '../free/page.module.css'
+
+interface Post {
+  id: number
+  title: string
+  authorName: string
+  authorRealName?: string // 관리자용 실제 닉네임
+  isAnonymous: boolean
+  viewCount: number
+  commentCount: number
+  likeCount: number
+  createdAt: string
+}
+
+const POSTS_PER_PAGE = 20
+
+export default function VipBoardPage() {
+  const { user, profile } = useAuthContext()
+  const isAdmin = profile && ['admin', 'superadmin', 'moderator'].includes(profile.role)
+  const { isVip, isLoading: vipStatusLoading } = useVipStatus()
+  const [posts, setPosts] = useState<Post[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [searchType, setSearchType] = useState<'all' | 'title' | 'author'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
+  // 복수 선택 삭제 관련 상태
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isSelectMode, setIsSelectMode] = useState(false)
+
+  const tabs = [
+    { label: '자유게시판', value: 'free', path: '/community/free' },
+    { label: '익명게시판', value: 'anonymous', path: '/community/anonymous' },
+    { label: '컨텐츠추천', value: 'recommend', path: '/community/recommend' },
+    { label: '짤, 움짤', value: 'meme', path: '/community/meme' },
+    { label: '신고게시판', value: 'report', path: '/community/report' },
+  ]
+
+  // 검색어 디바운스 (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+      setCurrentPage(1)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const fetchPosts = useCallback(async () => {
+    if (vipStatusLoading) {
+      return
+    }
+
+    if (!isVip) {
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    const result = await getPosts({
+      boardType: 'vip',
+      page: currentPage,
+      limit: POSTS_PER_PAGE,
+      searchQuery: debouncedSearch,
+      searchType
+    })
+
+    if (result.error) {
+      setError('게시글을 불러오는 데 실패했습니다. 잠시 후 다시 시도해주세요.')
+      setIsLoading(false)
+      return
+    }
+
+    if (result.data) {
+      setPosts(
+        result.data.data.map((p) => {
+          const isAnon = p.is_anonymous || false
+          const realNickname = p.author_nickname || '알 수 없음'
+          return {
+            id: p.id,
+            title: p.title,
+            authorName: isAnon ? '익명' : realNickname,
+            authorRealName: isAnon ? realNickname : undefined,
+            isAnonymous: isAnon,
+            viewCount: p.view_count || 0,
+            commentCount: p.comment_count || 0,
+            likeCount: p.like_count || 0,
+            createdAt: p.created_at,
+          }
+        })
+      )
+      setTotalCount(result.data.count)
+    }
+
+    setIsLoading(false)
+  }, [isVip, vipStatusLoading, currentPage, debouncedSearch, searchType])
+
+  useEffect(() => {
+    fetchPosts()
+  }, [fetchPosts])
+
+  const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE)
+
+  // 체크박스 토글
+  const toggleSelect = (id: number, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  // 전체 선택/해제
+  const toggleSelectAll = () => {
+    if (selectedIds.size === posts.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(posts.map(p => p.id)))
+    }
+  }
+
+  // 선택 모드 토글
+  const toggleSelectMode = () => {
+    setIsSelectMode(prev => !prev)
+    setSelectedIds(new Set())
+  }
+
+  // 선택된 게시글 삭제
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return
+
+    const confirmMsg = `선택한 ${selectedIds.size}개의 게시글을 삭제하시겠습니까?`
+    if (!confirm(confirmMsg)) return
+
+    setIsDeleting(true)
+    const result = await deleteMultiplePosts(Array.from(selectedIds))
+
+    if (result.error) {
+      alert(result.error)
+    } else if (result.data) {
+      const { deleted, failed } = result.data
+      if (failed > 0) {
+        alert(`${deleted}개 삭제 완료, ${failed}개 삭제 실패 (권한 없음)`)
+      } else {
+        alert(`${deleted}개 게시글이 삭제되었습니다.`)
+      }
+      setSelectedIds(new Set())
+      setIsSelectMode(false)
+      fetchPosts()
+    }
+
+    setIsDeleting(false)
+  }
+
+  const getPageNumbers = () => {
+    const pages: number[] = []
+    const maxVisible = 5
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+    const end = Math.min(totalPages, start + maxVisible - 1)
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1)
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+    return pages
+  }
+
+
+  return (
+    <PageLayout>
+      <div className={styles.main}>
+        <Navbar />
+        {/* VIP Hero Section */}
+        <section className={`${styles.hero} ${styles.vipHero}`}>
+          <div className={styles.heroContent}>
+            <div className={styles.vipTitleRow}>
+              <Crown size={32} className={styles.vipCrown} />
+              <h1 className={styles.title}>VIP LOUNGE</h1>
+            </div>
+            <p className={styles.subtitle}>VIP 후원자 전용 프리미엄 커뮤니티</p>
+          </div>
+        </section>
+
+      <div className={styles.container}>
+        <TabFilter tabs={tabs} activeTab="vip" />
+
+        {/* 검색 영역 (VIP 권한 있을 때만) */}
+        {isVip && !vipStatusLoading && (
+          <div className={styles.boardHeader}>
+            <div className={styles.boardLeft}>
+              <span className={styles.totalCount}>
+                전체 <strong>{totalCount}</strong>건
+              </span>
+              {/* 관리자: 선택 모드 버튼 */}
+              {isAdmin && (
+                <button
+                  onClick={toggleSelectMode}
+                  className={`${styles.selectModeBtn} ${isSelectMode ? styles.active : ''}`}
+                >
+                  <CheckSquare size={14} />
+                  {isSelectMode ? '선택 취소' : '선택'}
+                </button>
+              )}
+              {/* 선택 모드일 때 삭제 버튼 */}
+              {isSelectMode && selectedIds.size > 0 && (
+                <button
+                  onClick={handleDeleteSelected}
+                  disabled={isDeleting}
+                  className={styles.deleteSelectedBtn}
+                >
+                  <Trash2 size={14} />
+                  {isDeleting ? '삭제 중...' : `${selectedIds.size}개 삭제`}
+                </button>
+              )}
+            </div>
+            <div className={styles.searchArea}>
+              <div className={styles.searchTypeSelect}>
+                <select
+                  value={searchType}
+                  onChange={(e) => {
+                    setSearchType(e.target.value as 'all' | 'title' | 'author')
+                    setCurrentPage(1)
+                  }}
+                  className={styles.select}
+                >
+                  <option value="all">전체</option>
+                  <option value="title">제목</option>
+                  <option value="author">작성자</option>
+                </select>
+                <ChevronDown size={14} className={styles.selectIcon} />
+              </div>
+              <div className={styles.searchBox}>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="검색어를 입력하세요"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setDebouncedSearch(searchQuery)
+                      setCurrentPage(1)
+                    }
+                  }}
+                />
+                <button
+                  className={styles.searchBtn}
+                  onClick={() => {
+                    setDebouncedSearch(searchQuery)
+                    setCurrentPage(1)
+                  }}
+                >
+                  <Search size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!user ? (
+          <div className={styles.locked}>
+            <Lock size={48} />
+            <h3>로그인이 필요합니다</h3>
+            <p>VIP 라운지에 접근하려면 로그인해주세요.</p>
+            <Link href="/login" className={styles.loginBtn}>로그인</Link>
+          </div>
+        ) : vipStatusLoading ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner} />
+            <span>VIP 권한 확인 중...</span>
+          </div>
+        ) : !isVip ? (
+          <div className={styles.locked}>
+            <Crown size={48} style={{ color: '#ffd700' }} />
+            <h3>VIP 전용 공간입니다</h3>
+            <p>후원 랭킹 <strong>Top 50</strong>만 VIP 라운지 이용이 가능합니다.</p>
+            <Link href="/ranking" className={styles.loginBtn}>후원 랭킹 보기</Link>
+          </div>
+        ) : error ? (
+          <InlineError message={error} onRetry={fetchPosts} />
+        ) : isLoading ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner} />
+            <span>게시글을 불러오는 중...</span>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className={styles.empty}>
+            <p>등록된 게시글이 없습니다</p>
+          </div>
+        ) : (
+          <div className={`${styles.board} ${styles.vipBoard} ${isSelectMode ? styles.selectModeVip : ''}`}>
+            <div className={styles.tableHeader}>
+              {isSelectMode && (
+                <span className={styles.colCheck}>
+                  <button
+                    onClick={toggleSelectAll}
+                    className={styles.checkBtn}
+                    title={selectedIds.size === posts.length ? '전체 해제' : '전체 선택'}
+                  >
+                    {selectedIds.size === posts.length ? (
+                      <CheckSquare size={16} className={styles.checkedIcon} />
+                    ) : (
+                      <Square size={16} />
+                    )}
+                  </button>
+                </span>
+              )}
+              <span className={styles.colNumber}>번호</span>
+              <span className={styles.colTitle}>제목</span>
+              <span className={styles.colAuthor}>글쓴이</span>
+              <span className={styles.colDate}>작성일</span>
+              <span className={styles.colViews}>조회</span>
+            </div>
+            <div className={styles.tableBody}>
+              {posts.map((post, index) => (
+                <Link
+                  key={post.id}
+                  href={`/community/vip/${post.id}`}
+                  className={`${styles.row} ${styles.vipRow} ${selectedIds.has(post.id) ? styles.selected : ''}`}
+                >
+                  {/* Checkbox */}
+                  {isSelectMode && (
+                    <div className={styles.cellCheck} onClick={(e) => toggleSelect(post.id, e)}>
+                      {selectedIds.has(post.id) ? (
+                        <CheckSquare size={16} className={styles.checkedIcon} />
+                      ) : (
+                        <Square size={16} />
+                      )}
+                    </div>
+                  )}
+                  <div className={styles.cellNumber}>{posts.length - index}</div>
+                  <div className={styles.cellTitle}>
+                    <h3 className={styles.postTitle}>{post.title}</h3>
+                    <div className={styles.titleMeta}>
+                      {post.commentCount > 0 && (
+                        <span className={styles.commentCount}>
+                          <MessageSquare size={12} />
+                          {post.commentCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className={`${styles.cellAuthor} ${styles.authorVip}`}>
+                    <Crown size={10} />
+                    {post.authorName}
+                    {isAdmin && post.isAnonymous && post.authorRealName && (
+                      <span className={styles.adminRealName}>({post.authorRealName})</span>
+                    )}
+                  </span>
+                  <span className={styles.cellDate}>{formatShortDate(post.createdAt)}</span>
+                  <span className={styles.cellViews}>{post.viewCount.toLocaleString()}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isVip && (
+          <div className={styles.boardFooter}>
+            <div className={styles.pagination}>
+              <button
+                className={styles.pageBtn}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(1)}
+              >
+                «
+              </button>
+              <button
+                className={styles.pageBtn}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                ‹
+              </button>
+              {getPageNumbers().map(pageNum => (
+                <button
+                  key={pageNum}
+                  className={`${styles.pageBtn} ${currentPage === pageNum ? styles.active : ''}`}
+                  onClick={() => setCurrentPage(pageNum)}
+                >
+                  {pageNum}
+                </button>
+              ))}
+              <button
+                className={styles.pageBtn}
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                ›
+              </button>
+              <button
+                className={styles.pageBtn}
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(totalPages)}
+              >
+                »
+              </button>
+            </div>
+            <Link href="/community/write?board=vip" className={`${styles.writeBtn} ${styles.vipWriteBtn}`}>
+              <Crown size={14} />
+              글쓰기
+            </Link>
+          </div>
+        )}
+        </div>
+        <Footer />
+      </div>
+    </PageLayout>
+  )
+}

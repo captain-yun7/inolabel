@@ -1,0 +1,477 @@
+.section {
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.header h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.line {
+  height: 1px;
+  width: 100%;
+  background: var(--glass-border);
+  flex: 1;
+  position: relative;
+}
+
+.line::after {
+  display: none;
+}
+
+.arrows {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.arrowButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.arrowButton:hover {
+  border-color: var(--overlay-strong);
+  color: var(--text-primary);
+  background: var(--overlay-subtle);
+}
+
+/* Extended Grid to simple Flex with gap */
+.grid {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1rem 0 2rem 0; /* Space for hover lift */
+  scroll-behavior: smooth;
+
+  /* Scroll Snap for better mobile UX */
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 1rem;
+
+  /* Hide Scrollbar */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.grid::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 160px; /* Slightly larger vertical card */
+  transition: transform var(--duration-base) var(--ease-spring);
+  position: relative;
+  scroll-snap-align: start;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+}
+
+.thumbnail {
+  position: relative;
+  aspect-ratio: 9/16;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover .thumbnail {
+  border-color: var(--overlay-strong);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+.thumbnailImage {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+  width: 100%;
+  height: 100%;
+}
+
+.card:hover .thumbnailImage {
+  transform: scale(1.08); /* Slow smooth zoom */
+}
+
+/* Dark gradient overlay for text legibility at bottom */
+.thumbnail::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 40%,
+    rgba(0, 0, 0, 0.5) 70%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  pointer-events: none;
+}
+
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+
+.card:hover .playOverlay {
+  opacity: 1;
+}
+
+.playOverlay svg {
+  width: 48px;
+  height: 48px;
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  transform: scale(0.8);
+  transition: transform 0.2s ease;
+}
+
+.card:hover .playOverlay svg {
+  transform: scale(1);
+}
+
+/* Info overlay on top of thumbnail */
+.info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  z-index: 10;
+}
+
+.title {
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.4;
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 1),
+    0 2px 4px rgba(0, 0, 0, 1),
+    0 1px 2px rgba(0, 0, 0, 1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+/* Unit Badge - Top Left */
+.unitBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 8px;
+  background: var(--overlay-medium);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--overlay-strong);
+  color: var(--text-primary);
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.unitBadge.crew {
+  background: var(--crew-bg);
+  border-color: var(--crew-border);
+  color: var(--crew-color);
+}
+
+/* Duration - Top Right now */
+.duration {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.65rem;
+  color: var(--text-primary);
+  background: var(--glass-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+/* Hidden elements if unused */
+.options {
+  display: none;
+}
+.thumbnailPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: var(--surface-elevated);
+}
+
+/* Unit Toggle Buttons */
+.unitToggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggleBtn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleBtn:hover {
+  border-color: var(--overlay-strong);
+  color: var(--text-primary);
+}
+
+.toggleBtn.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--background);
+}
+
+.toggleBtn.crewBtn.active {
+  background: var(--crew-color);
+  border-color: var(--crew-color);
+  color: white;
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modalContent {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.videoWrapper {
+  width: 100%;
+  aspect-ratio: 9/16;
+  background: #000;
+}
+
+.videoFrame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.videoError {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.videoInfo {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.videoInfo h4 {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modalBadge {
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--overlay-medium);
+  border: 1px solid var(--overlay-strong);
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.modalBadge.crew {
+  background: var(--crew-bg);
+  border-color: var(--crew-border);
+  color: var(--crew-color);
+}
+
+/* Loading & Empty */
+.loading,
+.empty {
+  color: var(--text-muted);
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Placeholder */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  background: var(--surface);
+  border: 1px dashed var(--glass-border);
+  border-radius: 16px;
+  color: var(--text-muted);
+}
+
+.placeholder svg {
+  opacity: 0.5;
+}
+
+.placeholderTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.placeholderDesc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .unitToggle {
+    display: none;
+  }
+
+  .modal {
+    padding: 1rem;
+  }
+
+  .modalContent {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h3 {
+    font-size: 0.85rem;
+  }
+
+  .grid {
+    gap: 1rem;
+    padding: 0.5rem 0 1.5rem 0;
+  }
+
+  .card {
+    width: 140px;
+  }
+
+  .title {
+    font-size: 0.75rem;
+  }
+
+  .unitBadge {
+    font-size: 0.55rem;
+    padding: 2px 6px;
+    top: 8px;
+    left: 8px;
+  }
+
+  .duration {
+    font-size: 0.6rem;
+    top: 8px;
+    right: 8px;
+  }
+
+  .arrowButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .playOverlay svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .info {
+    padding: 0.75rem;
+  }
+}

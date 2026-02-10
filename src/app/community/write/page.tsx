@@ -1,0 +1,423 @@
+'use client'
+
+import { useState, Suspense, useEffect, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Send, AlertCircle, FileText, Crown, UserX, Lightbulb, ImageIcon, AlertTriangle } from 'lucide-react'
+import { PageLayout } from '@/components/layout'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import { RichEditor } from '@/components/ui'
+import { useAuthContext } from '@/lib/context/AuthContext'
+import { useSupabaseContext } from '@/lib/context'
+import { useVipStatus, useImageUpload } from '@/lib/hooks'
+import { createPost, updatePost } from '@/lib/actions/posts'
+import styles from './page.module.css'
+
+function WritePostContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const supabase = useSupabaseContext()
+  const { isAuthenticated, profile } = useAuthContext()
+  const { isVip: isVipByRank, isLoading: vipLoading } = useVipStatus()
+
+  // URL에서 게시판 타입 가져오기 (기본: free)
+  type BoardType = 'free' | 'vip' | 'anonymous' | 'recommend' | 'meme' | 'report'
+  const boardParam = searchParams.get('board') as BoardType | null
+  const boardType = boardParam || 'free'
+
+  // 수정 모드인지 확인 (?edit=123 형태)
+  const editId = searchParams.get('edit')
+  const isEditMode = !!editId
+
+  // VIP 게시판 접근 권한 체크 (Role 기반 OR Rank 기반)
+  const VIP_ROLES = ['vip', 'moderator', 'admin', 'superadmin']
+  const isVipByRole = profile?.role && VIP_ROLES.includes(profile.role)
+  const canAccessVip = isVipByRole || isVipByRank
+
+  // 익명게시판은 강제 익명
+  const forceAnonymous = boardType === 'anonymous'
+
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    is_anonymous: forceAnonymous,
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingPost, setIsLoadingPost] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // 이미지 업로드 훅
+  const { uploadImage } = useImageUpload({
+    folder: 'posts',
+    onError: (msg) => setError(msg),
+  })
+
+  // 수정 모드일 경우 기존 데이터 로드
+  const fetchPost = useCallback(async () => {
+    if (!editId) return
+
+    setIsLoadingPost(true)
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', parseInt(editId))
+      .single()
+
+    if (error) {
+      setError('게시글을 찾을 수 없습니다.')
+    } else if (data) {
+      setFormData({
+        title: data.title,
+        content: data.content || '',
+        is_anonymous: data.is_anonymous || false,
+      })
+    }
+    setIsLoadingPost(false)
+  }, [editId, supabase])
+
+  useEffect(() => {
+    if (isEditMode) {
+      fetchPost()
+    }
+  }, [isEditMode, fetchPost])
+
+  // 익명게시판 진입 시 강제 익명 설정
+  useEffect(() => {
+    if (forceAnonymous) {
+      setFormData(prev => ({ ...prev, is_anonymous: true }))
+    }
+  }, [forceAnonymous])
+
+  // VIP 게시판 접근 권한 없으면 자유게시판으로 리다이렉트
+  // VIP 상태 로딩 완료 후에만 체크
+  useEffect(() => {
+    if (!vipLoading && boardType === 'vip' && !canAccessVip && isAuthenticated) {
+      router.replace('/community/write?board=free')
+    }
+  }, [boardType, canAccessVip, isAuthenticated, vipLoading, router])
+
+  const boardInfo: Record<BoardType, { name: string; icon: typeof FileText; description: string; color: string }> = {
+    free: {
+      name: '자유게시판',
+      icon: FileText,
+      description: '자유롭게 소통하는 공간입니다',
+      color: 'var(--color-primary)',
+    },
+    vip: {
+      name: 'VIP 라운지',
+      icon: Crown,
+      description: 'VIP 회원 전용 게시판입니다',
+      color: '#ffd700',
+    },
+    anonymous: {
+      name: '익명게시판',
+      icon: UserX,
+      description: '익명으로 자유롭게 소통하는 공간입니다',
+      color: 'var(--text-secondary)',
+    },
+    recommend: {
+      name: '컨텐츠추천',
+      icon: Lightbulb,
+      description: '추천 콘텐츠를 공유하는 공간입니다',
+      color: '#f59e0b',
+    },
+    meme: {
+      name: '짤, 움짤 모음',
+      icon: ImageIcon,
+      description: '짤과 움짤을 공유하는 공간입니다',
+      color: '#22c55e',
+    },
+    report: {
+      name: '신고게시판',
+      icon: AlertTriangle,
+      description: '신고 및 건의사항을 작성하는 공간입니다',
+      color: '#ef4444',
+    },
+  }
+
+  const currentBoard = boardInfo[boardType]
+  const BoardIcon = currentBoard.icon
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!formData.title.trim()) {
+      setError('제목을 입력해주세요.')
+      return
+    }
+
+    if (formData.title.length > 100) {
+      setError('제목은 100자 이내로 입력해주세요.')
+      return
+    }
+
+    if (!formData.content.trim()) {
+      setError('내용을 입력해주세요.')
+      return
+    }
+
+    if (boardType === 'vip' && !canAccessVip) {
+      setError('VIP 라운지는 VIP 등급 이상만 작성할 수 있습니다.')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const isAnonymous = forceAnonymous || formData.is_anonymous
+
+      if (isEditMode && editId) {
+        // 수정 모드
+        const result = await updatePost(parseInt(editId), {
+          title: formData.title.trim(),
+          content: formData.content.trim(),
+          is_anonymous: isAnonymous,
+        })
+
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+
+        router.push(`/community/${boardType}/${editId}`)
+      } else {
+        // 작성 모드
+        const result = await createPost({
+          board_type: boardType,
+          title: formData.title.trim(),
+          content: formData.content.trim(),
+          is_anonymous: isAnonymous,
+        })
+
+        if (result.error) {
+          setError(result.error)
+          return
+        }
+
+        // 성공 시 해당 게시판으로 이동
+        router.push(`/community/${boardType}`)
+      }
+    } catch {
+      setError('게시글 저장 중 오류가 발생했습니다.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // 비로그인 사용자 안내
+  if (!isAuthenticated) {
+    return (
+      <PageLayout>
+        <div className={styles.main}>
+          <Navbar />
+          <div className={styles.writeContainer}>
+            <div className={styles.authRequired}>
+              <AlertCircle size={48} />
+              <h2>로그인이 필요합니다</h2>
+              <p>게시글을 작성하려면 먼저 로그인해주세요.</p>
+              <div className={styles.authButtons}>
+                <Link href="/login" className={styles.loginBtn}>
+                  로그인
+                </Link>
+                <Link href="/signup" className={styles.signupBtn}>
+                  회원가입
+                </Link>
+              </div>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </PageLayout>
+    )
+  }
+
+  // 수정 모드에서 데이터 로딩 중
+  if (isLoadingPost) {
+    return (
+      <PageLayout>
+        <div className={styles.main}>
+          <Navbar />
+          <div className={styles.writeContainer}>
+            <div className={styles.loadingState}>
+              <div className={styles.spinner} />
+              <p>게시글을 불러오는 중...</p>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </PageLayout>
+    )
+  }
+
+  return (
+    <PageLayout>
+      <div className={styles.main}>
+        <Navbar />
+
+        <div className={styles.writeContainer}>
+          {/* 상단 헤더 */}
+          <div className={styles.writeHeader}>
+            <Link href={`/community/${boardType}`} className={styles.backLink}>
+              <ArrowLeft size={20} />
+              <span>목록으로</span>
+            </Link>
+            <div className={styles.boardBadge} style={{ '--board-color': currentBoard.color } as React.CSSProperties}>
+              <BoardIcon size={18} />
+              <span>{currentBoard.name}</span>
+            </div>
+          </div>
+
+          {/* 글쓰기 폼 */}
+          <form onSubmit={handleSubmit} className={styles.writeForm}>
+            {/* 폼 헤더 */}
+            <div className={styles.formHeader}>
+              <h1 className={styles.formTitle}>{isEditMode ? '글 수정' : '글쓰기'}</h1>
+              <p className={styles.formDescription}>{currentBoard.description}</p>
+            </div>
+
+            {/* 제목 입력 */}
+            <div className={styles.formRow}>
+              <label htmlFor="title" className={styles.rowLabel}>
+                제목
+              </label>
+              <div className={styles.rowInput}>
+                <input
+                  type="text"
+                  id="title"
+                  className={styles.titleInput}
+                  placeholder="제목을 입력하세요"
+                  maxLength={100}
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  autoFocus
+                />
+                <span className={styles.charCount}>{formData.title.length}/100</span>
+              </div>
+            </div>
+
+            {/* 내용 입력 (리치에디터) */}
+            <div className={styles.formRow}>
+              <label className={styles.rowLabel}>
+                내용
+              </label>
+              <div className={styles.rowInput}>
+                <RichEditor
+                  content={formData.content}
+                  onChange={(content) => setFormData(prev => ({ ...prev, content }))}
+                  placeholder="내용을 입력하세요..."
+                  disabled={isSubmitting}
+                  minHeight="300px"
+                  onImageUpload={uploadImage}
+                />
+              </div>
+            </div>
+
+            {/* 옵션 영역 */}
+            {forceAnonymous ? (
+              <div className={styles.optionRow}>
+                <span className={styles.optionLabel}>작성자 표시</span>
+                <div className={styles.visibilityOptions}>
+                  <span className={styles.anonymousNotice}>
+                    <UserX size={14} />
+                    익명게시판은 모든 글이 익명으로 작성됩니다
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.optionRow}>
+                <span className={styles.optionLabel}>작성자 표시</span>
+                <div className={styles.visibilityOptions}>
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="author-visibility"
+                      value="nickname"
+                      checked={!formData.is_anonymous}
+                      onChange={() => setFormData(prev => ({ ...prev, is_anonymous: false }))}
+                    />
+                    <span className={styles.radioCustom} />
+                    <span className={styles.radioText}>닉네임 공개</span>
+                  </label>
+                  <label className={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="author-visibility"
+                      value="anonymous"
+                      checked={formData.is_anonymous}
+                      onChange={() => setFormData(prev => ({ ...prev, is_anonymous: true }))}
+                    />
+                    <span className={styles.radioCustom} />
+                    <span className={styles.radioText}>익명</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* 에러 메시지 */}
+            {error && (
+              <div className={styles.errorMessage}>
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* 버튼 영역 */}
+            <div className={styles.formActions}>
+              <Link href={`/community/${boardType}`} className={styles.cancelBtn}>
+                취소
+              </Link>
+              <button
+                type="submit"
+                className={styles.submitBtn}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className={styles.spinner} />
+                    {isEditMode ? '수정 중...' : '등록 중...'}
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    {isEditMode ? '수정' : '등록'}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <Footer />
+      </div>
+    </PageLayout>
+  )
+}
+
+// Loading fallback for Suspense
+function WritePostLoading() {
+  return (
+    <PageLayout>
+      <div className={styles.main}>
+        <Navbar />
+        <div className={styles.writeContainer}>
+          <div className={styles.loadingState}>
+            <div className={styles.spinner} />
+            <p>로딩 중...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    </PageLayout>
+  )
+}
+
+// Main export with Suspense boundary
+export default function WritePostPage() {
+  return (
+    <Suspense fallback={<WritePostLoading />}>
+      <WritePostContent />
+    </Suspense>
+  )
+}
