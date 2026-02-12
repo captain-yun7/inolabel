@@ -1,41 +1,44 @@
+/* LiveMembers - 현재 방송중 섹션 (가로 스크롤 썸네일 카드) */
+
 .section {
   width: 100%;
-  height: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 320px;
   padding: var(--space-5);
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
+/* ─── Header ─── */
 .header {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  margin-bottom: 1.75rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.header h3 {
+.headerTitle {
   font-size: 1.125rem;
   font-weight: 800;
   color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
-/* Live Count Badge - Pink Theme */
+/* Live Count Badge */
 .liveCount {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.25rem 0.55rem;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: var(--radius-md);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: #ef4444;
 }
@@ -50,237 +53,261 @@
 
 @keyframes livePulse {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 0.6; transform: scale(0.85); }
 }
 
-.line {
+/* ─── Filter Tabs ─── */
+.tabs {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.tab {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  border-color: var(--text-tertiary);
+  color: var(--text-primary);
+}
+
+.tabActive {
+  background: var(--text-primary);
+  color: var(--background);
+  border-color: var(--text-primary);
+}
+
+.tabActive:hover {
+  background: var(--text-primary);
+  color: var(--background);
+  border-color: var(--text-primary);
+}
+
+.spacer {
   flex: 1;
-  height: 1px;
-  background: var(--card-border);
 }
 
-/* View All Link */
+/* View All */
 .viewAll {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: var(--text-meta);
+  gap: 2px;
+  font-size: 0.8125rem;
   color: var(--text-tertiary);
-  white-space: nowrap;
   text-decoration: none;
+  white-space: nowrap;
   transition: color 0.2s;
 }
 
 .viewAll:hover {
-  color: var(--text-primary);
+  color: var(--color-primary);
 }
 
-/* Grid Layout - 가로 우선 (라이브 멤버가 왼쪽부터 채워짐) */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(80px, 1fr));
-  gap: 1.25rem 2rem;
-  padding: 0.5rem 0 1rem 0;
-  flex: 1;
-  align-content: start;
-  min-height: 220px;
+/* ─── Scroll Area ─── */
+.scrollWrapper {
+  position: relative;
+  min-width: 0;
 }
 
-.grid.singleRow {
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  max-width: 550px;
+.scrollContainer {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0;
 }
 
-/* Member Card */
-.member {
+.scrollContainer::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+.cardList {
   display: flex;
-  flex-direction: column;
+  gap: 0.875rem;
+  min-width: min-content;
+}
+
+/* Scroll Arrows */
+.scrollBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 90px;
-  transition: transform 0.2s ease;
-  text-decoration: none;
-  padding-top: 10px;
-}
-
-.member.clickable {
+  justify-content: center;
   cursor: pointer;
-}
-
-.member:hover {
-  transform: translateY(-2px);
-}
-
-.member:hover .avatar {
-  border-color: var(--text-tertiary);
+  transition: all 0.2s;
+  opacity: 0;
   box-shadow: var(--shadow-sm);
 }
 
-/* Avatar Wrapper */
-.avatarWrapper {
-  position: relative;
-  width: 84px;
-  height: 84px;
+.scrollWrapper:hover .scrollBtn {
+  opacity: 1;
 }
 
-/* LIVE Ring - Thin pink border (like Instagram stories) */
-.avatarWrapper.isLive::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: rgba(239, 68, 68, 0.25);
-  z-index: 0;
+.scrollBtn:hover {
+  background: var(--text-primary);
+  color: var(--background);
+  border-color: var(--text-primary);
 }
 
-.avatarWrapper.isLive::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
-  z-index: 0;
+.scrollLeft {
+  left: -12px;
 }
 
-/* LIVE Badge - Cyan with pulse animation */
-.liveBadge {
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.2rem 0.55rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), var(--surface));
-  border-radius: var(--radius-full);
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: #ef4444;
-  z-index: 3;
-  letter-spacing: 0.5px;
-  border: 1px solid rgba(239, 68, 68, 0.45);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+.scrollRight {
+  right: -12px;
 }
 
-:global([data-theme="dark"]) .liveBadge {
-  background: linear-gradient(180deg, rgba(24, 24, 27, 0.95), rgba(9, 9, 11, 0.95));
-  border-color: rgba(239, 68, 68, 0.35);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-/* Avatar */
-.avatar {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 3px solid var(--background);
+/* ─── Thumbnail Card ─── */
+.card {
+  flex-shrink: 0;
+  width: 160px;
+  text-decoration: none;
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  border: 1px solid var(--card-border);
   background: var(--surface);
   transition: all 0.2s ease;
-  z-index: 1;
+  cursor: pointer;
 }
 
-.avatar.avatarLive {
-  border-color: var(--background);
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-color: var(--color-primary);
 }
 
-/* Non-live members - More faded like reference */
-.avatar:not(.avatarLive) {
-  opacity: 0.5;
-  filter: grayscale(0.4) brightness(0.85);
+.cardLive {
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
-.member:hover .avatar {
+.cardLive:hover {
+  border-color: #ef4444;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);
+}
+
+.cardOffline {
+  opacity: 0.6;
+}
+
+.cardOffline:hover {
   opacity: 1;
-  filter: grayscale(0);
 }
 
-.member:hover .avatar:not(.avatarLive) {
-  border-color: var(--text-muted);
+/* Thumbnail */
+.thumbnail {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: var(--overlay-light);
+  overflow: hidden;
 }
 
-.avatarImage {
+.thumbnailImage {
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.member:hover .avatarImage {
+.card:hover .thumbnailImage {
   transform: scale(1.05);
 }
 
-.avatarPlaceholder {
+.thumbnailPlaceholder {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-muted);
   background: var(--surface);
 }
 
-/* Name */
-.name {
-  color: var(--text-secondary);
-  font-size: 1.0625rem;
-  font-weight: 600;
-  text-align: center;
-  width: 100%;
+/* LIVE Badge on thumbnail */
+.liveBadge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 8px;
+  background: #ef4444;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+  z-index: 2;
+}
+
+/* Card Info */
+.cardInfo {
+  padding: 0.5rem 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cardName {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cardTitle {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
   white-space: nowrap;
-  transition: color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.member:hover .name {
-  color: var(--text-primary);
-}
-
-/* Loading & Empty */
-.loading,
+/* Empty State */
 .empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  width: 100%;
+  min-height: 120px;
   color: var(--text-muted);
   font-size: 0.875rem;
 }
 
-/* Skeleton Loading */
-.skeletonGrid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(80px, 1fr));
-  gap: 1.25rem 2rem;
-  padding: 0.5rem 0 1rem 0;
-  flex: 1;
-  align-content: start;
-}
-
-.skeletonMember {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding-top: 10px;
-}
-
-.skeletonAvatar {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: linear-gradient(90deg, var(--surface) 25%, var(--card-border) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-.skeletonName {
-  width: 60px;
-  height: 16px;
-  border-radius: 4px;
+/* ─── Skeleton ─── */
+.skeleton {
+  flex-shrink: 0;
+  width: 160px;
+  height: 140px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(90deg, var(--surface) 25%, var(--card-border) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -291,175 +318,62 @@
   100% { background-position: -200% 0; }
 }
 
+/* ─── Responsive ─── */
 @media (max-width: 768px) {
-  .skeletonGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem 0.75rem;
+  .section {
+    padding: var(--space-3);
   }
 
-  .skeletonAvatar {
-    width: 64px;
-    height: 64px;
+  .header {
+    gap: 0.5rem;
   }
 
-  .skeletonName {
-    width: 50px;
-    height: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .skeletonGrid {
-    gap: 0.75rem 0.5rem;
+  .headerTitle {
+    font-size: 1rem;
   }
 
-  .skeletonMember {
-    gap: 5px;
-    padding-top: 6px;
+  .tabs {
+    gap: 0.25rem;
   }
 
-  .skeletonAvatar {
-    width: 52px;
-    height: 52px;
+  .tab {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
   }
 
-  .skeletonName {
-    width: 40px;
-    height: 12px;
-  }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem 0.75rem;
+  .card {
+    width: 140px;
   }
 
-  .member {
-    min-width: unset;
-  }
-
-  .avatarWrapper {
-    width: 64px;
-    height: 64px;
-  }
-
-  .name {
-    font-size: 0.875rem;
+  .scrollBtn {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
   .section {
-    padding: var(--space-3);
-    min-height: 240px;
+    padding: var(--space-2);
   }
 
-  .header {
-    margin-bottom: 1rem;
-    gap: 0.625rem;
-  }
-
-  .header h3 {
+  .headerTitle {
     font-size: 0.875rem;
-    letter-spacing: 0.5px;
   }
 
   .liveCount {
     padding: 0.15rem 0.4rem;
-    font-size: 0.65rem;
-    gap: 0.3rem;
+    font-size: 0.7rem;
   }
 
-  .liveCountDot {
-    width: 5px;
-    height: 5px;
+  .card {
+    width: 130px;
   }
 
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem 0.5rem;
-    padding: 0.25rem 0 0.75rem 0;
-    min-height: 150px;
-  }
-
-  .member {
-    min-width: unset;
-    gap: 5px;
-    padding-top: 6px;
-  }
-
-  .avatarWrapper {
-    width: 52px;
-    height: 52px;
-  }
-
-  .avatar {
-    border-width: 2px;
-  }
-
-  .liveBadge {
-    bottom: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.12rem 0.3rem;
-    font-size: 0.5rem;
-  }
-
-  .name {
-    font-size: 0.75rem;
-  }
-
-  .viewAll {
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 360px) {
-  .section {
-    padding: var(--space-2);
-    min-height: 200px;
-  }
-
-  .header {
-    margin-bottom: 0.75rem;
-  }
-
-  .header h3 {
+  .cardName {
     font-size: 0.8125rem;
   }
 
-  .liveCount {
-    padding: 0.1rem 0.35rem;
-    font-size: 0.6rem;
-  }
-
-  .grid {
-    gap: 0.5rem 0.375rem;
-    min-height: 120px;
-  }
-
-  .member {
-    gap: 4px;
-    padding-top: 4px;
-  }
-
-  .avatarWrapper {
-    width: 44px;
-    height: 44px;
-  }
-
-  .liveBadge {
-    padding: 0.1rem 0.25rem;
-    font-size: 0.45rem;
-  }
-
-  .name {
-    font-size: 0.6875rem;
-  }
-
-  .avatarPlaceholder {
-    font-size: 1rem;
+  .skeleton {
+    width: 130px;
+    height: 120px;
   }
 }

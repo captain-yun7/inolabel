@@ -119,6 +119,12 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
   align-items: stretch;
+  min-width: 0;
+}
+
+.liveNoticeGrid > * {
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* =======================================

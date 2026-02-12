@@ -48,7 +48,7 @@ export default function CommunityPreview() {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <MessageSquare size={16} className={styles.icon} />
-          <h3>자유게시판</h3>
+          <h3>자유게시판 인기글</h3>
         </div>
         <Link href="/community/free" className={styles.viewAll}>
           전체보기 <ChevronRight size={16} />

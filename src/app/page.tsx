@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageLayout } from "@/components/layout";
 import Navbar from "@/components/Navbar";
-import { Hero, LiveMembers, CommunityPreview, YouTubeShorts } from "@/components/home";
+import { Hero, LiveMembers, CommunityPreview, YouTubeShorts, GoodsShop } from "@/components/home";
 import Footer from "@/components/Footer";
 import styles from "./page.module.css";
 
@@ -36,6 +36,9 @@ export default function Home() {
 
           {/* YouTube Shorts Section */}
           <YouTubeShorts />
+
+          {/* Label Goods Shop */}
+          <GoodsShop />
         </div>
 
         <Footer />
