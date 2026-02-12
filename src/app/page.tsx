@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <PageLayout>
+    <PageLayout showSideBanners={false}>
       <div className={styles.main}>
         <Navbar />
         <Hero />
@@ -35,7 +35,9 @@ export default function Home() {
           </div>
 
           {/* YouTube Shorts Section */}
-          <YouTubeShorts />
+          <div className={styles.sectionAlt}>
+            <YouTubeShorts />
+          </div>
 
           {/* Label Goods Shop */}
           <GoodsShop />

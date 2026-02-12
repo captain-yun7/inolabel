@@ -23,10 +23,11 @@
 }
 
 .headerTitle {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
   white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
 /* Live Count Badge */
@@ -200,7 +201,7 @@
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(253, 104, 186, 0.2), 0 8px 24px rgba(0, 0, 0, 0.2);
   border-color: var(--color-primary);
 }
 
@@ -258,7 +259,7 @@
   left: 6px;
   padding: 2px 8px;
   background: #ef4444;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.65rem;
   font-weight: 800;
   color: #fff;

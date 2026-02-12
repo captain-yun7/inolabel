@@ -2,18 +2,13 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--glass-border);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   height: var(--header-height);
   display: flex;
   align-items: center;
   transition: var(--transition-theme);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 1px 0 0 rgba(255, 255, 255, 0.04),
-    inset -1px 0 0 rgba(255, 255, 255, 0.04),
-    0 8px 20px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
 }
 
 .container {
@@ -30,16 +25,8 @@
   display: flex;
   align-items: center;
   padding: 4px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
   background: transparent;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-/* Dark mode: soften stroke to avoid visible box */
-:global([data-theme="dark"]) .logo {
-  border-color: transparent;
-  box-shadow: none;
 }
 
 .logo :global(img) {
@@ -70,7 +57,7 @@
   padding: 0.625rem 1.1rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #333333;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -82,16 +69,18 @@
 }
 
 .link:hover {
-  color: var(--text-primary);
-  background: var(--surface-hover);
+  color: #fd68ba;
+  background: rgba(253, 104, 186, 0.06);
 }
 
 .chevron {
   transition: transform 0.2s;
+  color: #999999;
 }
 
 .navItem:hover .chevron {
   transform: rotate(180deg);
+  color: #fd68ba;
 }
 
 /* Dropdown Menu */
@@ -135,7 +124,7 @@
 }
 
 .dropdownItem:hover {
-  background: var(--interactive-hover);
+  background: rgba(253, 104, 186, 0.06);
 }
 
 .dropdownItemHeader {
@@ -145,7 +134,7 @@
 }
 
 .dropdownIcon {
-  color: var(--primary);
+  color: #fd68ba;
   flex-shrink: 0;
   opacity: 0.8;
   transition: all 0.15s;
@@ -169,7 +158,7 @@
 }
 
 .dropdownItem:hover .dropdownLabel {
-  color: var(--primary);
+  color: #fd68ba;
 }
 
 /* Actions */
@@ -224,20 +213,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--glass-border);
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 30px;
   transition: all 0.2s;
   cursor: pointer;
 }
 
 .profileButton:hover {
-  background: var(--surface-hover);
-  border-color: var(--primary);
+  background: rgba(253, 104, 186, 0.06);
+  border-color: rgba(253, 104, 186, 0.3);
 }
 
 .profileButton .chevron {
-  color: var(--text-muted);
+  color: #999999;
   transition: transform 0.2s;
 }
 
@@ -249,12 +238,12 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--surface-hover);
+  background: rgba(253, 104, 186, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: var(--text-secondary);
+  color: #fd68ba;
 }
 
 .avatar img {
@@ -266,7 +255,7 @@
 .nickname {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #333333;
 }
 
 .profileDropdown {
@@ -304,12 +293,12 @@
 }
 
 .profileDropdownItem:hover {
-  background: var(--interactive-hover);
+  background: rgba(253, 104, 186, 0.06);
   color: var(--text-primary);
 }
 
 .profileDropdownItem:hover svg {
-  color: var(--primary);
+  color: #fd68ba;
 }
 
 .profileDropdownItem svg {
@@ -324,14 +313,10 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.5rem 0.875rem;
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.15) 0%,
-    rgba(139, 92, 246, 0.25) 100%
-  );
-  border: 1px solid rgba(139, 92, 246, 0.4);
+  background: rgba(253, 104, 186, 0.08);
+  border: 1px solid rgba(253, 104, 186, 0.2);
   border-radius: 20px;
-  color: #a78bfa;
+  color: #fd68ba;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -340,18 +325,13 @@
 }
 
 .adminBtn:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.2) 0%,
-    rgba(139, 92, 246, 0.35) 100%
-  );
-  border-color: #a78bfa;
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+  background: rgba(253, 104, 186, 0.15);
+  border-color: rgba(253, 104, 186, 0.4);
   transform: translateY(-1px);
 }
 
 .adminBtn svg {
-  filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.5));
+  filter: none;
 }
 
 /* VIP Button */
@@ -395,10 +375,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--card-border);
+  background: #fd68ba;
+  border: 1px solid #fd68ba;
   border-radius: 8px;
-  color: var(--text-primary);
+  color: #ffffff;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -406,9 +386,10 @@
 }
 
 .loginBtn:hover {
-  background: var(--surface-hover);
-  border-color: var(--color-pink-border);
+  background: #e44fa0;
+  border-color: #e44fa0;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(253, 104, 186, 0.3);
 }
 
 /* Mobile Menu Button */
@@ -426,7 +407,7 @@
   display: block;
   width: 24px;
   height: 2px;
-  background: var(--text-primary);
+  background: #333333;
   position: absolute;
   left: 50%;
   top: 50%;
@@ -441,7 +422,7 @@
   display: block;
   width: 24px;
   height: 2px;
-  background: var(--text-primary);
+  background: #333333;
   position: absolute;
   left: 0;
   transition: all 0.2s;
@@ -459,7 +440,7 @@
 .mobileMenuBtn:hover .hamburger,
 .mobileMenuBtn:hover .hamburger::before,
 .mobileMenuBtn:hover .hamburger::after {
-  background: var(--primary); /* Deep Pink Hover */
+  background: #fd68ba;
 }
 
 .hamburger.active {
@@ -469,13 +450,13 @@
 .hamburger.active::before {
   top: 0;
   transform: rotate(45deg);
-  background: var(--primary); /* Deep Pink Active */
+  background: #fd68ba;
 }
 
 .hamburger.active::after {
   top: 0;
   transform: rotate(-45deg);
-  background: var(--primary); /* Deep Pink Active */
+  background: #fd68ba;
 }
 
 /* Mobile Menu */
@@ -504,7 +485,7 @@
 .mobileNavHeader {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--primary);
+  color: #fd68ba;
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 0.5rem 1rem;
@@ -524,8 +505,8 @@
 }
 
 .mobileSubItem:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
+  background: rgba(253, 104, 186, 0.06);
+  color: #fd68ba;
 }
 
 /* Mobile Actions */

@@ -4,10 +4,10 @@
 
 /* Tailwind CSS 4.x Theme Configuration */
 @theme {
-  /* Brand Colors - Neutral Gray (Modern & Clean) */
-  --color-primary: #52525b;
-  --color-primary-light: #71717a;
-  --color-primary-deep: #3f3f46;
+  /* Brand Colors - Signature Pink */
+  --color-primary: #fd68ba;
+  --color-primary-light: #ff8ed0;
+  --color-primary-deep: #e44fa0;
 
   /* Live Status - 시안색 (CLAUDE.md 가이드라인) */
   --color-live: #00d4ff;
@@ -115,14 +115,14 @@
   --space-20: 5rem; /* 80px */
   --space-24: 6rem; /* 96px */
 
-  /* Border Radius - 부드러운 곡선 */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
-  --radius-3xl: 24px;
+  /* Border Radius - 직각 (Sharp Corners) */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
   --radius-full: 9999px;
 
   /* Layout */
@@ -135,12 +135,12 @@
      3. Core Colors - Official Brand Palette
      ============================================ */
 
-  /* Primary Brand Color: Neutral Dark/Light (Modern & Clean) */
-  --color-pink: #52525b;
-  --color-pink-light: #71717a;
-  --color-pink-deep: #3f3f46;
-  --color-pink-glow: rgba(82, 82, 91, 0.3);
-  --color-pink-bg: rgba(82, 82, 91, 0.08);
+  /* Primary Brand Color: Signature Pink */
+  --color-pink: #fd68ba;
+  --color-pink-light: #ff8ed0;
+  --color-pink-deep: #e44fa0;
+  --color-pink-glow: rgba(253, 104, 186, 0.3);
+  --color-pink-bg: rgba(253, 104, 186, 0.08);
 
   /* Secondary Brand Color: Rose Gold (Luxury/VIP) */
   --color-gold: #d4af37;
@@ -164,14 +164,14 @@
   --color-warning: #eab308;
   --color-warning-bg: rgba(234, 179, 8, 0.15);
 
-  --color-info: #71717a;
-  --color-info-bg: rgba(113, 113, 122, 0.15);
+  --color-info: #3b82f6;
+  --color-info-bg: rgba(59, 130, 246, 0.15);
 
-  --color-cyan: #a1a1aa;
-  --color-cyan-bg: rgba(239, 68, 68, 0.15);
+  --color-cyan: #00d4ff;
+  --color-cyan-bg: rgba(0, 212, 255, 0.15);
 
-  --color-collab: #71717a;
-  --color-collab-bg: rgba(113, 113, 122, 0.15);
+  --color-collab: #a78bfa;
+  --color-collab-bg: rgba(167, 139, 250, 0.15);
 
   /* Legacy/Component Specific Colors */
   --red: #ef4444;
@@ -245,9 +245,9 @@
      4. Theme Tokens
      ============================================ */
 
-  /* Neutral Border (replaces pink) */
-  --color-pink-border: rgba(82, 82, 91, 0.4);
-  --color-pink-border-strong: rgba(82, 82, 91, 0.5);
+  /* Pink Border */
+  --color-pink-border: rgba(253, 104, 186, 0.4);
+  --color-pink-border-strong: rgba(253, 104, 186, 0.5);
 
   /* Neutral Gradients (replaces pink) */
   --pink-gradient-primary: linear-gradient(
@@ -267,11 +267,11 @@
     var(--color-pink-light)
   );
 
-  /* Neutral Glow Shadows (replaces pink) */
-  --pink-glow-sm: 0 4px 15px rgba(82, 82, 91, 0.3);
-  --pink-glow-md: 0 4px 15px rgba(82, 82, 91, 0.4);
-  --pink-glow-lg: 0 6px 20px rgba(82, 82, 91, 0.4);
-  --pink-glow-xl: 0 6px 25px rgba(82, 82, 91, 0.5);
+  /* Pink Glow Shadows */
+  --pink-glow-sm: 0 4px 15px rgba(253, 104, 186, 0.2);
+  --pink-glow-md: 0 4px 15px rgba(253, 104, 186, 0.3);
+  --pink-glow-lg: 0 6px 20px rgba(253, 104, 186, 0.35);
+  --pink-glow-xl: 0 6px 25px rgba(253, 104, 186, 0.4);
 
   /* Gold Light variant */
   --metallic-gold-light: #f0d060;
@@ -299,9 +299,9 @@
   --background-secondary: #141417;
 
   /* Surfaces: Dark & Deep */
-  --surface: #1a1a1e;
-  --surface-secondary: #232328;
-  --surface-hover: #2a2a30;
+  --surface: #1c1c22;
+  --surface-secondary: #252530;
+  --surface-hover: #2e2e38;
 
   /* Text: Clean White & Soft Grey */
   --text-primary: #ffffff;
@@ -310,15 +310,15 @@
   --text-muted: #71717a;
 
   /* Components */
-  --card-bg: #141417;
-  --card-border: rgba(255, 255, 255, 0.08); /* Subtle White Border */
-  --card-hover: #1a1a1e;
+  --card-bg: #18181f;
+  --card-border: rgba(255, 255, 255, 0.12);
+  --card-hover: #1e1e26;
 
-  --line-color: rgba(255, 255, 255, 0.08);
+  --line-color: rgba(255, 255, 255, 0.1);
 
   /* Overlays */
   --glass-bg: rgba(15, 17, 21, 0.85); /* Dark Glass */
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -339,13 +339,13 @@
   --interactive-hover: rgba(255, 255, 255, 0.05);
 
   /* Item Borders */
-  --item-border: rgba(255, 255, 255, 0.06);
-  --item-border-hover: rgba(255, 255, 255, 0.12);
-  --divider: rgba(255, 255, 255, 0.08);
+  --item-border: rgba(255, 255, 255, 0.1);
+  --item-border-hover: rgba(255, 255, 255, 0.18);
+  --divider: rgba(255, 255, 255, 0.1);
 
   /* Page Navigation */
   --pageNav-bg: #09090b;
-  --pageNav-border: rgba(255, 255, 255, 0.08);
+  --pageNav-border: rgba(255, 255, 255, 0.12);
 
   /* Hero Backgrounds */
   --hero-bg: linear-gradient(180deg, #14141a 0%, #0f0f12 50%, #09090b 100%);
@@ -463,13 +463,13 @@
   --gray-overlay-15: rgba(100, 100, 100, 0.15);
   --gray-overlay-20: rgba(150, 150, 150, 0.15);
 
-  /* Neutral Overlay - Various Opacities (replaces pink) */
-  --color-pink-overlay-01: rgba(82, 82, 91, 0.01);
-  --color-pink-overlay-02: rgba(82, 82, 91, 0.02);
-  --color-pink-overlay-03: rgba(82, 82, 91, 0.03);
-  --color-pink-overlay-05: rgba(82, 82, 91, 0.05);
-  --color-pink-overlay-08: rgba(82, 82, 91, 0.08);
-  --color-pink-overlay-10: rgba(82, 82, 91, 0.1);
+  /* Pink Overlay - Various Opacities */
+  --color-pink-overlay-01: rgba(253, 104, 186, 0.01);
+  --color-pink-overlay-02: rgba(253, 104, 186, 0.02);
+  --color-pink-overlay-03: rgba(253, 104, 186, 0.03);
+  --color-pink-overlay-05: rgba(253, 104, 186, 0.05);
+  --color-pink-overlay-08: rgba(253, 104, 186, 0.08);
+  --color-pink-overlay-10: rgba(253, 104, 186, 0.1);
 
   /* Live/Error Color Utility */
   --live-overlay-02: rgba(239, 68, 68, 0.02);
@@ -515,14 +515,14 @@
    Light Theme: 'Studio Blanc'
    ============================================ */
 [data-theme="light"] {
-  /* Backgrounds: Clean White */
+  /* Backgrounds: Pure White */
   --background: #ffffff;
-  --background-secondary: #fafafa;
+  --background-secondary: #ffffff;
 
-  /* Surfaces: Soft Grey & White */
-  --surface: #f4f4f5;
-  --surface-secondary: #fafafa;
-  --surface-hover: #e4e4e7;
+  /* Surfaces: White */
+  --surface: #ffffff;
+  --surface-secondary: #ffffff;
+  --surface-hover: #f8f8f8;
 
   /* Text: Sharp Black */
   --text-primary: #09090b;
@@ -532,8 +532,8 @@
 
   /* Components */
   --card-bg: #ffffff;
-  --card-border: rgba(0, 0, 0, 0.08);
-  --card-hover: #fafafa;
+  --card-border: rgba(0, 0, 0, 0.12);
+  --card-hover: #f8f8f8;
 
   --line-color: rgba(0, 0, 0, 0.08);
 
@@ -602,11 +602,11 @@
   --pageNav-border: rgba(0, 0, 0, 0.08);
 
   /* Hero Backgrounds */
-  --hero-bg: linear-gradient(180deg, #f8f8f8 0%, #fafafa 50%, #ffffff 100%);
+  --hero-bg: linear-gradient(180deg, #ffffff 0%, #ffffff 50%, #ffffff 100%);
   --hero-fade: linear-gradient(to top, var(--background), transparent);
 
   /* Button Backgrounds */
-  --btn-secondary-bg: #f4f4f5;
+  --btn-secondary-bg: #ffffff;
   --btn-secondary-border: rgba(0, 0, 0, 0.1);
   --btn-secondary-color: #52525b;
   --btn-secondary-hover: rgba(0, 0, 0, 0.05);
@@ -622,15 +622,15 @@
   /* ============================================
      Premium/VIP Page Backgrounds (Light Mode)
      ============================================ */
-  --bg-deepest: #f8f8fa;
-  --bg-darker: #f4f4f6;
-  --bg-dark: #efefef;
-  --bg-base: #fafafa;
+  --bg-deepest: #ffffff;
+  --bg-darker: #ffffff;
+  --bg-dark: #ffffff;
+  --bg-base: #ffffff;
   --bg-elevated: #ffffff;
 
   /* VIP Hero Gradient - Light */
-  --vip-hero-bg: linear-gradient(180deg, #fafafa 0%, #f4f4f6 50%, #f0f0f2 100%);
-  --vip-hero-fade: linear-gradient(to top, #f8f8fa 0%, transparent 100%);
+  --vip-hero-bg: linear-gradient(180deg, #ffffff 0%, #ffffff 50%, #ffffff 100%);
+  --vip-hero-fade: linear-gradient(to top, #ffffff 0%, transparent 100%);
 
   /* Text Overlay Colors (라이트 모드 - 어두운 텍스트) */
   --text-overlay-100: rgba(9, 9, 11, 1);
@@ -655,7 +655,7 @@
   --elite-border-subtle: rgba(0, 0, 0, 0.1);
   --elite-glow: rgba(100, 100, 100, 0.15);
   --elite-glow-strong: rgba(100, 100, 100, 0.25);
-  --elite-bg: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 50%, #f0f0f0 100%);
+  --elite-bg: linear-gradient(135deg, #ffffff 0%, #f8f8f8 50%, #ffffff 100%);
   --elite-badge-bg: linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.05) 0%,
@@ -671,7 +671,7 @@
   --premium-card-border: rgba(0, 0, 0, 0.08);
 
   /* Card Background Gradients - Light Mode */
-  --card-bg-gradient: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  --card-bg-gradient: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
   --card-bg-dark: #ffffff;
   --highlight-line: rgba(0, 0, 0, 0.06);
   --highlight-line-subtle: rgba(0, 0, 0, 0.03);
@@ -684,7 +684,7 @@
   --shimmer-bronze: rgba(139, 69, 19, 0.05);
 
   /* Video/Thumbnail Backgrounds - Light */
-  --video-bg: linear-gradient(135deg, #f4f4f5, #e4e4e7);
+  --video-bg: linear-gradient(135deg, #ffffff, #f8f8f8);
   --video-overlay: linear-gradient(
     180deg,
     transparent 50%,
@@ -707,13 +707,13 @@
   --gray-overlay-15: rgba(100, 100, 100, 0.12);
   --gray-overlay-20: rgba(100, 100, 100, 0.15);
 
-  /* Neutral Overlay - Light Mode (replaces pink) */
-  --color-pink-overlay-01: rgba(82, 82, 91, 0.02);
-  --color-pink-overlay-02: rgba(82, 82, 91, 0.03);
-  --color-pink-overlay-03: rgba(82, 82, 91, 0.04);
-  --color-pink-overlay-05: rgba(82, 82, 91, 0.06);
-  --color-pink-overlay-08: rgba(82, 82, 91, 0.1);
-  --color-pink-overlay-10: rgba(82, 82, 91, 0.12);
+  /* Pink Overlay - Light Mode */
+  --color-pink-overlay-01: rgba(253, 104, 186, 0.02);
+  --color-pink-overlay-02: rgba(253, 104, 186, 0.03);
+  --color-pink-overlay-03: rgba(253, 104, 186, 0.04);
+  --color-pink-overlay-05: rgba(253, 104, 186, 0.06);
+  --color-pink-overlay-08: rgba(253, 104, 186, 0.1);
+  --color-pink-overlay-10: rgba(253, 104, 186, 0.12);
 
   /* Live/Error Color Utility - Light */
   --live-overlay-02: rgba(239, 68, 68, 0.03);
@@ -1105,9 +1105,9 @@ li {
 }
 
 .card:hover {
-  border-color: var(--card-border-hover);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  border-color: var(--color-pink);
+  box-shadow: 0 0 20px rgba(253, 104, 186, 0.15), var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 /* Premium Card Variant */
@@ -1173,7 +1173,7 @@ li {
   width: 100%;
   padding-bottom: 56.25%; /* 16:9 aspect ratio */
   margin: 1em 0;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--surface);
 }
@@ -1194,7 +1194,7 @@ li {
 div[style*="cursor: pointer"] img {
   max-width: 100%;
   height: auto;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 /* 왼쪽 정렬 */

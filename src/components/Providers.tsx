@@ -17,10 +17,22 @@ import {
   useTheme,
 } from "@/lib/context";
 
-// INNO LABEL Mantine Theme - Sophisticated Monochrome
+// INNO LABEL Mantine Theme - Pink Brand
 const mantineTheme = createTheme({
-  primaryColor: "gray",
+  primaryColor: "pink",
   colors: {
+    pink: [
+      "#fff0f7", // [0] - lightest
+      "#ffe0ef",
+      "#ffc2df",
+      "#ff99c8",
+      "#ff8ed0",
+      "#fd68ba",
+      "#e44fa0", // [6] - primary
+      "#c93d87",
+      "#a8306e",
+      "#872456", // [9] - darkest
+    ],
     gray: [
       "#fafafa", // [0] - lightest
       "#f4f4f5",
@@ -28,7 +40,7 @@ const mantineTheme = createTheme({
       "#d4d4d8",
       "#a1a1aa",
       "#71717a",
-      "#52525b", // [6] - primary
+      "#52525b", // [6]
       "#3f3f46",
       "#27272a",
       "#18181b", // [9] - darkest
@@ -85,7 +97,7 @@ export default function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={mantineTheme} defaultColorScheme="auto">
+      <MantineProvider theme={mantineTheme} defaultColorScheme="light">
         <ModalsProvider>
           <Notifications position="top-right" />
           <SupabaseProvider>

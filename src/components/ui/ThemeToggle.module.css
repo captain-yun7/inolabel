@@ -5,16 +5,16 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  background: var(--surface);
-  border: 1px solid var(--glass-border);
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .toggle:hover {
-  background: var(--surface-hover);
-  border-color: var(--primary);
+  background: rgba(253, 104, 186, 0.06);
+  border-color: rgba(253, 104, 186, 0.3);
   transform: scale(1.05);
 }
 
@@ -43,18 +43,18 @@
 }
 
 .sunIcon {
-  color: var(--sun-color);
+  color: #fd68ba;
 }
 
 .moonIcon {
-  color: var(--moon-color);
+  color: #333333;
 }
 
 /* Hover effects */
 .toggle:hover .sunIcon.active {
-  color: var(--sun-color-hover);
+  color: #e44fa0;
 }
 
 .toggle:hover .moonIcon.active {
-  color: var(--moon-color-hover);
+  color: #fd68ba;
 }

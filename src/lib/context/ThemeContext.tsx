@@ -19,22 +19,22 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setMounted(true);
-      // Get saved theme from localStorage, default to dark
+      // Get saved theme from localStorage, default to light
       const savedTheme = localStorage.getItem("theme") as Theme | null;
       if (savedTheme) {
         // 사용자가 이전에 선택한 테마 사용
         setThemeState(savedTheme);
         document.documentElement.setAttribute("data-theme", savedTheme);
       } else {
-        // 저장된 테마가 없으면 항상 다크모드로 시작
-        setThemeState("dark");
-        document.documentElement.setAttribute("data-theme", "dark");
+        // 저장된 테마가 없으면 라이트 모드로 시작
+        setThemeState("light");
+        document.documentElement.setAttribute("data-theme", "light");
       }
     }, 0);
 

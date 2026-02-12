@@ -46,6 +46,16 @@
   position: relative;
 }
 
+/* 짝수 섹션: 미묘하게 다른 배경으로 시각적 분리 */
+.sectionAlt {
+  margin-left: calc(-1 * var(--space-4));
+  margin-right: calc(-1 * var(--space-4));
+  padding: var(--space-6) var(--space-4);
+  background: var(--surface);
+  border-top: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--card-border);
+}
+
 .sectionHeader {
   display: flex;
   align-items: center;
@@ -57,20 +67,19 @@
   display: inline-flex;
   align-items: center;
   padding: var(--space-1) var(--space-3);
-  background: var(--overlay-medium);
+  background: rgba(253, 104, 186, 0.1);
   border: 1px solid var(--color-pink-border);
-  border-radius: var(--radius-full);
-  color: var(--text-secondary);
-  font-size: 11px; /* 10px → 11px - 배지는 작은 글씨 허용하되 10px 초과 */
-  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 800;
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
 .sectionTitle {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 700;
+  font-size: var(--text-xl);
+  font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
