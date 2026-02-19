@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { ArrowLeft, Users, Radio, FileText, Calendar } from 'lucide-react'
+import { Users, Radio, FileText, Calendar } from 'lucide-react'
+import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import SigGallery from '@/components/info/SigGallery'
 import styles from './page.module.css'
@@ -12,12 +13,10 @@ export const metadata = {
 export default function SigPage() {
   return (
     <div className={styles.main}>
-      {/* Navigation */}
+      <Navbar />
+
+      {/* Sub Navigation */}
       <nav className={styles.pageNav}>
-        <Link href="/" className={styles.backBtn}>
-          <ArrowLeft size={18} />
-          <span>홈</span>
-        </Link>
         <div className={styles.navTabs}>
           <Link href="/rg/org" className={styles.navTab}>
             <Users size={16} />

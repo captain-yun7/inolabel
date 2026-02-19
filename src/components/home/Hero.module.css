@@ -3,7 +3,7 @@
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--background);
 }
 
 .container {
@@ -24,7 +24,7 @@
 }
 
 .bannerImage {
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
 }
 

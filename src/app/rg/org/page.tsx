@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Users, Radio, Calendar, FileText } from "lucide-react";
+import { Users, Radio, Calendar, FileText } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization, useBjRanks } from "@/lib/hooks";
 import { MemberCard } from "@/components/info";
+import type { TierInfo } from "@/components/info/MemberCard";
 import type { OrganizationRecord } from "@/types/organization";
 import { PledgeSidebar } from "@/components/info/PledgeSidebar";
 import { ProfileSidebar } from "@/components/info/ProfileSidebar";
 import AdminOrgOverlay, { useAdminOrgEdit } from "@/components/info/AdminOrgOverlay";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
 type UnitType = "excel" | "crew";
@@ -20,6 +23,36 @@ export default function OrganizationPage() {
   const { getRankByName } = useBjRanks();
   const [selectedMember, setSelectedMember] = useState<OrganizationRecord | null>(null);
   const [activeUnit, setActiveUnit] = useState<UnitType>("excel");
+
+  // 스타크래프트 티어 데이터 (crew 멤버에 종족/티어 표시용)
+  const [tierMap, setTierMap] = useState<Record<string, TierInfo>>({});
+
+  useEffect(() => {
+    async function fetchTierData() {
+      const supabase = getSupabaseClient();
+      const { data: tiers } = await supabase
+        .from('starcraft_tiers')
+        .select('id, name, color');
+      const { data: tierMembers } = await supabase
+        .from('starcraft_tier_members')
+        .select('player_name, race, tier_id');
+
+      if (tiers && tierMembers) {
+        const tierLookup = new Map(tiers.map(t => [t.id, { name: t.name, color: t.color }]));
+        const map: Record<string, TierInfo> = {};
+        for (const tm of tierMembers) {
+          const tier = tierLookup.get(tm.tier_id);
+          map[tm.player_name] = {
+            race: tm.race || undefined,
+            tierName: tier?.name,
+            tierColor: tier?.color || undefined,
+          };
+        }
+        setTierMap(map);
+      }
+    }
+    fetchTierData();
+  }, []);
 
   // 관리자 편집 기능
   const {
@@ -70,21 +103,34 @@ export default function OrganizationPage() {
     });
   }, [grouped.members, getRankByName]);
 
-  // 섹션 타이틀
+  // 섹션 타이틀 (역할 기반 동적 생성)
   const getLeaderTitle = () => {
-    if (grouped.leaders.length > 0) return "대표";
-    if (grouped.directors.length > 0) return "부장";
-    return "팀장";
+    if (topLeaders.length === 0) return "대표";
+    const roles = [...new Set(topLeaders.map(m => m.role))];
+    return roles.join(' / ');
+  };
+  const getDirectorTitle = () => {
+    if (grouped.directors.length === 0) return "";
+    const roles = [...new Set(grouped.directors.map(m => m.role))];
+    return roles.join(' / ');
+  };
+  const getManagerTitle = () => {
+    if (middleManagers.length === 0) return "팀장";
+    const roles = [...new Set(middleManagers.map(m => m.role))];
+    return roles.join(' / ');
+  };
+  const getMemberTitle = () => {
+    if (regularMembers.length === 0) return "멤버";
+    const roles = [...new Set(regularMembers.map(m => m.role))];
+    return roles.join(' / ');
   };
 
   return (
     <div className={styles.container}>
-      {/* Minimal Navigation */}
+      <Navbar />
+
+      {/* Sub Navigation */}
       <nav className={styles.pageNav}>
-        <Link href="/" className={styles.backBtn}>
-          <ArrowLeft size={18} />
-          <span>홈</span>
-        </Link>
         <div className={styles.navTabs}>
           <Link
             href="/rg/org"
@@ -181,6 +227,7 @@ export default function OrganizationPage() {
                             size="large"
                             onClick={() => handleCardClick(member)}
                             isSelected={selectedMember?.id === member.id}
+                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
                           />
                         </motion.div>
                       ))}
@@ -188,11 +235,40 @@ export default function OrganizationPage() {
                   </section>
                 )}
 
-                {/* Section: Managers */}
+                {/* Section: Directors (부총장/차장/과장) */}
+                {grouped.directors.length > 0 && (
+                  <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                      <h2 className={styles.sectionTitle}>{getDirectorTitle()}</h2>
+                      <span className={styles.sectionCount}>{grouped.directors.length}명</span>
+                    </div>
+                    <div className={`${styles.grid} ${styles.gridManagers}`}>
+                      {grouped.directors.map((member, index) => (
+                        <motion.div
+                          key={member.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.04 }}
+                          onDoubleClick={() => handleCardDoubleClick(member)}
+                        >
+                          <MemberCard
+                            member={member}
+                            size="medium"
+                            onClick={() => handleCardClick(member)}
+                            isSelected={selectedMember?.id === member.id}
+                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Section: Managers (교수/팀장/실장) */}
                 {middleManagers.length > 0 && (
                   <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                      <h2 className={styles.sectionTitle}>팀장</h2>
+                      <h2 className={styles.sectionTitle}>{getManagerTitle()}</h2>
                       <span className={styles.sectionCount}>{middleManagers.length}명</span>
                     </div>
                     <div className={`${styles.grid} ${styles.gridManagers}`}>
@@ -209,6 +285,7 @@ export default function OrganizationPage() {
                             size="medium"
                             onClick={() => handleCardClick(member)}
                             isSelected={selectedMember?.id === member.id}
+                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
                           />
                         </motion.div>
                       ))}
@@ -220,7 +297,7 @@ export default function OrganizationPage() {
                 {regularMembers.length > 0 && (
                   <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                      <h2 className={styles.sectionTitle}>멤버</h2>
+                      <h2 className={styles.sectionTitle}>{getMemberTitle()}</h2>
                       <span className={styles.sectionCount}>{regularMembers.length}명</span>
                     </div>
                     <div className={`${styles.grid} ${styles.gridMembers}`}>
@@ -237,6 +314,7 @@ export default function OrganizationPage() {
                             size="small"
                             onClick={() => handleCardClick(member)}
                             isSelected={selectedMember?.id === member.id}
+                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
                           />
                         </motion.div>
                       ))}

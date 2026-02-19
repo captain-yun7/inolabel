@@ -14,16 +14,14 @@ export default function TierRow({ tier, liveNames }: TierRowProps) {
     <div className={styles.row}>
       <div
         className={styles.tierLabel}
-        style={{
-          backgroundColor: tier.color || '#333',
-        }}
+        style={{ backgroundColor: tier.color || '#666' }}
       >
         <span className={styles.tierName}>{tier.name}</span>
       </div>
       <div className={styles.members}>
         {tier.members.length === 0 ? (
           <div className={styles.emptySlot}>
-            <span>-</span>
+            <span>멤버 없음</span>
           </div>
         ) : (
           tier.members.map((member) => (

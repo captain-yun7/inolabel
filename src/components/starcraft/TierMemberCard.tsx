@@ -8,13 +8,22 @@ interface TierMemberCardProps {
   isLive?: boolean
 }
 
-const RACE_EMOJI: Record<string, string> = {
-  terran: 'T',
-  zerg: 'Z',
-  protoss: 'P',
+const RACE_LABEL: Record<string, string> = {
+  terran: '테란',
+  zerg: '저그',
+  protoss: '프토',
+}
+
+const RACE_COLOR: Record<string, string> = {
+  terran: '#3b82f6',
+  zerg: '#a855f7',
+  protoss: '#f59e0b',
 }
 
 export default function TierMemberCard({ member, isLive }: TierMemberCardProps) {
+  const raceColor = member.race ? RACE_COLOR[member.race] : undefined
+  const raceLabel = member.race ? RACE_LABEL[member.race] : null
+
   return (
     <div className={`${styles.card} ${isLive ? styles.liveCard : ''}`}>
       <div className={styles.avatarWrap}>
@@ -22,23 +31,44 @@ export default function TierMemberCard({ member, isLive }: TierMemberCardProps) 
           <img
             src={member.image_url}
             alt={member.player_name}
-            className={`${styles.avatar} ${isLive ? styles.liveAvatar : ''}`}
+            className={styles.avatar}
+            style={
+              isLive
+                ? { borderColor: '#00d4ff' }
+                : raceColor
+                  ? { borderColor: raceColor }
+                  : undefined
+            }
           />
         ) : (
-          <div className={`${styles.avatarPlaceholder} ${isLive ? styles.liveAvatar : ''}`}>
-            {member.race ? RACE_EMOJI[member.race] || '?' : '?'}
+          <div
+            className={styles.avatarPlaceholder}
+            style={
+              isLive
+                ? { borderColor: '#00d4ff' }
+                : raceColor
+                  ? { borderColor: raceColor, color: raceColor }
+                  : undefined
+            }
+          >
+            {raceLabel ? raceLabel.charAt(0) : '?'}
           </div>
         )}
-        {isLive && <span className={styles.liveBadge}>Live</span>}
+        {isLive && <span className={styles.liveBadge}>LIVE</span>}
       </div>
-      <div className={styles.info}>
-        <span className={styles.name}>{member.player_name}</span>
-        {member.race && (
-          <span className={styles.race}>
-            {RACE_EMOJI[member.race] || member.race}
-          </span>
-        )}
-      </div>
+      <span className={styles.name}>{member.player_name}</span>
+      {raceLabel && (
+        <span
+          className={styles.raceBadge}
+          style={{
+            backgroundColor: raceColor ? `${raceColor}18` : undefined,
+            color: raceColor,
+            borderColor: raceColor ? `${raceColor}40` : undefined,
+          }}
+        >
+          {raceLabel}
+        </span>
+      )}
     </div>
   )
 }

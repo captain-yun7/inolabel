@@ -28,6 +28,13 @@
   color: var(--text-secondary);
 }
 
+.tierOrder {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #aaa);
+  margin-top: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
 .content {
   margin-top: 1.5rem;
 }

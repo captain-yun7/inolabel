@@ -22,6 +22,7 @@ export default async function StarcraftTierPage() {
           <div className={styles.header}>
             <h1 className={styles.title}>스타크래프트 티어표</h1>
             <p className={styles.subtitle}>INNO LABEL 스타크래프트 실력 랭킹</p>
+            <p className={styles.tierOrder}>갓 &gt; 킹 &gt; 잭 &gt; 스페이드 &gt; 0 ~ 8 &gt; 유스</p>
           </div>
 
           <div className={styles.content}>

@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useLiveRoster, useBjRanks } from "@/lib/hooks";
+import Navbar from "@/components/Navbar";
 import { PledgeSidebar } from "@/components/info/PledgeSidebar";
 import { ProfileSidebar } from "@/components/info/ProfileSidebar";
 import type { OrganizationRecord, UnitFilter } from "@/types/organization";
-import { ArrowLeft, Radio, Users, FileText, Calendar } from "lucide-react";
+import { Radio, Users, FileText, Calendar } from "lucide-react";
 import styles from "./page.module.css";
 
 // SOOP TV URL 생성
@@ -153,12 +154,10 @@ export default function LivePage() {
 
   return (
     <div className={styles.main}>
-      {/* Navigation */}
+      <Navbar />
+
+      {/* Sub Navigation */}
       <nav className={styles.pageNav}>
-        <Link href="/" className={styles.backBtn}>
-          <ArrowLeft size={18} />
-          <span>홈</span>
-        </Link>
         <div className={styles.navTabs}>
           <Link href="/rg/org" className={styles.navTab}>
             <Users size={16} />

@@ -10,6 +10,12 @@ interface TierBoardProps {
   tiers: StarcraftTierWithMembers[]
 }
 
+const RACE_LEGEND = [
+  { key: 'terran', label: '테란', color: '#3b82f6' },
+  { key: 'zerg', label: '저그', color: '#a855f7' },
+  { key: 'protoss', label: '프토', color: '#f59e0b' },
+]
+
 export default function TierBoard({ tiers }: TierBoardProps) {
   const { members } = useLiveRoster({ realtime: true })
 
@@ -33,10 +39,26 @@ export default function TierBoard({ tiers }: TierBoardProps) {
   }
 
   return (
-    <div className={styles.board}>
-      {tiers.map((tier) => (
-        <TierRow key={tier.id} tier={tier} liveNames={liveNames} />
-      ))}
+    <div className={styles.wrapper}>
+      {/* 종족 컬러 범례 */}
+      <div className={styles.legend}>
+        {RACE_LEGEND.map((race) => (
+          <div key={race.key} className={styles.legendItem}>
+            <span
+              className={styles.legendDot}
+              style={{ backgroundColor: race.color }}
+            />
+            <span className={styles.legendLabel}>{race.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 티어 보드 */}
+      <div className={styles.board}>
+        {tiers.map((tier) => (
+          <TierRow key={tier.id} tier={tier} liveNames={liveNames} />
+        ))}
+      </div>
     </div>
   )
 }

@@ -123,15 +123,14 @@ export function useOrganizationData(
 
   const getGroupedByRole = useCallback(
     <T extends GroupableMember>(memberList: T[]) => {
-      const leaders = memberList.filter(
-        (m) => m.role === '대표' || m.role === 'R대표' || m.role === 'G대표'
-      )
-      // 부장/팀장은 현재 사용하지 않지만 호환성 유지
-      const directors: T[] = []
-      const managers: T[] = []
-      const regularMembers = memberList.filter(
-        (m) => m.role === '멤버' || m.role === '크루'
-      )
+      const leaderRoles = ['대표', 'R대표', 'G대표', '이사장', '총장']
+      const directorRoles = ['부총장', '차장', '과장']
+      const managerRoles = ['팀장', '실장', '비서', '교수']
+      const leaders = memberList.filter((m) => leaderRoles.includes(m.role))
+      const directors = memberList.filter((m) => directorRoles.includes(m.role))
+      const managers = memberList.filter((m) => managerRoles.includes(m.role))
+      const assignedRoles = [...leaderRoles, ...directorRoles, ...managerRoles]
+      const regularMembers = memberList.filter((m) => !assignedRoles.includes(m.role))
       return { leaders, directors, managers, members: regularMembers }
     },
     []
