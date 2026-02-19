@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import type { StarcraftTierWithMembers } from '@/types/database'
 import { useLiveRoster } from '@/lib/hooks/useLiveRoster'
+import { Radio } from 'lucide-react'
 import TierRow from './TierRow'
 import styles from './TierBoard.module.css'
 
@@ -18,6 +19,7 @@ const RACE_LEGEND = [
 
 export default function TierBoard({ tiers }: TierBoardProps) {
   const { members } = useLiveRoster({ realtime: true })
+  const [showLiveOnly, setShowLiveOnly] = useState(false)
 
   // 라이브 중인 멤버 이름 Set (organization name 기준)
   const liveNames = useMemo(() => {
@@ -30,6 +32,15 @@ export default function TierBoard({ tiers }: TierBoardProps) {
     return names
   }, [members])
 
+  // 라이브 필터 적용 시 멤버 필터링
+  const filteredTiers = useMemo(() => {
+    if (!showLiveOnly) return tiers
+    return tiers.map(tier => ({
+      ...tier,
+      members: tier.members.filter(m => liveNames.has(m.player_name)),
+    }))
+  }, [tiers, showLiveOnly, liveNames])
+
   if (tiers.length === 0) {
     return (
       <div className={styles.empty}>
@@ -40,22 +51,37 @@ export default function TierBoard({ tiers }: TierBoardProps) {
 
   return (
     <div className={styles.wrapper}>
-      {/* 종족 컬러 범례 */}
-      <div className={styles.legend}>
-        {RACE_LEGEND.map((race) => (
-          <div key={race.key} className={styles.legendItem}>
-            <span
-              className={styles.legendDot}
-              style={{ backgroundColor: race.color }}
-            />
-            <span className={styles.legendLabel}>{race.label}</span>
-          </div>
-        ))}
+      {/* 상단 바: 범례 + 라이브 필터 */}
+      <div className={styles.topBar}>
+        {/* 종족 컬러 범례 */}
+        <div className={styles.legend}>
+          {RACE_LEGEND.map((race) => (
+            <div key={race.key} className={styles.legendItem}>
+              <span
+                className={styles.legendDot}
+                style={{ backgroundColor: race.color }}
+              />
+              <span className={styles.legendLabel}>{race.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 라이브 필터 토글 */}
+        <button
+          className={`${styles.liveFilter} ${showLiveOnly ? styles.liveFilterActive : ''}`}
+          onClick={() => setShowLiveOnly(prev => !prev)}
+        >
+          <Radio size={14} />
+          <span>LIVE만 보기</span>
+          {liveNames.size > 0 && (
+            <span className={styles.liveFilterCount}>{liveNames.size}</span>
+          )}
+        </button>
       </div>
 
       {/* 티어 보드 */}
       <div className={styles.board}>
-        {tiers.map((tier) => (
+        {filteredTiers.map((tier) => (
           <TierRow key={tier.id} tier={tier} liveNames={liveNames} />
         ))}
       </div>

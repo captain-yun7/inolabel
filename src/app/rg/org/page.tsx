@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Radio, Calendar, FileText } from "lucide-react";
+import { Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useOrganization, useBjRanks } from "@/lib/hooks";
@@ -128,31 +127,6 @@ export default function OrganizationPage() {
   return (
     <div className={styles.container}>
       <Navbar />
-
-      {/* Sub Navigation */}
-      <nav className={styles.pageNav}>
-        <div className={styles.navTabs}>
-          <Link
-            href="/rg/org"
-            className={`${styles.navTab} ${styles.active}`}
-          >
-            <Users size={16} />
-            <span>조직도</span>
-          </Link>
-          <Link href="/rg/live" className={styles.navTab}>
-            <Radio size={16} />
-            <span>LIVE</span>
-          </Link>
-          <Link href="/rg/sig" className={styles.navTab}>
-            <FileText size={16} />
-            <span>시그</span>
-          </Link>
-          <Link href="/rg/history" className={styles.navTab}>
-            <Calendar size={16} />
-            <span>연혁</span>
-          </Link>
-        </div>
-      </nav>
 
       {/* Page Header */}
       <header className={styles.pageHeader}>

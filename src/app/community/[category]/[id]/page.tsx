@@ -50,7 +50,8 @@ export default function PostDetailPage({
   }
 
   // category가 유효한 게시판 타입인지 검증
-  if (!['free', 'vip'].includes(category)) {
+  const validCategories = ['free', 'vip', 'anonymous', 'recommend', 'meme', 'report']
+  if (!validCategories.includes(category)) {
     notFound()
   }
   const supabase = useSupabaseContext()
@@ -229,8 +230,15 @@ export default function PostDetailPage({
   }
 
   const getCategoryLabel = () => {
-    return category === 'vip' ? 'VIP 라운지' : '자유게시판'
+    const labels: Record<string, string> = {
+      free: '자유게시판', vip: 'VIP 라운지', anonymous: '익명게시판',
+      recommend: '컨텐츠추천', meme: '짤, 움짤', report: '신고게시판',
+    }
+    return labels[category] || '게시판'
   }
+
+  // 신고게시판 내용은 관리자만 열람 가능
+  const isReportRestricted = category === 'report' && !isAdmin
 
   // 게시글 삭제 핸들러
   const handleDelete = async () => {
@@ -353,10 +361,16 @@ export default function PostDetailPage({
           </div>
 
           {/* Content - HTML 콘텐츠 렌더링 (XSS 방지 + Plain text 호환) */}
-          <div
-            className={styles.content}
-            dangerouslySetInnerHTML={{ __html: renderContent(post.content) }}
-          />
+          {isReportRestricted ? (
+            <div className={styles.content} style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+              <p>신고게시판의 내용은 관리자만 열람할 수 있습니다.</p>
+            </div>
+          ) : (
+            <div
+              className={styles.content}
+              dangerouslySetInnerHTML={{ __html: renderContent(post.content) }}
+            />
+          )}
 
           {/* Article Footer - 좋아요 */}
           <div className={styles.articleFooter}>
@@ -371,8 +385,8 @@ export default function PostDetailPage({
           </div>
         </article>
 
-        {/* Comments */}
-        <section className={styles.comments}>
+        {/* Comments - 신고게시판은 관리자만 열람 가능 */}
+        {!isReportRestricted && <section className={styles.comments}>
           <h2 className={styles.commentsHeader}>
             <MessageSquare size={20} />
             댓글 {comments.length}
@@ -450,7 +464,7 @@ export default function PostDetailPage({
             )}
           </div>
           </div>
-        </section>
+        </section>}
 
         {/* Footer */}
         <footer className={styles.footer}>

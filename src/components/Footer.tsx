@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Youtube, MessageCircle, ExternalLink, Crown, Heart } from "lucide-react";
+import { Youtube, MessageCircle, ExternalLink, Heart } from "lucide-react";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -24,34 +24,6 @@ export default function Footer() {
           <p className={styles.description}>
             함께하는 즐거움, 이노레이블과 함께
           </p>
-        </div>
-
-        {/* Links */}
-        <div className={styles.links}>
-          <div className={styles.linkGroup}>
-            <h4 className={styles.linkTitle}>커뮤니티</h4>
-            <Link href="/community/free" className={styles.link}>
-              자유게시판
-            </Link>
-            <Link href="/community/vip" className={styles.link}>
-              VIP 게시판
-            </Link>
-            <Link href="/notice" className={styles.link}>
-              공지사항
-            </Link>
-          </div>
-          <div className={styles.linkGroup}>
-            <h4 className={styles.linkTitle}>정보</h4>
-            <Link href="/rg/org" className={styles.link}>
-              조직도
-            </Link>
-            <Link href="/rg/sig" className={styles.link}>
-              시그리스트
-            </Link>
-            <Link href="/starcraft/tier" className={styles.link}>
-              스타크래프트 티어
-            </Link>
-          </div>
         </div>
 
         {/* Social & External */}

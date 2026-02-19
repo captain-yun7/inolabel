@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square } from 'lucide-react'
+import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square, Flame, Trophy } from 'lucide-react'
 import { PageLayout } from '@/components/layout'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { InlineError } from '@/components/common/InlineError'
 import { useAuthContext } from '@/lib/context'
-import { getPosts, deleteMultiplePosts } from '@/lib/actions/posts'
+import { getPosts, getBestPosts, deleteMultiplePosts } from '@/lib/actions/posts'
 import { formatShortDate } from '@/lib/utils/format'
 import TabFilter from '@/components/community/TabFilter'
 import styles from '../free/page.module.css'
@@ -61,6 +61,10 @@ export default function AnonymousBoardPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSelectMode, setIsSelectMode] = useState(false)
 
+  // BEST 게시글
+  const [weeklyBest, setWeeklyBest] = useState<{ id: number; title: string; likeCount: number; authorName: string }[]>([])
+  const [monthlyBest, setMonthlyBest] = useState<{ id: number; title: string; likeCount: number; authorName: string }[]>([])
+
   const tabs = [
     { label: '자유게시판', value: 'free', path: '/community/free' },
     { label: '익명게시판', value: 'anonymous', path: '/community/anonymous' },
@@ -68,6 +72,29 @@ export default function AnonymousBoardPage() {
     { label: '짤, 움짤', value: 'meme', path: '/community/meme' },
     { label: '신고게시판', value: 'report', path: '/community/report' },
   ]
+
+  // BEST 게시글 로드
+  useEffect(() => {
+    async function loadBest() {
+      const [weeklyResult, monthlyResult] = await Promise.all([
+        getBestPosts({ boardType: 'anonymous', period: 'weekly', limit: 5 }),
+        getBestPosts({ boardType: 'anonymous', period: 'monthly', limit: 5 }),
+      ])
+      if (weeklyResult.data) {
+        setWeeklyBest(weeklyResult.data.map(p => ({
+          id: p.id, title: p.title, likeCount: p.like_count || 0,
+          authorName: '익명',
+        })))
+      }
+      if (monthlyResult.data) {
+        setMonthlyBest(monthlyResult.data.map(p => ({
+          id: p.id, title: p.title, likeCount: p.like_count || 0,
+          authorName: '익명',
+        })))
+      }
+    }
+    loadBest()
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -191,6 +218,58 @@ export default function AnonymousBoardPage() {
 
         <div className={styles.container}>
           <TabFilter tabs={tabs} activeTab="anonymous" />
+
+          {/* BEST 게시글 */}
+          {(weeklyBest.length > 0 || monthlyBest.length > 0) && (
+            <div className={styles.bestSection}>
+              <div className={styles.bestColumns}>
+                {weeklyBest.length > 0 && (
+                  <div className={styles.bestColumn}>
+                    <div className={styles.bestHeader}>
+                      <Flame size={14} />
+                      <span>주간 BEST</span>
+                    </div>
+                    <ul className={styles.bestList}>
+                      {weeklyBest.map((post, i) => (
+                        <li key={post.id}>
+                          <Link href={`/community/anonymous/${post.id}`} className={styles.bestItem}>
+                            <span className={styles.bestRank}>{i + 1}</span>
+                            <span className={styles.bestTitle}>{post.title}</span>
+                            <span className={styles.bestLikes}>
+                              <ThumbsUp size={10} />
+                              {post.likeCount}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {monthlyBest.length > 0 && (
+                  <div className={styles.bestColumn}>
+                    <div className={styles.bestHeader}>
+                      <Trophy size={14} />
+                      <span>월간 BEST</span>
+                    </div>
+                    <ul className={styles.bestList}>
+                      {monthlyBest.map((post, i) => (
+                        <li key={post.id}>
+                          <Link href={`/community/anonymous/${post.id}`} className={styles.bestItem}>
+                            <span className={styles.bestRank}>{i + 1}</span>
+                            <span className={styles.bestTitle}>{post.title}</span>
+                            <span className={styles.bestLikes}>
+                              <ThumbsUp size={10} />
+                              {post.likeCount}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className={styles.boardHeader}>
             <div className={styles.boardLeft}>

@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { Users, Radio, FileText, Calendar } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import SigGallery from '@/components/info/SigGallery'
@@ -14,31 +12,6 @@ export default function SigPage() {
   return (
     <div className={styles.main}>
       <Navbar />
-
-      {/* Sub Navigation */}
-      <nav className={styles.pageNav}>
-        <div className={styles.navTabs}>
-          <Link href="/rg/org" className={styles.navTab}>
-            <Users size={16} />
-            <span>조직도</span>
-          </Link>
-          <Link href="/rg/live" className={styles.navTab}>
-            <Radio size={16} />
-            <span>LIVE</span>
-          </Link>
-          <Link
-            href="/rg/sig"
-            className={`${styles.navTab} ${styles.active}`}
-          >
-            <FileText size={16} />
-            <span>시그</span>
-          </Link>
-          <Link href="/rg/history" className={styles.navTab}>
-            <Calendar size={16} />
-            <span>연혁</span>
-          </Link>
-        </div>
-      </nav>
 
       {/* Page Header */}
       <header className={styles.pageHeader}>

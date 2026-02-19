@@ -6,13 +6,20 @@
   gap: 1rem;
 }
 
+/* 상단 바 */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.25rem;
+}
+
 /* 종족 컬러 범례 */
 .legend {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  justify-content: flex-end;
-  padding: 0 0.25rem;
 }
 
 .legendItem {
@@ -45,6 +52,53 @@
   box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.06));
 }
 
+/* 라이브 필터 버튼 */
+.liveFilter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--card-border, #e5e5e5);
+  border-radius: 20px;
+  background: var(--surface, #fafafa);
+  color: var(--text-secondary, #666);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.liveFilter:hover {
+  border-color: var(--color-primary, #fd68ba);
+  color: var(--text-primary, #333);
+}
+
+.liveFilterActive {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.liveFilterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.liveFilter:not(.liveFilterActive) .liveFilterCount {
+  background: var(--text-muted, #999);
+}
+
 /* 빈 상태 */
 .empty {
   text-align: center;
@@ -55,6 +109,12 @@
 
 /* ─── 반응형 ─── */
 @media (max-width: 640px) {
+  .topBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
   .legend {
     gap: 1rem;
     justify-content: center;
@@ -62,5 +122,9 @@
 
   .legendLabel {
     font-size: 0.75rem;
+  }
+
+  .liveFilter {
+    justify-content: center;
   }
 }
