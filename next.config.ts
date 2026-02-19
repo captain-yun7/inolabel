@@ -184,6 +184,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'profile.img.sooplive.co.kr',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'videodelivery.net',
         pathname: '/**',
       },
