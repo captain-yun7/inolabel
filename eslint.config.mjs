@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Scripts folder uses CommonJS require() - exclude from ESLint
     "scripts/**",
+    // Python venv contains JS files that fail lint
+    "python-live-scraper/**",
   ]),
   // Custom rule overrides
   {
