@@ -1,7 +1,6 @@
 import type {
   SoopLiveStatus,
   SoopLiveApiResponse,
-  SoopChannelHomeResponse,
   SoopBoardPost,
   SoopVod,
 } from './types'
@@ -115,11 +114,38 @@ export async function getChannelHome(bjId: string): Promise<{
       throw new Error(`SOOP Channel API error: ${response.status}`)
     }
 
-    const data: SoopChannelHomeResponse = await response.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await response.json()
+
+    // SOOP API raw 필드를 SoopBoardPost로 변환
+    const posts: SoopBoardPost[] = (data.boards || []).map((b: Record<string, unknown>) => ({
+      title_no: b.title_no as number,
+      title: (b.title_name || b.title || '') as string,
+      content: (b.content || '') as string,
+      write_dt: (b.reg_date || b.write_dt || '') as string,
+      read_cnt: typeof b.count === 'object' && b.count !== null
+        ? ((b.count as Record<string, number>).read_cnt || 0)
+        : (b.read_cnt as number || 0),
+      comment_cnt: typeof b.count === 'object' && b.count !== null
+        ? ((b.count as Record<string, number>).comment_cnt || 0)
+        : (b.comment_cnt as number || 0),
+    }))
+
+    // SOOP API raw 필드를 SoopVod로 변환
+    const vods: SoopVod[] = (data.vods || []).map((v: Record<string, unknown>) => ({
+      title_no: v.title_no as number,
+      title: (v.title_name || v.title || '') as string,
+      thumbnail: (v.thumb || v.thumbnail || '') as string,
+      duration: (v.duration as number) || 0,
+      read_cnt: typeof v.count === 'object' && v.count !== null
+        ? ((v.count as Record<string, number>).read_cnt || 0)
+        : (v.read_cnt as number || 0),
+      reg_date: (v.reg_date || '') as string,
+    }))
 
     return {
-      posts: data.boards || [],
-      vods: data.vods || [],
+      posts,
+      vods,
       isLive: data.broad !== null,
     }
   } catch (error) {
@@ -135,10 +161,12 @@ export async function getChannelHome(bjId: string): Promise<{
 export function extractBjId(url: string): string | null {
   if (!url) return null
 
+  // https://www.sooplive.co.kr/station/bjid (방송국 URL)
   // https://ch.sooplive.co.kr/bjid
-  // https://www.sooplive.co.kr/bjid
   // https://play.sooplive.co.kr/bjid/12345
   const patterns = [
+    /sooplive\.co\.kr\/station\/([a-zA-Z0-9_]+)/,
+    /soop\.co\.kr\/station\/([a-zA-Z0-9_]+)/,
     /sooplive\.co\.kr\/([a-zA-Z0-9_]+)/,
     /soop\.co\.kr\/([a-zA-Z0-9_]+)/,
   ]
