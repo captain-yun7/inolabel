@@ -124,61 +124,24 @@ export default function LivePage() {
 
   const liveCount = liveMembers.length;
 
-  // 전체 멤버 공지사항 수집
+  // 전체 멤버 공지사항 수집 (서버 bulk API, 5분 캐시)
   const fetchAllNotices = useCallback(async () => {
     setNoticesLoading(true);
     try {
-      // 중복 제거된 멤버에서 bjId가 있는 멤버만
-      const membersWithBjId = uniqueMembers
-        .map((m) => {
-          const bjId = getMemberBjId(m);
-          if (!bjId) return null;
-          return { name: m.name, image_url: m.image_url, bjId };
-        })
-        .filter(Boolean) as { name: string; image_url: string | null; bjId: string }[];
-
-      // 병렬로 공지사항 수집 (5개씩 배치)
-      const allNotices: MemberNotice[] = [];
-      const batchSize = 5;
-
-      for (let i = 0; i < membersWithBjId.length; i += batchSize) {
-        const batch = membersWithBjId.slice(i, i + batchSize);
-        const results = await Promise.all(
-          batch.map(async (member) => {
-            try {
-              const res = await fetch(`/api/soop/station?bjId=${member.bjId}`);
-              if (!res.ok) return [];
-              const json = await res.json();
-              const posts: SoopBoardPost[] = json.data?.posts || [];
-              return posts.slice(0, 3).map((post) => ({
-                ...post,
-                memberName: member.name,
-                memberImage: member.image_url,
-                bjId: member.bjId,
-              }));
-            } catch {
-              return [];
-            }
-          })
-        );
-        allNotices.push(...results.flat());
-      }
-
-      // 날짜순 정렬 (최신 먼저)
-      allNotices.sort((a, b) => new Date(b.write_dt).getTime() - new Date(a.write_dt).getTime());
-      setNotices(allNotices);
+      const res = await fetch("/api/soop/notices");
+      if (!res.ok) throw new Error("notices API failed");
+      const json = await res.json();
+      setNotices(json.data || []);
     } catch (error) {
       console.error("공지사항 수집 실패:", error);
     } finally {
       setNoticesLoading(false);
     }
-  }, [uniqueMembers]);
+  }, []);
 
   useEffect(() => {
-    if (uniqueMembers.length > 0) {
-      fetchAllNotices();
-    }
-  }, [uniqueMembers.length, fetchAllNotices]);
+    fetchAllNotices();
+  }, [fetchAllNotices]);
 
   // 라이브 카드 렌더링
   const renderLiveCard = (member: OrganizationRecord & { _soopStatus?: SoopLiveStatus | null }, index: number) => {

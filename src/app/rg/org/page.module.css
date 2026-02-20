@@ -246,9 +246,7 @@
 }
 
 .gridLeaders {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  max-width: 600px;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
 .gridManagers {
@@ -394,10 +392,7 @@
     gap: var(--space-3);
   }
 
-  .gridLeaders {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  }
-
+  .gridLeaders,
   .gridManagers,
   .gridMembers {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -466,11 +461,7 @@
     gap: var(--space-2);
   }
 
-  .gridLeaders {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: none;
-  }
-
+  .gridLeaders,
   .gridManagers,
   .gridMembers {
     grid-template-columns: repeat(2, 1fr);

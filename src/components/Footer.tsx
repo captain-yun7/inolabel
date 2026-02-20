@@ -14,12 +14,12 @@ export default function Footer() {
           <div className={styles.logoWrapper}>
             <Image
               src="/assets/logo/inolabel_logo.png"
-              alt="INNO LABEL"
+              alt="INOLABEL"
               width={48}
               height={48}
               style={{ objectFit: "contain" }}
             />
-            <span className={styles.logo}>INNO LABEL</span>
+            <span className={styles.logo}>INOLABEL</span>
           </div>
           <p className={styles.description}>
             함께하는 즐거움, 이노레이블과 함께
@@ -65,7 +65,7 @@ export default function Footer() {
       <div className={styles.bottom}>
         <div className={styles.bottomInner}>
           <span className={styles.copyright}>
-            © {currentYear} INNO LABEL. Made with <Heart size={12} className={styles.heartIcon} /> by fans, for fans.
+            © {currentYear} INOLABEL. Made with <Heart size={12} className={styles.heartIcon} /> by fans, for fans.
           </span>
           <div className={styles.legal}>
             <Link href="#" className={styles.legalLink}>

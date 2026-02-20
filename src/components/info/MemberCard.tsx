@@ -47,6 +47,8 @@ export function MemberCard({ member, size, onClick, isSelected, tierInfo }: Memb
       className={`${styles.memberCard} ${styles[size]} ${isSelected ? styles.selected : ''}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
+      onClick={onClick}
+      style={{ cursor: 'pointer' }}
     >
       <div className={`${styles.avatarWrapper} ${member.is_live ? styles.isLive : ''} ${isLeader ? styles.isLeader : ''}`}>
         {member.is_live && (
@@ -106,9 +108,6 @@ export function MemberCard({ member, size, onClick, isSelected, tierInfo }: Memb
 
       {/* Hover Overlay - cnine.kr style */}
       <div className={styles.hoverOverlay}>
-        <button className={styles.overlayBtn} onClick={onClick}>
-          상세 보기
-        </button>
         {soopUrl && (
           <a
             href={soopUrl}

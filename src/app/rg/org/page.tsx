@@ -190,7 +190,7 @@ export default function OrganizationPage() {
                         >
                           <MemberCard
                             member={member}
-                            size="large"
+                            size="medium"
                             onClick={() => handleCardClick(member)}
                             isSelected={selectedMember?.id === member.id}
                             tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
