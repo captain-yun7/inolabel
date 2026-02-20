@@ -336,6 +336,34 @@ export default function LivePage() {
           </div>
         </div>
 
+        {/* 숲 공지 섹션 - 가로 스크롤 */}
+        <section className={styles.noticeSection}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              <FileText size={20} />
+              숲 공지
+              {notices.length > 0 && (
+                <span className={styles.sectionCount}>{notices.length}</span>
+              )}
+            </h2>
+          </div>
+          {noticesLoading ? (
+            <div className={styles.noticeLoading}>
+              <div className={styles.spinner} />
+              <span>공지사항을 불러오는 중...</span>
+            </div>
+          ) : notices.length > 0 ? (
+            <div className={styles.noticeScroll}>
+              {notices.slice(0, 30).map((notice, index) => renderNoticeCard(notice, index))}
+            </div>
+          ) : (
+            <div className={styles.noticeEmpty}>
+              <FileText size={32} className={styles.emptyIcon} />
+              <p>공지사항이 없습니다</p>
+            </div>
+          )}
+        </section>
+
         {/* 라이브 섹션 */}
         {isLoading || !liveCheckDone ? (
           <div className={styles.loading}>
@@ -362,34 +390,6 @@ export default function LivePage() {
             <span className={styles.emptyHint}>멤버가 방송을 시작하면 여기에 표시됩니다</span>
           </div>
         )}
-
-        {/* 숲 공지 섹션 */}
-        <section className={styles.noticeSection}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>
-              <FileText size={20} />
-              숲 공지
-              {notices.length > 0 && (
-                <span className={styles.sectionCount}>{notices.length}</span>
-              )}
-            </h2>
-          </div>
-          {noticesLoading ? (
-            <div className={styles.noticeLoading}>
-              <div className={styles.spinner} />
-              <span>공지사항을 불러오는 중...</span>
-            </div>
-          ) : notices.length > 0 ? (
-            <div className={styles.noticeGrid}>
-              {notices.slice(0, 30).map((notice, index) => renderNoticeCard(notice, index))}
-            </div>
-          ) : (
-            <div className={styles.noticeEmpty}>
-              <FileText size={32} className={styles.emptyIcon} />
-              <p>공지사항이 없습니다</p>
-            </div>
-          )}
-        </section>
       </div>
       <Footer />
     </div>
