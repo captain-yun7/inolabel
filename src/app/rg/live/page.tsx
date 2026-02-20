@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useLiveRoster } from "@/lib/hooks";
@@ -9,12 +9,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import type { OrganizationRecord, UnitFilter } from "@/types/organization";
 import type { SoopBoardPost } from "@/lib/soop/types";
+import type { SoopLiveStatus } from "@/lib/soop/types";
 import { Radio, FileText, Eye, MessageCircle } from "lucide-react";
 import styles from "./page.module.css";
 
 // SOOP TV URL 생성
 const getSoopTvUrl = (id: string) => `https://play.sooplive.co.kr/${id}`;
-const getSoopStationUrl = (id: string) => `https://www.sooplive.co.kr/station/${id}`;
 
 // 멤버 공지사항 타입
 interface MemberNotice extends SoopBoardPost {
@@ -40,11 +40,23 @@ function getRelativeTime(dateStr: string): string {
   return date.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
 }
 
+// 멤버에서 SOOP bjId 추출 헬퍼
+function getMemberBjId(member: OrganizationRecord): string | null {
+  const soopUrl = member.social_links?.soop || member.social_links?.sooptv || member.social_links?.pandatv;
+  if (!soopUrl) return null;
+  return extractBjId(soopUrl);
+}
+
 export default function LivePage() {
-  const { members, liveStatusByMemberId, isLoading } = useLiveRoster({ realtime: true });
+  const { members, isLoading } = useLiveRoster({ realtime: true });
   const [unitFilter, setUnitFilter] = useState<UnitFilter>("all");
   const [notices, setNotices] = useState<MemberNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
+
+  // SOOP API 실시간 라이브 상태
+  const [soopLiveMap, setSoopLiveMap] = useState<Record<string, SoopLiveStatus>>({});
+  const [liveCheckDone, setLiveCheckDone] = useState(false);
+  const liveCheckRef = useRef(false);
 
   // 이름 기반 중복 제거 (김인호 excel + crew)
   const uniqueMembers = useMemo(() => {
@@ -56,12 +68,54 @@ export default function LivePage() {
     });
   }, [members]);
 
+  // SOOP API로 직접 라이브 상태 체크
+  useEffect(() => {
+    if (uniqueMembers.length === 0 || liveCheckRef.current) return;
+    liveCheckRef.current = true;
+
+    const bjIds: string[] = [];
+    for (const m of uniqueMembers) {
+      const bjId = getMemberBjId(m);
+      if (bjId) bjIds.push(bjId);
+    }
+
+    if (bjIds.length === 0) {
+      setLiveCheckDone(true);
+      return;
+    }
+
+    fetch(`/api/soop/live?bjIds=${bjIds.join(",")}`)
+      .then((res) => res.json())
+      .then((json) => {
+        const statuses: SoopLiveStatus[] = json.data || [];
+        const map: Record<string, SoopLiveStatus> = {};
+        for (const s of statuses) {
+          map[s.bjId] = s;
+        }
+        setSoopLiveMap(map);
+      })
+      .catch(console.error)
+      .finally(() => setLiveCheckDone(true));
+  }, [uniqueMembers]);
+
+  // 멤버에 실시간 라이브 상태 병합
+  const membersWithLive = useMemo(() => {
+    return uniqueMembers.map((m) => {
+      const bjId = getMemberBjId(m);
+      const soopStatus = bjId ? soopLiveMap[bjId] : null;
+      if (soopStatus?.isLive) {
+        return { ...m, is_live: true, _soopStatus: soopStatus };
+      }
+      return { ...m, _soopStatus: soopStatus || null };
+    });
+  }, [uniqueMembers, soopLiveMap]);
+
   // 유닛 필터 적용
   const filteredMembers = useMemo(() => {
     return unitFilter === "all"
-      ? uniqueMembers
-      : uniqueMembers.filter((m) => m.unit === unitFilter);
-  }, [uniqueMembers, unitFilter]);
+      ? membersWithLive
+      : membersWithLive.filter((m) => m.unit === unitFilter);
+  }, [membersWithLive, unitFilter]);
 
   // 라이브 중인 멤버만
   const liveMembers = useMemo(() => {
@@ -77,9 +131,7 @@ export default function LivePage() {
       // 중복 제거된 멤버에서 bjId가 있는 멤버만
       const membersWithBjId = uniqueMembers
         .map((m) => {
-          const soopUrl = m.social_links?.sooptv || m.social_links?.pandatv;
-          if (!soopUrl) return null;
-          const bjId = extractBjId(soopUrl);
+          const bjId = getMemberBjId(m);
           if (!bjId) return null;
           return { name: m.name, image_url: m.image_url, bjId };
         })
@@ -129,12 +181,10 @@ export default function LivePage() {
   }, [uniqueMembers.length, fetchAllNotices]);
 
   // 라이브 카드 렌더링
-  const renderLiveCard = (member: OrganizationRecord, index: number) => {
-    const soopId = member.social_links?.sooptv || member.social_links?.pandatv;
-    const bjId = soopId ? extractBjId(soopId) : null;
-    const liveEntries = liveStatusByMemberId[member.id];
-    const liveEntry = liveEntries?.find((e) => e.isLive);
-    const thumbnailUrl = liveEntry?.thumbnailUrl;
+  const renderLiveCard = (member: OrganizationRecord & { _soopStatus?: SoopLiveStatus | null }, index: number) => {
+    const bjId = getMemberBjId(member);
+    const soopStatus = member._soopStatus;
+    const thumbnailUrl = soopStatus?.thumbnailUrl;
 
     return (
       <motion.a
@@ -167,10 +217,10 @@ export default function LivePage() {
             <span className={styles.liveDot} />
             LIVE
           </div>
-          {liveEntry?.viewerCount ? (
+          {soopStatus?.viewerCount ? (
             <div className={styles.viewerCount}>
               <Eye size={12} />
-              {liveEntry.viewerCount.toLocaleString()}
+              {soopStatus.viewerCount.toLocaleString()}
             </div>
           ) : null}
         </div>
@@ -287,7 +337,7 @@ export default function LivePage() {
         </div>
 
         {/* 라이브 섹션 */}
-        {isLoading ? (
+        {isLoading || !liveCheckDone ? (
           <div className={styles.loading}>
             <div className={styles.spinner} />
             <span>멤버 목록을 불러오는 중...</span>

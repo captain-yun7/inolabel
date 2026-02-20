@@ -9,7 +9,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const SYNC_SECRET = process.env.LIVE_STATUS_SYNC_SECRET
 
-type SocialLinks = Partial<Record<'pandatv' | 'chzzk' | 'youtube' | 'twitch' | 'sooptv', string>>
+type SocialLinks = Partial<Record<'pandatv' | 'chzzk' | 'youtube' | 'twitch' | 'sooptv' | 'soop', string>>
 
 interface SyncResult {
   total: number
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
 
   for (const member of members) {
     const socialLinks = (member.social_links || {}) as SocialLinks
-    const soopUrl = socialLinks.sooptv
+    const soopUrl = socialLinks.sooptv || socialLinks.soop
 
     if (soopUrl) {
       const bjId = extractBjId(soopUrl)

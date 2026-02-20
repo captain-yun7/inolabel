@@ -42,7 +42,7 @@ export function StationNoticesSidebar({ member, onClose }: StationNoticesSidebar
       return
     }
 
-    const soopUrl = member.social_links?.sooptv || member.social_links?.pandatv
+    const soopUrl = member.social_links?.soop || member.social_links?.sooptv || member.social_links?.pandatv
     if (!soopUrl) {
       setPosts([])
       setBjId(null)

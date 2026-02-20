@@ -22,6 +22,7 @@ export type UnitFilter = 'all' | 'excel' | 'crew' | 'vip'
 export interface SocialLinks {
   pandatv?: string
   sooptv?: string
+  soop?: string
   chzzk?: string
   youtube?: string
   instagram?: string

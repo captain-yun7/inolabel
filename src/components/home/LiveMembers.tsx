@@ -38,7 +38,7 @@ export default function LiveMembers() {
         avatarUrl: member.image_url,
         isLive: Boolean(member.is_live),
         unit: member.unit,
-        sooptvId: member.social_links?.sooptv || member.social_links?.pandatv || null,
+        sooptvId: member.social_links?.soop || member.social_links?.sooptv || member.social_links?.pandatv || null,
       }))
       .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0))
   }, [rosterMembers])
