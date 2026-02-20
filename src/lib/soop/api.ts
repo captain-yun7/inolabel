@@ -50,12 +50,12 @@ export async function checkLiveStatus(bjId: string): Promise<SoopLiveStatus> {
     const channelResult = ch?.RESULT ?? 0
     const isLive = ch !== null && ch !== undefined && channelResult !== 0
 
-    // BNO(방송번호)로 라이브 썸네일 URL 생성
+    // 라이브 시 station API로 BNO(썸네일)와 시청자 수 보완
+    // live API는 BNO/VIEWCNT를 항상 제공하지 않음 (RESULT=-6 또는 VIEWCNT 누락)
     let bno = ch?.BNO
     let viewerCount = ch?.VIEWCNT || 0
 
-    // RESULT=-6 (연령제한 등)인 경우 BNO/시청자수가 없음 → station API로 보완
-    if (isLive && !bno) {
+    if (isLive) {
       try {
         const stationRes = await fetch(`${CHANNEL_API_URL}/${bjId}/station`, {
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
@@ -63,8 +63,8 @@ export async function checkLiveStatus(bjId: string): Promise<SoopLiveStatus> {
         if (stationRes.ok) {
           const stationData = await stationRes.json()
           if (stationData.broad) {
-            bno = stationData.broad.broad_no
-            viewerCount = stationData.broad.current_sum_viewer || 0
+            if (!bno) bno = stationData.broad.broad_no
+            if (!viewerCount) viewerCount = stationData.broad.current_sum_viewer || 0
           }
         }
       } catch { /* station API 실패 시 무시 */ }
