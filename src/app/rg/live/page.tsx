@@ -1,198 +1,254 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useLiveRoster, useBjRanks } from "@/lib/hooks";
+import { useLiveRoster } from "@/lib/hooks";
+import { extractBjId } from "@/lib/soop/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import type { OrganizationRecord, UnitFilter } from "@/types/organization";
-import { Radio, Target } from "lucide-react";
+import type { SoopBoardPost } from "@/lib/soop/types";
+import { Radio, FileText, Eye, MessageCircle } from "lucide-react";
 import styles from "./page.module.css";
 
 // SOOP TV URL 생성
 const getSoopTvUrl = (id: string) => `https://play.sooplive.co.kr/${id}`;
+const getSoopStationUrl = (id: string) => `https://www.sooplive.co.kr/station/${id}`;
 
-// 엑셀부 직급 계층
-const EXCEL_TIERS: { label: string; roles: string[] }[] = [
-  { label: '대표', roles: ['대표', 'R대표', 'G대표'] },
-  { label: '간부', roles: ['부장', '차장', '과장', '팀장'] },
-];
+// 멤버 공지사항 타입
+interface MemberNotice extends SoopBoardPost {
+  memberName: string;
+  memberImage: string | null;
+  bjId: string;
+}
 
-// 스타부 직급 계층
-const CREW_TIERS: { label: string; roles: string[] }[] = [
-  { label: '이사장', roles: ['이사장'] },
-  { label: '임원', roles: ['총장', '부총장', '교수진', '교수'] },
-];
+// 상대 시간 계산
+function getRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
 
-/**
- * 현재 직급에 해당하는 공약 한 줄 추출
- */
-function getCurrentPledge(
-  pledgeText: string | null | undefined,
-  currentRankPosition: number | null
-): { rankLabel: string; content: string } | null {
-  if (!pledgeText || currentRankPosition === null) return null;
-
-  const lines = pledgeText.split('\n').filter(line => line.trim());
-
-  for (const line of lines) {
-    const match = line.match(/^\[?(\d+(?:[,&\s]*\d+)*(?:등)?)\]?\s*(.+?)\s*[▶ㅡ\-→]\s*(.+)$/);
-    if (match) {
-      const rankStr = match[1].replace(/등$/, '').replace(/\s+/g, '');
-      const ranks = rankStr.split(/[,&]/).map(r => r.trim()).filter(Boolean);
-      if (ranks.some(r => parseInt(r, 10) === currentRankPosition)) {
-        return { rankLabel: match[2].trim(), content: match[3].trim() };
-      }
-    } else {
-      const simpleMatch = line.match(/^(\d+(?:[,&\s]*\d+)*(?:등)?)\s+(.+?)\s+[▶ㅡ\-→]\s*(.+)$/);
-      if (simpleMatch) {
-        const rankStr = simpleMatch[1].replace(/등$/, '').replace(/\s+/g, '');
-        const ranks = rankStr.split(/[,&]/).map(r => r.trim()).filter(Boolean);
-        if (ranks.some(r => parseInt(r, 10) === currentRankPosition)) {
-          return { rankLabel: simpleMatch[2].trim(), content: simpleMatch[3].trim() };
-        }
-      }
-    }
-  }
-
-  return null;
+  if (diffMin < 1) return "방금 전";
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay < 7) return `${diffDay}일 전`;
+  if (diffDay < 30) return `${Math.floor(diffDay / 7)}주 전`;
+  return date.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
 }
 
 export default function LivePage() {
-  const { members, isLoading } = useLiveRoster({ realtime: true });
-  const { getRankByName } = useBjRanks();
-  const [unitFilter, setUnitFilter] = useState<UnitFilter>('all');
+  const { members, liveStatusByMemberId, isLoading } = useLiveRoster({ realtime: true });
+  const [unitFilter, setUnitFilter] = useState<UnitFilter>("all");
+  const [notices, setNotices] = useState<MemberNotice[]>([]);
+  const [noticesLoading, setNoticesLoading] = useState(true);
 
-  // Filter by unit
-  const unitFilteredMembers = useMemo(() => {
-    return unitFilter === 'all'
-      ? members
-      : members.filter((member) => member.unit === unitFilter);
-  }, [members, unitFilter]);
-
-  // 직급 순으로 정렬
-  const sortByRank = useCallback((memberList: OrganizationRecord[]) => {
-    return [...memberList].sort((a, b) => {
-      const rankA = a.current_rank ? getRankByName(a.current_rank)?.level ?? 999 : 999;
-      const rankB = b.current_rank ? getRankByName(b.current_rank)?.level ?? 999 : 999;
-      return rankA - rankB;
+  // 이름 기반 중복 제거 (김인호 excel + crew)
+  const uniqueMembers = useMemo(() => {
+    const seen = new Set<string>();
+    return members.filter((m) => {
+      if (seen.has(m.name)) return false;
+      seen.add(m.name);
+      return true;
     });
-  }, [getRankByName]);
+  }, [members]);
 
-  // 유닛별 멤버를 계층 구조로 그룹화
-  const groupMembersByTier = useCallback((memberList: OrganizationRecord[], unit: 'excel' | 'crew') => {
-    const tiers = unit === 'excel' ? EXCEL_TIERS : CREW_TIERS;
-    const groups: { label: string; members: OrganizationRecord[] }[] = [];
-    const assigned = new Set<number>();
+  // 유닛 필터 적용
+  const filteredMembers = useMemo(() => {
+    return unitFilter === "all"
+      ? uniqueMembers
+      : uniqueMembers.filter((m) => m.unit === unitFilter);
+  }, [uniqueMembers, unitFilter]);
 
-    for (const tier of tiers) {
-      const tierMembers = memberList.filter(m =>
-        tier.roles.some(r => m.role === r) && !assigned.has(m.id)
-      );
-      tierMembers.forEach(m => assigned.add(m.id));
-      if (tierMembers.length > 0) {
-        groups.push({ label: tier.label, members: sortByRank(tierMembers) });
+  // 라이브 중인 멤버만
+  const liveMembers = useMemo(() => {
+    return filteredMembers.filter((m) => m.is_live);
+  }, [filteredMembers]);
+
+  const liveCount = liveMembers.length;
+
+  // 전체 멤버 공지사항 수집
+  const fetchAllNotices = useCallback(async () => {
+    setNoticesLoading(true);
+    try {
+      // 중복 제거된 멤버에서 bjId가 있는 멤버만
+      const membersWithBjId = uniqueMembers
+        .map((m) => {
+          const soopUrl = m.social_links?.sooptv || m.social_links?.pandatv;
+          if (!soopUrl) return null;
+          const bjId = extractBjId(soopUrl);
+          if (!bjId) return null;
+          return { name: m.name, image_url: m.image_url, bjId };
+        })
+        .filter(Boolean) as { name: string; image_url: string | null; bjId: string }[];
+
+      // 병렬로 공지사항 수집 (5개씩 배치)
+      const allNotices: MemberNotice[] = [];
+      const batchSize = 5;
+
+      for (let i = 0; i < membersWithBjId.length; i += batchSize) {
+        const batch = membersWithBjId.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map(async (member) => {
+            try {
+              const res = await fetch(`/api/soop/station?bjId=${member.bjId}`);
+              if (!res.ok) return [];
+              const json = await res.json();
+              const posts: SoopBoardPost[] = json.data?.posts || [];
+              return posts.slice(0, 3).map((post) => ({
+                ...post,
+                memberName: member.name,
+                memberImage: member.image_url,
+                bjId: member.bjId,
+              }));
+            } catch {
+              return [];
+            }
+          })
+        );
+        allNotices.push(...results.flat());
       }
+
+      // 날짜순 정렬 (최신 먼저)
+      allNotices.sort((a, b) => new Date(b.write_dt).getTime() - new Date(a.write_dt).getTime());
+      setNotices(allNotices);
+    } catch (error) {
+      console.error("공지사항 수집 실패:", error);
+    } finally {
+      setNoticesLoading(false);
     }
+  }, [uniqueMembers]);
 
-    const remaining = memberList.filter(m => !assigned.has(m.id));
-    if (remaining.length > 0) {
-      const label = unit === 'excel' ? '그외 직급' : '학생';
-      groups.push({ label, members: sortByRank(remaining) });
+  useEffect(() => {
+    if (uniqueMembers.length > 0) {
+      fetchAllNotices();
     }
+  }, [uniqueMembers.length, fetchAllNotices]);
 
-    return groups;
-  }, [sortByRank]);
-
-  // 유닛별 그룹화
-  const excelMembers = useMemo(() =>
-    groupMembersByTier(members.filter(m => m.unit === 'excel'), 'excel'),
-    [members, groupMembersByTier]
-  );
-
-  const crewMembers = useMemo(() =>
-    groupMembersByTier(members.filter(m => m.unit === 'crew'), 'crew'),
-    [members, groupMembersByTier]
-  );
-
-  // 전체 보기일 때는 두 유닛 모두 표시
-  const allGrouped = useMemo(() => {
-    if (unitFilter === 'excel') return [{ unitLabel: '엑셀부', groups: excelMembers }];
-    if (unitFilter === 'crew') return [{ unitLabel: '스타부', groups: crewMembers }];
-    return [
-      { unitLabel: '엑셀부', groups: excelMembers },
-      { unitLabel: '스타부', groups: crewMembers },
-    ];
-  }, [unitFilter, excelMembers, crewMembers]);
-
-  const liveCount = unitFilteredMembers.filter(m => m.is_live).length;
-  const totalCount = unitFilteredMembers.length;
-
-  // 멤버 카드 렌더링 (공약표 인라인 포함)
-  const renderMemberCard = (member: OrganizationRecord, index: number) => {
+  // 라이브 카드 렌더링
+  const renderLiveCard = (member: OrganizationRecord, index: number) => {
     const soopId = member.social_links?.sooptv || member.social_links?.pandatv;
-    const rankLevel = member.current_rank
-      ? getRankByName(member.current_rank)?.level ?? null
-      : null;
-    const pledge = getCurrentPledge(
-      member.profile_info?.position_pledge,
-      rankLevel
-    );
+    const bjId = soopId ? extractBjId(soopId) : null;
+    const liveEntries = liveStatusByMemberId[member.id];
+    const liveEntry = liveEntries?.find((e) => e.isLive);
+    const thumbnailUrl = liveEntry?.thumbnailUrl;
 
     return (
-      <motion.div
+      <motion.a
         key={member.id}
-        className={`${styles.orgCard} ${member.is_live ? styles.liveCard : ''}`}
+        className={styles.liveCard}
+        href={bjId ? getSoopTvUrl(bjId) : "#"}
+        target="_blank"
+        rel="noopener noreferrer"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.03 }}
+        transition={{ delay: index * 0.05 }}
       >
-        <div className={`${styles.cardAvatar} ${member.is_live ? styles.liveAvatar : ''}`}>
-          {member.image_url ? (
+        {/* 썸네일 */}
+        <div className={styles.liveThumbnail}>
+          {thumbnailUrl ? (
             <Image
-              src={member.image_url}
-              alt={member.name}
+              src={thumbnailUrl}
+              alt={`${member.name} 방송`}
               fill
-              className={styles.avatarImage}
+              className={styles.thumbnailImage}
+              sizes="(max-width: 768px) 100vw, 400px"
             />
           ) : (
-            <div className={styles.avatarPlaceholder}>
-              {member.name.charAt(0)}
+            <div className={styles.thumbnailPlaceholder}>
+              <Radio size={32} />
+              <span>LIVE</span>
             </div>
           )}
-          {member.is_live && <span className={styles.liveBadge}>Live</span>}
+          <div className={styles.liveTag}>
+            <span className={styles.liveDot} />
+            LIVE
+          </div>
+          {liveEntry?.viewerCount ? (
+            <div className={styles.viewerCount}>
+              <Eye size={12} />
+              {liveEntry.viewerCount.toLocaleString()}
+            </div>
+          ) : null}
         </div>
-        <div className={styles.cardInfo}>
-          <span className={styles.cardName}>{member.name}</span>
-          <span className={styles.cardRole}>
-            {member.role === '대표' || member.role === 'R대표' || member.role === 'G대표'
-              ? member.role
-              : member.current_rank || member.role}
-          </span>
-          {member.is_live && soopId && (
-            <a
-              href={getSoopTvUrl(soopId)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.watchBtn}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Radio size={12} />
-              시청하기
-            </a>
-          )}
-          {pledge && (
-            <div className={styles.pledgeBadge}>
-              <span className={styles.pledgeRankLabel}>
-                <Target size={10} />
-                {pledge.rankLabel}
+
+        {/* 프로필 정보 */}
+        <div className={styles.liveCardInfo}>
+          <div className={styles.liveCardProfile}>
+            <div className={styles.liveCardAvatar}>
+              {member.image_url ? (
+                <Image
+                  src={member.image_url}
+                  alt={member.name}
+                  width={36}
+                  height={36}
+                  className={styles.avatarImage}
+                />
+              ) : (
+                <div className={styles.avatarPlaceholder}>
+                  {member.name.charAt(0)}
+                </div>
+              )}
+            </div>
+            <div className={styles.liveCardMeta}>
+              <span className={styles.cardName}>{member.name}</span>
+              <span className={styles.cardUnit} data-unit={member.unit}>
+                {member.unit === "excel" ? "엑셀부" : "스타부"}
               </span>
-              <span className={styles.pledgeContent}>{pledge.content}</span>
             </div>
-          )}
+          </div>
         </div>
-      </motion.div>
+      </motion.a>
+    );
+  };
+
+  // 공지사항 카드 렌더링
+  const renderNoticeCard = (notice: MemberNotice, index: number) => {
+    return (
+      <motion.a
+        key={`${notice.bjId}-${notice.title_no}`}
+        className={styles.noticeCard}
+        href={`https://www.sooplive.co.kr/station/${notice.bjId}/board`}
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: index * 0.02 }}
+      >
+        <div className={styles.noticeProfile}>
+          <div className={styles.noticeAvatar}>
+            {notice.memberImage ? (
+              <Image
+                src={notice.memberImage}
+                alt={notice.memberName}
+                width={32}
+                height={32}
+                className={styles.avatarImage}
+              />
+            ) : (
+              <div className={styles.avatarPlaceholder}>
+                {notice.memberName.charAt(0)}
+              </div>
+            )}
+          </div>
+          <span className={styles.noticeMemberName}>{notice.memberName}</span>
+          <span className={styles.noticeTime}>{getRelativeTime(notice.write_dt)}</span>
+        </div>
+        <h4 className={styles.noticeTitle}>{notice.title}</h4>
+        <div className={styles.noticeStats}>
+          <span className={styles.noticeStat}>
+            <Eye size={12} />
+            {notice.read_cnt.toLocaleString()}
+          </span>
+          <span className={styles.noticeStat}>
+            <MessageCircle size={12} />
+            {notice.comment_cnt}
+          </span>
+        </div>
+      </motion.a>
     );
   };
 
@@ -211,14 +267,14 @@ export default function LivePage() {
         {/* Filter Bar */}
         <div className={styles.filterBar}>
           <div className={styles.unitFilter}>
-            {(['all', 'excel', 'crew'] as const).map((unit) => (
+            {(["all", "excel", "crew"] as const).map((unit) => (
               <button
                 key={unit}
                 onClick={() => setUnitFilter(unit)}
-                className={`${styles.unitButton} ${unitFilter === unit ? styles.active : ''}`}
+                className={`${styles.unitButton} ${unitFilter === unit ? styles.active : ""}`}
                 data-unit={unit}
               >
-                {unit === 'all' ? '전체' : unit === 'excel' ? '엑셀부' : '스타부'}
+                {unit === "all" ? "전체" : unit === "excel" ? "엑셀부" : "스타부"}
               </button>
             ))}
           </div>
@@ -227,44 +283,63 @@ export default function LivePage() {
               <span className={styles.liveDot} />
               <span className={styles.liveCount}>LIVE {liveCount}</span>
             </div>
-            <span className={styles.totalCount}>전체 {totalCount}명</span>
           </div>
         </div>
 
-        {/* Content */}
+        {/* 라이브 섹션 */}
         {isLoading ? (
           <div className={styles.loading}>
             <div className={styles.spinner} />
             <span>멤버 목록을 불러오는 중...</span>
           </div>
+        ) : liveMembers.length > 0 ? (
+          <section className={styles.liveSection}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <Radio size={20} />
+                방송 중
+                <span className={styles.sectionCount}>{liveCount}</span>
+              </h2>
+            </div>
+            <div className={styles.liveGrid}>
+              {liveMembers.map((member, index) => renderLiveCard(member, index))}
+            </div>
+          </section>
         ) : (
-          <div className={styles.orgChart}>
-            {allGrouped.map(({ unitLabel, groups }) => (
-              <section key={unitLabel} className={styles.unitSection}>
-                <h2 className={styles.unitSectionTitle}>{unitLabel}</h2>
-                {groups.map((group) => (
-                  <div key={group.label} className={styles.tierGroup}>
-                    <div className={styles.tierLabel}>
-                      <span className={styles.tierLine} />
-                      <span className={styles.tierText}>{group.label}</span>
-                      <span className={styles.tierLine} />
-                    </div>
-                    <div className={styles.grid}>
-                      {group.members.map((member, index) => renderMemberCard(member, index))}
-                    </div>
-                  </div>
-                ))}
-              </section>
-            ))}
-
-            {totalCount === 0 && (
-              <div className={styles.empty}>
-                <Radio size={48} className={styles.emptyIcon} />
-                <p>등록된 멤버가 없습니다</p>
-              </div>
-            )}
+          <div className={styles.empty}>
+            <Radio size={48} className={styles.emptyIcon} />
+            <p>현재 방송 중인 멤버가 없습니다</p>
+            <span className={styles.emptyHint}>멤버가 방송을 시작하면 여기에 표시됩니다</span>
           </div>
         )}
+
+        {/* 숲 공지 섹션 */}
+        <section className={styles.noticeSection}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>
+              <FileText size={20} />
+              숲 공지
+              {notices.length > 0 && (
+                <span className={styles.sectionCount}>{notices.length}</span>
+              )}
+            </h2>
+          </div>
+          {noticesLoading ? (
+            <div className={styles.noticeLoading}>
+              <div className={styles.spinner} />
+              <span>공지사항을 불러오는 중...</span>
+            </div>
+          ) : notices.length > 0 ? (
+            <div className={styles.noticeGrid}>
+              {notices.slice(0, 30).map((notice, index) => renderNoticeCard(notice, index))}
+            </div>
+          ) : (
+            <div className={styles.noticeEmpty}>
+              <FileText size={32} className={styles.emptyIcon} />
+              <p>공지사항이 없습니다</p>
+            </div>
+          )}
+        </section>
       </div>
       <Footer />
     </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getActiveBanners } from "@/lib/actions/banners";
 import AdminHeroOverlay from "./AdminHeroOverlay";
 import type { Banner } from "@/types/database";
@@ -42,6 +43,11 @@ export default function Hero() {
   const nextSlide = useCallback(() => {
     if (banners.length <= 1) return;
     setCurrentIndex((prev) => (prev + 1) % banners.length);
+  }, [banners.length]);
+
+  const prevSlide = useCallback(() => {
+    if (banners.length <= 1) return;
+    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
   }, [banners.length]);
 
   const goToSlide = (index: number) => {
@@ -165,20 +171,36 @@ export default function Hero() {
           {currentBanner && renderBannerContent(currentBanner)}
         </AnimatePresence>
 
-        {/* 인디케이터 (배너가 2개 이상일 때만) */}
+        {/* 네비게이션 (배너가 2개 이상일 때만) */}
         {banners.length > 1 && (
-          <div className={styles.indicators}>
-            {banners.map((banner, index) => (
-              <button
-                key={banner.id}
-                className={`${styles.indicator} ${
-                  index === currentIndex ? styles.indicatorActive : ""
-                }`}
-                onClick={() => goToSlide(index)}
-                aria-label={`배너 ${index + 1}로 이동`}
-              />
-            ))}
-          </div>
+          <>
+            <button
+              className={`${styles.navBtn} ${styles.navPrev}`}
+              onClick={prevSlide}
+              aria-label="이전 배너"
+            >
+              <ChevronLeft size={28} />
+            </button>
+            <button
+              className={`${styles.navBtn} ${styles.navNext}`}
+              onClick={nextSlide}
+              aria-label="다음 배너"
+            >
+              <ChevronRight size={28} />
+            </button>
+            <div className={styles.indicators}>
+              {banners.map((banner, index) => (
+                <button
+                  key={banner.id}
+                  className={`${styles.indicator} ${
+                    index === currentIndex ? styles.indicatorActive : ""
+                  }`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`배너 ${index + 1}로 이동`}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         {/* 관리자 오버레이 */}

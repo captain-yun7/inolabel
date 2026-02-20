@@ -23,7 +23,7 @@
   margin: 0 auto;
   padding: 3rem 2rem;
   display: grid;
-  grid-template-columns: 1.5fr 2fr 1fr;
+  grid-template-columns: 1fr auto;
   gap: 3rem;
 }
 
@@ -119,6 +119,7 @@
 .social {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 0.75rem;
 }
 
@@ -197,15 +198,8 @@
 /* Responsive */
 @media (max-width: 1024px) {
   .container {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr auto;
     gap: 2rem;
-  }
-
-  .social {
-    grid-column: span 2;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
   }
 }
 
@@ -228,6 +222,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+    grid-column: auto;
   }
 
   .bottomInner {

@@ -7,8 +7,8 @@ import TierBoard from '@/components/starcraft/TierBoard'
 import styles from './page.module.css'
 
 export const metadata: Metadata = {
-  title: '스타크래프트 티어표 | INNO LABEL',
-  description: '이노레이블 스타크래프트 티어 랭킹',
+  title: '스타크래프트 티어표 | SOOP',
+  description: 'SOOP 스타크래프트 스트리머 티어 랭킹',
 }
 
 export default async function StarcraftTierPage() {
@@ -21,7 +21,7 @@ export default async function StarcraftTierPage() {
         <main className={styles.main}>
           <div className={styles.header}>
             <h1 className={styles.title}>스타크래프트 티어표</h1>
-            <p className={styles.subtitle}>INNO LABEL 스타크래프트 실력 랭킹</p>
+            <p className={styles.subtitle}>SOOP 스타크래프트 스트리머 티어 랭킹</p>
             <p className={styles.tierOrder}>갓 &gt; 킹 &gt; 잭 &gt; 스페이드 &gt; 0 ~ 8 &gt; 유스</p>
           </div>
 

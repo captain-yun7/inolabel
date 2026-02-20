@@ -213,6 +213,45 @@
   font-size: 0.75rem;
 }
 
+/* 좌/우 화살표 버튼 */
+.navBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  opacity: 0;
+  backdrop-filter: blur(4px);
+}
+
+.hero:hover .navBtn {
+  opacity: 1;
+}
+
+.navBtn:hover {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.navPrev {
+  left: 1rem;
+}
+
+.navNext {
+  right: 1rem;
+}
+
 /* 인디케이터 (슬라이더 도트) */
 .indicators {
   position: absolute;
@@ -275,6 +314,18 @@
 
 /* 반응형 - 모바일 */
 @media (max-width: 768px) {
+  .navBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navPrev {
+    left: 0.5rem;
+  }
+
+  .navNext {
+    right: 0.5rem;
+  }
   .container {
     aspect-ratio: 1500 / 350;
   }

@@ -117,7 +117,7 @@ export function MemberCard({ member, size, onClick, isSelected, tierInfo }: Memb
             className={`${styles.overlayBtn} ${styles.overlayBtnLive}`}
             onClick={(e) => e.stopPropagation()}
           >
-            방송바로가기
+            방송국 바로가기
           </a>
         )}
         {hasSocial && (

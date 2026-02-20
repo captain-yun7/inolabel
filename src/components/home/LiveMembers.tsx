@@ -23,8 +23,15 @@ export default function LiveMembers() {
   const [filter, setFilter] = useState<UnitFilter>('all')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const members: LiveMember[] = useMemo(() =>
-    rosterMembers
+  const members: LiveMember[] = useMemo(() => {
+    // 이름 기반 중복 제거 (김인호가 excel/crew 양쪽에 있음)
+    const seen = new Set<string>()
+    return rosterMembers
+      .filter((m) => {
+        if (seen.has(m.name)) return false
+        seen.add(m.name)
+        return true
+      })
       .map((member) => ({
         id: member.id,
         nickname: member.name,
@@ -33,9 +40,8 @@ export default function LiveMembers() {
         unit: member.unit,
         sooptvId: member.social_links?.sooptv || member.social_links?.pandatv || null,
       }))
-      .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0)),
-    [rosterMembers]
-  )
+      .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0))
+  }, [rosterMembers])
 
   const filteredMembers = useMemo(() => {
     if (filter === 'all') return members

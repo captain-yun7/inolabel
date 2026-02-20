@@ -9,7 +9,7 @@ import { useOrganization, useBjRanks } from "@/lib/hooks";
 import { MemberCard } from "@/components/info";
 import type { TierInfo } from "@/components/info/MemberCard";
 import type { OrganizationRecord } from "@/types/organization";
-import { PledgeSidebar } from "@/components/info/PledgeSidebar";
+import { StationNoticesSidebar } from "@/components/info/StationNoticesSidebar";
 import { ProfileSidebar } from "@/components/info/ProfileSidebar";
 import AdminOrgOverlay, { useAdminOrgEdit } from "@/components/info/AdminOrgOverlay";
 import { getSupabaseClient } from "@/lib/supabase/client";
@@ -311,10 +311,10 @@ export default function OrganizationPage() {
           <Footer />
         </div>
 
-        {/* Right Sidebar - Pledge */}
+        {/* Right Sidebar - Station Notices */}
         <div className={styles.rightSidebar}>
           <AnimatePresence mode="wait">
-            <PledgeSidebar member={selectedMember} onClose={() => setSelectedMember(null)} />
+            <StationNoticesSidebar member={selectedMember} onClose={() => setSelectedMember(null)} />
           </AnimatePresence>
         </div>
       </div>

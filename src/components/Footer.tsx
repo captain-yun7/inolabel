@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Youtube, MessageCircle, ExternalLink, Heart } from "lucide-react";
+import { Youtube, Link2, ExternalLink, Heart } from "lucide-react";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -31,19 +31,31 @@ export default function Footer() {
           <h4 className={styles.linkTitle}>소셜</h4>
           <div className={styles.socialLinks}>
             <a
-              href="https://www.sooplive.co.kr"
+              href="https://www.sooplive.co.kr/station/pookygamja"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.socialLink}
-              aria-label="SOOP"
+              aria-label="김인호 방송국"
             >
               <ExternalLink size={18} />
             </a>
-            <a href="#" className={styles.socialLink} aria-label="YouTube">
+            <a
+              href="https://www.youtube.com/@kiminho22"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialLink}
+              aria-label="김인호 YouTube"
+            >
               <Youtube size={18} />
             </a>
-            <a href="#" className={styles.socialLink} aria-label="Discord">
-              <MessageCircle size={18} />
+            <a
+              href="http://link.inpock.co.kr/kiminho_official"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialLink}
+              aria-label="김인호 링크"
+            >
+              <Link2 size={18} />
             </a>
           </div>
         </div>
