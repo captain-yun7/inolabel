@@ -10,7 +10,6 @@ import { MemberCard } from "@/components/info";
 import type { TierInfo } from "@/components/info/MemberCard";
 import type { OrganizationRecord } from "@/types/organization";
 import { StationNoticesSidebar } from "@/components/info/StationNoticesSidebar";
-import { ProfileSidebar } from "@/components/info/ProfileSidebar";
 import AdminOrgOverlay, { useAdminOrgEdit } from "@/components/info/AdminOrgOverlay";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
@@ -154,15 +153,8 @@ export default function OrganizationPage() {
         </div>
       </div>
 
-      {/* Main Layout - 3 Column: Left Sidebar + Content + Right Sidebar */}
+      {/* Main Layout - 2 Column: Content + Station Notices Sidebar */}
       <div className={`${styles.mainLayout} ${selectedMember ? styles.sidebarsOpen : ''}`}>
-        {/* Left Sidebar - Profile/Social */}
-        <div className={styles.leftSidebar}>
-          <AnimatePresence mode="wait">
-            <ProfileSidebar member={selectedMember} onClose={() => setSelectedMember(null)} />
-          </AnimatePresence>
-        </div>
-
         {/* Content Area */}
         <div className={styles.contentArea}>
           {isLoading ? (

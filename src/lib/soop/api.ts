@@ -1,6 +1,5 @@
 import type {
   SoopLiveStatus,
-  SoopLiveApiResponse,
   SoopBoardPost,
   SoopVod,
 } from './types'
@@ -42,16 +41,47 @@ export async function checkLiveStatus(bjId: string): Promise<SoopLiveStatus> {
       throw new Error(`SOOP API error: ${response.status}`)
     }
 
-    const raw: SoopLiveApiResponse = await response.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any = await response.json()
+
+    // SOOP API: RESULT는 CHANNEL 내부에 있음
+    // CHANNEL.RESULT === 0: 오프라인, !== 0 (1 또는 -6 등): 라이브
+    const ch = raw.CHANNEL
+    const channelResult = ch?.RESULT ?? 0
+    const isLive = ch !== null && ch !== undefined && channelResult !== 0
+
+    // BNO(방송번호)로 라이브 썸네일 URL 생성
+    let bno = ch?.BNO
+    let viewerCount = ch?.VIEWCNT || 0
+
+    // RESULT=-6 (연령제한 등)인 경우 BNO/시청자수가 없음 → station API로 보완
+    if (isLive && !bno) {
+      try {
+        const stationRes = await fetch(`${CHANNEL_API_URL}/${bjId}/station`, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        })
+        if (stationRes.ok) {
+          const stationData = await stationRes.json()
+          if (stationData.broad) {
+            bno = stationData.broad.broad_no
+            viewerCount = stationData.broad.current_sum_viewer || 0
+          }
+        }
+      } catch { /* station API 실패 시 무시 */ }
+    }
+
+    const thumbnailUrl = isLive && bno
+      ? `https://liveimg.sooplive.co.kr/m/${bno}`
+      : null
 
     const status: SoopLiveStatus = {
       bjId,
-      bjNick: raw.CHANNEL?.BJNICK || bjId,
-      title: raw.CHANNEL?.TITLE || '',
-      isLive: raw.RESULT === 1 && raw.CHANNEL !== null,
-      viewerCount: raw.CHANNEL?.VIEWCNT || 0,
-      thumbnailUrl: raw.CHANNEL?.THUMB || null,
-      categoryName: raw.CHANNEL?.CATE || null,
+      bjNick: ch?.BJNICK || bjId,
+      title: ch?.TITLE || '',
+      isLive,
+      viewerCount,
+      thumbnailUrl,
+      categoryName: ch?.CATE || null,
       startTime: null,
     }
 
