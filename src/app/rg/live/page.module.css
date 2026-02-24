@@ -298,13 +298,27 @@
   min-width: 0;
 }
 
-.cardName {
+.cardTitle {
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cardSubInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.cardName {
+  font-size: inherit;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .cardUnit {
