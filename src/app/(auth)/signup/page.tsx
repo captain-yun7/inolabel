@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthContext } from "@/lib/context";
@@ -145,16 +145,18 @@ export default function SignupPage() {
   // 닉네임 실시간 중복 체크
   const [debouncedNickname] = useDebouncedValue(nickname, 500);
 
-  const checkNickname = useCallback(
-    async (nicknameToCheck: string) => {
-      if (!nicknameToCheck || nicknameToCheck.length < 2) {
-        setNicknameDuplicate(null);
-        return;
-      }
+  useEffect(() => {
+    if (!debouncedNickname || debouncedNickname.length < 2) {
+      setNicknameDuplicate(null);
+      return;
+    }
 
-      setNicknameChecking(true);
-      try {
-        const result = await checkNicknameDuplicate(nicknameToCheck);
+    let cancelled = false;
+    setNicknameChecking(true);
+
+    checkNicknameDuplicate(debouncedNickname)
+      .then((result) => {
+        if (cancelled) return;
         if (!result.error && result.data !== null) {
           setNicknameDuplicate(result.data);
           if (result.data) {
@@ -163,22 +165,19 @@ export default function SignupPage() {
             form.clearFieldError("nickname");
           }
         }
-      } catch {
+      })
+      .catch(() => {
         // 에러 시 무시
-      } finally {
-        setNicknameChecking(false);
-      }
-    },
-    [form]
-  );
+      })
+      .finally(() => {
+        if (!cancelled) setNicknameChecking(false);
+      });
 
-  useEffect(() => {
-    if (debouncedNickname && debouncedNickname.length >= 2) {
-      checkNickname(debouncedNickname);
-    } else {
-      setNicknameDuplicate(null);
-    }
-  }, [debouncedNickname, checkNickname]);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedNickname]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {

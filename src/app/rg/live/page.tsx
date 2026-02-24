@@ -207,9 +207,14 @@ export default function LivePage() {
               )}
             </div>
             <div className={styles.liveCardMeta}>
-              <span className={styles.cardName}>{member.name}</span>
-              <span className={styles.cardUnit} data-unit={member.unit}>
-                {member.unit === "excel" ? "엑셀부" : "스타부"}
+              <span className={styles.cardTitle}>
+                {soopStatus?.title || member.name}
+              </span>
+              <span className={styles.cardSubInfo}>
+                {member.name}
+                <span className={styles.cardUnit} data-unit={member.unit}>
+                  {member.unit === "excel" ? "엑셀부" : "스타부"}
+                </span>
               </span>
             </div>
           </div>
