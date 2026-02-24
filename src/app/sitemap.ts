@@ -7,7 +7,7 @@
 
 import type { MetadataRoute } from 'next'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rgfamily.com'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://innolabel.com'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date()

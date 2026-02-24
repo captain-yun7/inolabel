@@ -146,9 +146,11 @@ export function MemberCard({ member, size, onClick, isSelected, tierInfo }: Memb
 // Mini SVG icons
 function SoopIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6zm4 4h-2v-2h2v2zm0-4h-2V7h2v6z" opacity="0" />
-      <text x="4" y="17" fontSize="14" fontWeight="bold" fill="currentColor">S</text>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#0a7cff" />
+      <path d="M7 8.5C7 7.67 7.67 7 8.5 7h7c.83 0 1.5.67 1.5 1.5v4c0 .83-.67 1.5-1.5 1.5H13l-2.5 2.5V14H8.5C7.67 14 7 13.33 7 12.5v-4z" fill="white" />
+      <circle cx="10" cy="10.5" r="1" fill="#0a7cff" />
+      <circle cx="14" cy="10.5" r="1" fill="#0a7cff" />
     </svg>
   )
 }

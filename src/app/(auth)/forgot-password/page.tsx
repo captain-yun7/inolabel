@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
             underline="never"
             style={{ letterSpacing: 2 }}
           >
-            INNO LABEL
+            INOLABEL
           </Anchor>
           <Title order={2} ta="center" c="dark">
             비밀번호 찾기

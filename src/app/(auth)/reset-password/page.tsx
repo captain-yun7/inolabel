@@ -170,7 +170,7 @@ export default function ResetPasswordPage() {
               underline="never"
               style={{ letterSpacing: 2 }}
             >
-              INNO LABEL
+              INOLABEL
             </Anchor>
             <Alert
               icon={<IconAlertCircle size={16} />}
@@ -230,7 +230,7 @@ export default function ResetPasswordPage() {
             underline="never"
             style={{ letterSpacing: 2 }}
           >
-            INNO LABEL
+            INOLABEL
           </Anchor>
           <Title order={2} ta="center" c="dark">
             비밀번호 재설정

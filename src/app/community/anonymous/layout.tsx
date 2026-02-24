@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "익명게시판 | INNO LABEL",
+  title: "익명게시판 | INOLABEL",
   description: "익명으로 자유롭게 소통하는 공간",
   openGraph: {
-    title: "익명게시판 | INNO LABEL",
+    title: "익명게시판 | INOLABEL",
     description: "익명으로 자유롭게 소통하는 공간",
     type: "website",
   },

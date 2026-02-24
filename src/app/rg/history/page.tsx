@@ -4,8 +4,8 @@ import Timeline from '@/components/info/Timeline'
 import styles from './page.module.css'
 
 export const metadata = {
-  title: '타임라인 | INNO LABEL',
-  description: 'INNO LABEL 시즌별 콘텐츠 일정',
+  title: '타임라인 | INOLABEL',
+  description: 'INOLABEL 시즌별 콘텐츠 일정',
 }
 
 export default function TimelinePage() {

@@ -4,8 +4,8 @@ import SigGallery from '@/components/info/SigGallery'
 import styles from './page.module.css'
 
 export const metadata = {
-  title: '시그리스트 | INNO LABEL',
-  description: 'INNO LABEL 멤버별 시그니처 리액션 모음',
+  title: '시그리스트 | INOLABEL',
+  description: 'INOLABEL 멤버별 시그니처 리액션 모음',
 }
 
 export default function SigPage() {

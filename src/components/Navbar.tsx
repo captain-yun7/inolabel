@@ -122,7 +122,7 @@ export default function Navbar() {
           <Link href="/">
             <Image
               src="/assets/logo/inolabel_logo.png"
-              alt="INNO LABEL"
+              alt="INOLABEL"
               width={64}
               height={64}
               priority

@@ -84,7 +84,7 @@ export default function Hero() {
           <div className={styles.imageWrapper}>
             <Image
               src={DEFAULT_BANNER_IMAGE}
-              alt="INNO LABEL"
+              alt="INOLABEL"
               fill
               priority
               className={styles.bannerImage}
@@ -109,7 +109,7 @@ export default function Hero() {
           >
             <Image
               src={DEFAULT_BANNER_IMAGE}
-              alt="INNO LABEL"
+              alt="INOLABEL"
               fill
               priority
               className={styles.bannerImage}
