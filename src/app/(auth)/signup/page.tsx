@@ -334,7 +334,7 @@ export default function SignupPage() {
             underline="never"
             style={{ letterSpacing: 2 }}
           >
-            INNO LABEL
+            INOLABEL
           </Anchor>
           <Title order={2} ta="center" c="dark">
             회원가입

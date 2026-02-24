@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "VIP 라운지 | INNO LABEL",
-  description: "INNO LABEL Top 50 VIP 전용 프리미엄 커뮤니티 공간.",
+  title: "VIP 라운지 | INOLABEL",
+  description: "INOLABEL Top 50 VIP 전용 프리미엄 커뮤니티 공간.",
   openGraph: {
-    title: "VIP 라운지 | INNO LABEL",
+    title: "VIP 라운지 | INOLABEL",
     description: "Top 50 VIP 전용 공간",
     type: "website",
   },

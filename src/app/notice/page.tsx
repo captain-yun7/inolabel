@@ -347,7 +347,7 @@ export default function NoticePage() {
               <Bell size={32} />
             </div>
             <h1 className={styles.title}>공지사항</h1>
-            <p className={styles.subtitle}>INNO LABEL 공식 공지 및 소식</p>
+            <p className={styles.subtitle}>INOLABEL 공식 공지 및 소식</p>
           </div>
         </section>
 

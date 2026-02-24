@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "이노레이블",
-  description: "INNO LABEL 공식 사이트",
+  description: "INOLABEL 공식 사이트",
 };
 
 export default function RootLayout({

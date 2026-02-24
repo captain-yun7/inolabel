@@ -151,7 +151,7 @@ export function StationNoticesSidebar({ member, onClose }: StationNoticesSidebar
               <a
                 key={post.title_no}
                 className={styles.noticeItem}
-                href={bjId ? `https://www.sooplive.co.kr/station/${bjId}/board` : '#'}
+                href={bjId ? `https://www.sooplive.co.kr/station/${bjId}/board/all/${post.title_no}` : '#'}
                 target="_blank"
                 rel="noopener noreferrer"
               >

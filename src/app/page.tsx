@@ -6,11 +6,11 @@ import Footer from "@/components/Footer";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "INNO LABEL - 이노레이블",
-  description: "INNO LABEL 공식 사이트. 스타크래프트 티어, 멤버 정보를 확인하세요.",
+  title: "INOLABEL - 이노레이블",
+  description: "INOLABEL 공식 사이트. 스타크래프트 티어, 멤버 정보를 확인하세요.",
   openGraph: {
-    title: "INNO LABEL - 이노레이블",
-    description: "INNO LABEL 공식 사이트",
+    title: "INOLABEL - 이노레이블",
+    description: "INOLABEL 공식 사이트",
     type: "website",
   },
 };

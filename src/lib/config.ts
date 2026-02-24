@@ -27,7 +27,7 @@ export const hasValidSupabaseCredentials = hasSupabaseCredentials
 // 앱 설정
 export const APP_CONFIG = {
   name: '이노레이블',
-  description: 'INNO LABEL 공식 사이트',
+  description: 'INOLABEL 공식 사이트',
   platform: 'sooptv',
   units: {
     excel: { name: '엑셀부', label: 'EXCEL UNIT', country: '한국' },

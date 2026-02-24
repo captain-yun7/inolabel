@@ -10,8 +10,8 @@ export default function SideBanner() {
     <div className={styles.container}>
       <div className={styles.banner}>
         <div className={styles.logo}>
-          <span className={styles.rg}>RG</span>
-          <span className={styles.family}>FAMILY</span>
+          <span className={styles.rg}>INO</span>
+          <span className={styles.family}>LABEL</span>
         </div>
       </div>
     </div>

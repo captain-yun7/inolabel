@@ -268,7 +268,7 @@ export default function FreeBoardPage() {
         <section className={styles.hero}>
           <div className={styles.heroContent}>
             <h1 className={styles.title}>커뮤니티</h1>
-            <p className={styles.subtitle}>INNO LABEL 팬들과 소통하는 자유 공간</p>
+            <p className={styles.subtitle}>INOLABEL 팬들과 소통하는 자유 공간</p>
           </div>
         </section>
 

@@ -111,7 +111,7 @@ export default function LoginPage() {
             underline="never"
             style={{ letterSpacing: 2 }}
           >
-            INNO LABEL
+            INOLABEL
           </Anchor>
           <Title order={2} ta="center" c="dark">
             로그인
