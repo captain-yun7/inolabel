@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building, Plus, X, Save, Radio, Link as LinkIcon, User, List, GitBranch } from 'lucide-react'
+import { Building, Plus, X, Save, Radio, Link as LinkIcon, User, List, GitBranch, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { DataTable, Column, ImageUpload, OrgTreeView } from '@/components/admin'
 import { useAdminCRUD, useAlert } from '@/lib/hooks'
 import { useSupabaseContext } from '@/lib/context'
+import { extractBjId } from '@/lib/soop/api'
 import styles from '../shared.module.css'
 
 interface SocialLinks {
   pandatv?: string
+  sooptv?: string
   youtube?: string
   instagram?: string
 }
@@ -52,6 +54,9 @@ export default function OrganizationPage() {
   const [localMembers, setLocalMembers] = useState<OrgMember[]>([])
   const [isSavingOrder, setIsSavingOrder] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('table')
+  const [soopUrl, setSoopUrl] = useState('')
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   // Fetch profiles for linking
   const fetchProfiles = useCallback(async () => {
@@ -192,6 +197,43 @@ export default function OrganizationPage() {
     baseOpenAddModal()
     // Override unit with current activeUnit
     setEditingMember((prev) => prev ? { ...prev, unit: activeUnit, positionOrder: filteredMembers.length } : null)
+    setSoopUrl('')
+    setFetchError(null)
+  }
+
+  const handleSoopUrlFetch = async () => {
+    if (!soopUrl.trim()) return
+
+    const bjId = extractBjId(soopUrl.trim())
+    if (!bjId) {
+      setFetchError('유효한 SOOP 방송국 URL이 아닙니다')
+      return
+    }
+
+    setIsFetchingProfile(true)
+    setFetchError(null)
+
+    try {
+      const response = await fetch(`/api/soop/station?bjId=${encodeURIComponent(bjId)}&action=profile-image`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || '프로필 이미지를 가져올 수 없습니다')
+      }
+
+      setEditingMember(prev => prev ? {
+        ...prev,
+        imageUrl: data.profileImage,
+        socialLinks: {
+          ...prev.socialLinks,
+          sooptv: bjId,
+        },
+      } : null)
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : '프로필 이미지 가져오기 실패')
+    } finally {
+      setIsFetchingProfile(false)
+    }
   }
 
   const columns: Column<OrgMember>[] = [
@@ -383,6 +425,53 @@ export default function OrganizationPage() {
                   />
                 </div>
 
+                {/* SOOP 방송국 URL로 프로필 이미지 가져오기 */}
+                <div className={styles.formGroup}>
+                  <label>
+                    <LinkIcon size={14} style={{ marginRight: '0.25rem' }} />
+                    SOOP 방송국 URL
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      value={soopUrl}
+                      onChange={(e) => {
+                        setSoopUrl(e.target.value)
+                        setFetchError(null)
+                      }}
+                      className={styles.input}
+                      placeholder="https://www.sooplive.co.kr/station/bjid"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSoopUrlFetch}
+                      disabled={isFetchingProfile || !soopUrl.trim()}
+                      className={styles.saveButton}
+                      style={{
+                        padding: '0.625rem 0.875rem',
+                        opacity: isFetchingProfile || !soopUrl.trim() ? 0.5 : 1,
+                        cursor: isFetchingProfile || !soopUrl.trim() ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {isFetchingProfile ? (
+                        <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                      ) : (
+                        '가져오기'
+                      )}
+                    </button>
+                  </div>
+                  {fetchError && (
+                    <span style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
+                      {fetchError}
+                    </span>
+                  )}
+                  <span className={styles.helperText} style={{ color: 'var(--text-tertiary)' }}>
+                    URL 입력 시 프로필 이미지 + SOOP ID 자동 입력
+                  </span>
+                </div>
+
                 <div className={styles.formGroup}>
                   <label>이름 *</label>
                   <input
@@ -398,17 +487,15 @@ export default function OrganizationPage() {
 
                 <div className={styles.formGroup}>
                   <label>직책 *</label>
-                  <select
+                  <input
+                    type="text"
                     value={editingMember.role || ''}
                     onChange={(e) =>
                       setEditingMember({ ...editingMember, role: e.target.value })
                     }
-                    className={styles.select}
-                  >
-                    <option value="">선택</option>
-                    <option value="대표">대표</option>
-                    <option value="멤버">멤버</option>
-                  </select>
+                    className={styles.input}
+                    placeholder="직책을 입력하세요 (예: 대표, 멤버, 팀장)"
+                  />
                 </div>
 
                 <div className={styles.formGroup}>
@@ -602,6 +689,31 @@ export default function OrganizationPage() {
                   />
                   <span className={styles.helperText} style={{ color: 'var(--text-tertiary)' }}>
                     팬더티비 아이디만 입력 (예: hj042300)
+                  </span>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>
+                    <Radio size={14} style={{ marginRight: '0.25rem' }} />
+                    SOOP TV ID
+                  </label>
+                  <input
+                    type="text"
+                    value={editingMember.socialLinks?.sooptv || ''}
+                    onChange={(e) =>
+                      setEditingMember({
+                        ...editingMember,
+                        socialLinks: {
+                          ...editingMember.socialLinks,
+                          sooptv: e.target.value || undefined,
+                        },
+                      })
+                    }
+                    className={styles.input}
+                    placeholder="bjid"
+                  />
+                  <span className={styles.helperText} style={{ color: 'var(--text-tertiary)' }}>
+                    SOOP 방송국 URL 입력 시 자동 입력됩니다
                   </span>
                 </div>
               </div>

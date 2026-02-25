@@ -215,6 +215,32 @@ export function extractBjId(url: string): string | null {
 }
 
 /**
+ * SOOP TV 채널의 프로필 이미지 URL 조회
+ * @param bjId SOOP BJ 아이디
+ * @returns 프로필 이미지 URL 또는 null
+ */
+export async function getProfileImage(bjId: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${CHANNEL_API_URL}/${bjId}/home`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`SOOP Channel API error: ${response.status}`)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await response.json()
+    return data.profile_image || null
+  } catch (error) {
+    console.error(`SOOP profile image fetch failed for ${bjId}:`, error)
+    return null
+  }
+}
+
+/**
  * SOOP TV 방송 URL 생성
  * @param bjId BJ 아이디
  */
