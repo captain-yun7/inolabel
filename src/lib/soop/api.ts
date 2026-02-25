@@ -221,19 +221,22 @@ export function extractBjId(url: string): string | null {
  */
 export async function getProfileImage(bjId: string): Promise<string | null> {
   try {
-    const response = await fetch(`${CHANNEL_API_URL}/${bjId}/home`, {
+    const response = await fetch(`${CHANNEL_API_URL}/${bjId}/station`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     })
 
     if (!response.ok) {
-      throw new Error(`SOOP Channel API error: ${response.status}`)
+      throw new Error(`SOOP Station API error: ${response.status}`)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await response.json()
-    return data.profile_image || null
+    const profileImage = data.profile_image as string | undefined
+    if (!profileImage) return null
+    // 프로토콜 없는 URL에 https: 추가
+    return profileImage.startsWith('//') ? `https:${profileImage}` : profileImage
   } catch (error) {
     console.error(`SOOP profile image fetch failed for ${bjId}:`, error)
     return null
