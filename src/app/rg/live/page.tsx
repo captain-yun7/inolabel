@@ -229,7 +229,7 @@ export default function LivePage() {
       <motion.a
         key={`${notice.bjId}-${notice.title_no}`}
         className={styles.noticeCard}
-        href={`https://www.sooplive.co.kr/station/${notice.bjId}/board/all/${notice.title_no}`}
+        href={`https://www.sooplive.co.kr/station/${notice.bjId}/post/${notice.title_no}`}
         target="_blank"
         rel="noopener noreferrer"
         initial={{ opacity: 0, y: 10 }}

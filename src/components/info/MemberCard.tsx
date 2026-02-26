@@ -39,7 +39,8 @@ export function MemberCard({ member, size, onClick, isSelected, tierInfo }: Memb
   const isLeader = leaderRoles.includes(member.role)
 
   const social = member.social_links as Record<string, string> | null
-  const soopUrl = social?.sooptv || social?.soop || social?.pandatv
+  const soopId = social?.sooptv || social?.soop || social?.pandatv
+  const soopUrl = soopId ? `https://www.sooplive.co.kr/station/${soopId}` : null
   const hasSocial = social && (soopUrl || social.youtube || social.instagram)
 
   return (
