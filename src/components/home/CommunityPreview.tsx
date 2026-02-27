@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, MessageSquare } from 'lucide-react'
-import { useSupabaseContext } from '@/lib/context'
+import { getBestPosts, getPosts } from '@/lib/actions/posts'
 import { formatDate } from '@/lib/utils/format'
 import styles from './CommunityPreview.module.css'
 
@@ -17,38 +17,46 @@ interface Post {
 }
 
 export default function CommunityPreview() {
-  const supabase = useSupabaseContext()
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        // 최근 7일간 인기글 (좋아요 순)
-        const weekAgo = new Date()
-        weekAgo.setDate(weekAgo.getDate() - 7)
-
-        const { data: popularData } = await supabase
-          .from('posts')
-          .select('id, title, board_type, created_at, author_nickname, comment_count, like_count')
-          .eq('board_type', 'free')
-          .gte('created_at', weekAgo.toISOString())
-          .order('like_count', { ascending: false })
-          .order('created_at', { ascending: false })
-          .limit(8)
+        // 서버 액션으로 인기글 조회
+        const { data: popularData } = await getBestPosts({
+          boardType: 'free',
+          period: 'weekly',
+          limit: 8,
+        })
 
         if (popularData && popularData.length > 0) {
-          setPosts(popularData.map(p => ({ ...p, category: p.board_type })))
+          setPosts(popularData.map(p => ({
+            id: p.id,
+            title: p.title,
+            category: p.board_type,
+            created_at: p.created_at,
+            author_nickname: p.author_nickname || null,
+            comment_count: p.comment_count ?? 0,
+          })))
         } else {
           // 인기글 없으면 최신글 fallback
-          const { data } = await supabase
-            .from('posts')
-            .select('id, title, board_type, created_at, author_nickname, comment_count')
-            .eq('board_type', 'free')
-            .order('created_at', { ascending: false })
-            .limit(8)
+          const { data: latestResult } = await getPosts({
+            boardType: 'free',
+            page: 1,
+            limit: 8,
+          })
 
-          if (data) setPosts(data.map(p => ({ ...p, category: p.board_type })))
+          if (latestResult) {
+            setPosts(latestResult.data.map(p => ({
+              id: p.id,
+              title: p.title,
+              category: p.board_type,
+              created_at: p.created_at,
+              author_nickname: p.author_nickname || null,
+              comment_count: p.comment_count ?? 0,
+            })))
+          }
         }
       } catch (err) {
         console.error('Failed to fetch posts:', err)
@@ -58,7 +66,7 @@ export default function CommunityPreview() {
     }
 
     fetchPosts()
-  }, [supabase])
+  }, [])
 
   return (
     <section className={styles.section}>
