@@ -59,6 +59,31 @@ test.describe('커뮤니티 - 신고게시판', () => {
   })
 })
 
+test.describe('커뮤니티 - 자유게시판 머리말 필터', () => {
+  test('머리말 필터 버튼 표시', async ({ page }) => {
+    await page.goto('/community/free')
+    await page.waitForLoadState('networkidle')
+
+    // 전체, 스타부, 엑셀부 필터 버튼
+    await expect(page.getByRole('button', { name: '전체' })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('button', { name: '스타부' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '엑셀부' })).toBeVisible()
+  })
+
+  test('머리말 필터 클릭 시 전환', async ({ page }) => {
+    await page.goto('/community/free')
+    await page.waitForLoadState('networkidle')
+
+    const staBtnLocator = page.getByRole('button', { name: '스타부' })
+    await expect(staBtnLocator).toBeVisible({ timeout: 15000 })
+    await staBtnLocator.click()
+
+    // 전체 버튼은 active 해제
+    const allBtn = page.getByRole('button', { name: '전체' })
+    await expect(allBtn).toBeVisible()
+  })
+})
+
 test.describe('커뮤니티 - VIP 게시판', () => {
   test('비인증 시 접근 제한', async ({ page }) => {
     await page.goto('/community/vip')

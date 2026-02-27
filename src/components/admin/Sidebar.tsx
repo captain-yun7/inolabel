@@ -15,6 +15,7 @@ import {
   LogOut,
   Home,
   Medal,
+  Youtube,
 } from 'lucide-react'
 import { useAuthContext } from '@/lib/context'
 import styles from './Sidebar.module.css'
@@ -26,6 +27,7 @@ const menuItems = [
   { href: '/admin/starcraft-tier', icon: Medal, label: '스타크래프트 티어' },
   { href: '/admin/posts', icon: MessageSquare, label: '게시글 관리' },
   { href: '/admin/signatures', icon: Image, label: '시그니처 관리' },
+  { href: '/admin/youtube', icon: Youtube, label: '유튜브 관리' },
 ]
 
 export default function Sidebar() {

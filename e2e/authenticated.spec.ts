@@ -24,6 +24,37 @@ test.describe('인증된 사용자 - 마이페이지', () => {
   })
 })
 
+test.describe('인증된 사용자 - 내 활동 탭', () => {
+  test('마이페이지 프로필/활동 탭 표시', async ({ page }) => {
+    await page.goto('/mypage')
+
+    if (page.url().includes('/login')) {
+      test.skip()
+      return
+    }
+
+    // 프로필 탭과 내 활동 탭
+    await expect(page.getByRole('tab', { name: '프로필' })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('tab', { name: '내 활동' })).toBeVisible()
+  })
+
+  test('내 활동 탭 클릭 시 게시글/댓글 목록', async ({ page }) => {
+    await page.goto('/mypage')
+
+    if (page.url().includes('/login')) {
+      test.skip()
+      return
+    }
+
+    // 내 활동 탭 클릭
+    await page.getByRole('tab', { name: '내 활동' }).click()
+
+    // 내가 쓴 글 섹션
+    await expect(page.getByText('내가 쓴 글')).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText('내가 쓴 댓글')).toBeVisible()
+  })
+})
+
 test.describe('인증된 사용자 - Navbar', () => {
   test('프로필 메뉴 표시', async ({ page }) => {
     await page.goto('/')

@@ -24,14 +24,31 @@ export default function CommunityPreview() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const { data, error } = await supabase
+        // 최근 7일간 인기글 (좋아요 순)
+        const weekAgo = new Date()
+        weekAgo.setDate(weekAgo.getDate() - 7)
+
+        const { data: popularData } = await supabase
           .from('posts')
-          .select('id, title, category, created_at, author_nickname, comment_count')
+          .select('id, title, board_type, created_at, author_nickname, comment_count, like_count')
+          .eq('board_type', 'free')
+          .gte('created_at', weekAgo.toISOString())
+          .order('like_count', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(8)
 
-        if (!error && data) {
-          setPosts(data)
+        if (popularData && popularData.length > 0) {
+          setPosts(popularData.map(p => ({ ...p, category: p.board_type })))
+        } else {
+          // 인기글 없으면 최신글 fallback
+          const { data } = await supabase
+            .from('posts')
+            .select('id, title, board_type, created_at, author_nickname, comment_count')
+            .eq('board_type', 'free')
+            .order('created_at', { ascending: false })
+            .limit(8)
+
+          if (data) setPosts(data.map(p => ({ ...p, category: p.board_type })))
         }
       } catch (err) {
         console.error('Failed to fetch posts:', err)

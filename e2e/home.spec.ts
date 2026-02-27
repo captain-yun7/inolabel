@@ -33,9 +33,11 @@ test.describe('홈페이지', () => {
     await expect(page.getByText('실시간 멤버')).toBeVisible()
   })
 
-  test('커뮤니티 프리뷰 섹션 표시', async ({ page }) => {
-    const communitySection = page.locator('[class*="community"], [class*="Community"]').first()
-    await expect(communitySection).toBeVisible()
+  test('자유게시판 인기글 프리뷰 섹션 표시', async ({ page }) => {
+    // 인기글 섹션 헤더
+    await expect(page.getByText('자유게시판 인기글')).toBeVisible()
+    // 전체보기 링크
+    await expect(page.getByText('전체보기')).toBeVisible()
   })
 
   test('Footer 존재', async ({ page }) => {

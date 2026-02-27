@@ -107,9 +107,10 @@ export async function getPosts(options: {
   limit?: number
   searchQuery?: string
   searchType?: 'all' | 'title' | 'author'
+  headerTag?: string | null
 }): Promise<ActionResult<{ data: (Post & { author_nickname?: string })[]; count: number }>> {
   return publicAction(async (supabase) => {
-    const { boardType, page = 1, limit = 20, searchQuery, searchType = 'all' } = options
+    const { boardType, page = 1, limit = 20, searchQuery, searchType = 'all', headerTag } = options
     const from = (page - 1) * limit
     const to = from + limit - 1
 
@@ -119,6 +120,11 @@ export async function getPosts(options: {
       .select('*, profiles!author_id(nickname)', { count: 'exact' })
       .eq('board_type', boardType)
       .eq('is_deleted', false)
+
+    // 머리말 필터 적용
+    if (headerTag) {
+      query = query.eq('header_tag', headerTag)
+    }
 
     // 검색 필터 적용
     if (searchQuery && searchQuery.trim()) {

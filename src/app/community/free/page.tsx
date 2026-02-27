@@ -55,6 +55,7 @@ export default async function FreeBoardPage() {
         categoryLabel: '잡담',
         searchTypes: ['all', 'title', 'author'],
         showPopularBadge: true,
+        headerTags: ['스타부', '엑셀부'],
       }}
       initialPosts={initialPosts}
       initialCount={postsResult.data?.count || 0}

@@ -66,6 +66,44 @@
   background: var(--background);
 }
 
+/* Activity Items */
+.activityItem {
+  display: block;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.15s ease;
+}
+
+.activityItem:hover {
+  border-color: var(--color-primary);
+  background: var(--surface-hover, rgba(253, 104, 186, 0.03));
+}
+
+.activityTitle {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.activityContent {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+}
+
+.activityMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .page {

@@ -150,6 +150,12 @@ export default function MembersPage() {
     { key: 'nickname', header: '닉네임', width: '140px', sortable: true },
     { key: 'email', header: '이메일', sortable: true },
     {
+      key: 'unit',
+      header: '소속',
+      width: '80px',
+      render: (item) => getUnitBadge(item.unit),
+    },
+    {
       key: 'role',
       header: '역할',
       width: '150px',

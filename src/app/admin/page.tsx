@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Calendar, FileText, Clock, Radio, Eye, RefreshCw, Film, PenTool, MessageSquare, ShoppingBag } from 'lucide-react'
+import { Users, Calendar, FileText, Clock, Radio, Eye, RefreshCw, Film, PenTool, MessageSquare, ShoppingBag, UserCheck } from 'lucide-react'
 import { StatsCard, DataTable, Column } from '@/components/admin'
 import { useSupabaseContext } from '@/lib/context'
 import { useLiveRoster } from '@/lib/hooks'
@@ -23,6 +23,7 @@ const formatDate = (dateStr: string, options?: FormatDateOptions): string => {
 
 interface DashboardStats {
   totalMembers: number
+  recentlyActiveMembers: number
   activeSeasons: number
   recentMembers: RecentMember[]
   totalPosts: number
@@ -74,6 +75,17 @@ export default function AdminDashboardPage() {
         .order('created_at', { ascending: false })
         .limit(5)
 
+      // 최근 24시간 활동 회원 수 (게시글 또는 댓글 작성)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      const [recentPostAuthors, recentCommentAuthors] = await Promise.all([
+        supabase.from('posts').select('author_id').gte('created_at', oneDayAgo),
+        supabase.from('comments').select('author_id').gte('created_at', oneDayAgo),
+      ])
+      const activeAuthorIds = new Set([
+        ...(recentPostAuthors.data || []).map(p => p.author_id),
+        ...(recentCommentAuthors.data || []).map(c => c.author_id),
+      ])
+
       // 콘텐츠 통계 - 병렬 처리
       const [postsCount, mediaCount, signaturesCount] = await Promise.all([
         supabase.from('posts').select('*', { count: 'exact', head: true }),
@@ -94,6 +106,7 @@ export default function AdminDashboardPage() {
 
       setStats({
         totalMembers: memberCount || 0,
+        recentlyActiveMembers: activeAuthorIds.size,
         activeSeasons: activeSeasonCount || 0,
         recentMembers: (recentMembers || []).map((m) => ({
           id: m.id,
@@ -172,6 +185,13 @@ export default function AdminDashboardPage() {
           icon={Users}
           color="primary"
           delay={0}
+        />
+        <StatsCard
+          title="24시간 활동"
+          value={stats?.recentlyActiveMembers.toLocaleString() || '0'}
+          icon={UserCheck}
+          color="success"
+          delay={0.1}
         />
       </div>
 

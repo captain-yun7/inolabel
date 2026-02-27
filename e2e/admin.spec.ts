@@ -53,6 +53,55 @@ test.describe('관리자 대시보드', () => {
   })
 })
 
+test.describe('관리자 대시보드 - 24시간 활동', () => {
+  test('24시간 활동 통계 카드 표시', async ({ page }) => {
+    await page.goto('/admin')
+
+    if (page.url().includes('/login') || page.url() === '/') {
+      test.skip()
+      return
+    }
+
+    await expect(page.getByText('24시간 활동')).toBeVisible({ timeout: 15000 })
+  })
+
+  test('굿즈샵 토글 표시', async ({ page }) => {
+    await page.goto('/admin')
+
+    if (page.url().includes('/login') || page.url() === '/') {
+      test.skip()
+      return
+    }
+
+    await expect(page.getByText('레이블 굿즈샵')).toBeVisible({ timeout: 15000 })
+  })
+})
+
+test.describe('관리자 유튜브 관리 페이지', () => {
+  test('유튜브 관리 페이지 접근', async ({ page }) => {
+    await page.goto('/admin/youtube')
+
+    if (page.url().includes('/login') || page.url() === '/') {
+      test.skip()
+      return
+    }
+
+    await expect(page.getByText('유튜브 관리')).toBeVisible({ timeout: 15000 })
+  })
+
+  test('쇼츠/영상 탭 전환', async ({ page }) => {
+    await page.goto('/admin/youtube')
+
+    if (page.url().includes('/login') || page.url() === '/') {
+      test.skip()
+      return
+    }
+
+    await expect(page.getByRole('button', { name: /쇼츠/ })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole('button', { name: /영상/ })).toBeVisible()
+  })
+})
+
 test.describe('관리자 하위 페이지 접근', () => {
   const adminPages = [
     { path: '/admin/members', title: '회원' },
@@ -60,6 +109,7 @@ test.describe('관리자 하위 페이지 접근', () => {
     { path: '/admin/posts', title: '게시' },
     { path: '/admin/notices', title: '공지' },
     { path: '/admin/signatures', title: '시그니처' },
+    { path: '/admin/youtube', title: '유튜브' },
   ]
 
   for (const { path, title } of adminPages) {

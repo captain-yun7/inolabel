@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuthContext } from "@/lib/context";
+import { useAuthContext, useSupabaseContext } from "@/lib/context";
 import { updateMyProfile, changePassword } from "@/lib/actions/profiles";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import {
@@ -20,6 +20,7 @@ import {
   Box,
   Divider,
   Alert,
+  Tabs,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import {
@@ -28,15 +29,89 @@ import {
   IconArrowLeft,
   IconCheck,
   IconAlertCircle,
+  IconMessageCircle,
+  IconPencil,
 } from "@tabler/icons-react";
 import styles from "./page.module.css";
 
+interface UserPost {
+  id: number;
+  title: string;
+  board_type: string;
+  created_at: string;
+  comment_count: number;
+  like_count: number;
+}
+
+interface UserComment {
+  id: number;
+  content: string;
+  created_at: string;
+  post_id: number;
+  post_title?: string;
+}
+
 export default function MyPage() {
   const router = useRouter();
+  const supabase = useSupabaseContext();
   const { user, profile, isAuthenticated, isLoading, signOut, refreshProfile } = useAuthContext();
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | null>("profile");
+  const [myPosts, setMyPosts] = useState<UserPost[]>([]);
+  const [myComments, setMyComments] = useState<UserComment[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+
+  const fetchActivity = useCallback(async () => {
+    if (!user) return;
+    setActivityLoading(true);
+    try {
+      const [postsRes, commentsRes] = await Promise.all([
+        supabase
+          .from("posts")
+          .select("id, title, board_type, created_at, comment_count, like_count")
+          .eq("author_id", user.id)
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("comments")
+          .select("id, content, created_at, post_id")
+          .eq("author_id", user.id)
+          .eq("is_deleted", false)
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
+
+      if (postsRes.data) setMyPosts(postsRes.data);
+
+      if (commentsRes.data) {
+        const postIds = [...new Set(commentsRes.data.map((c) => c.post_id))];
+        const { data: posts } = await supabase
+          .from("posts")
+          .select("id, title")
+          .in("id", postIds);
+
+        const postMap = new Map(posts?.map((p) => [p.id, p.title]) || []);
+        setMyComments(
+          commentsRes.data.map((c) => ({
+            ...c,
+            post_title: postMap.get(c.post_id) || "삭제된 게시글",
+          }))
+        );
+      }
+    } catch {
+      // 조용히 처리
+    }
+    setActivityLoading(false);
+  }, [user, supabase]);
+
+  useEffect(() => {
+    if (activeTab === "activity" && user) {
+      fetchActivity();
+    }
+  }, [activeTab, user, fetchActivity]);
 
   // Profile form
   const profileForm = useForm({
@@ -221,70 +296,164 @@ export default function MyPage() {
           </Group>
         </Paper>
 
-        {/* Edit Profile */}
-        <Paper className={styles.card} radius="lg" p="xl" withBorder>
-          <Title order={3} mb="md">
-            프로필 수정
-          </Title>
-          <form onSubmit={profileForm.onSubmit(handleProfileSubmit)}>
-            <Stack gap="md">
-              <TextInput
-                label="닉네임"
-                placeholder="닉네임을 입력하세요"
-                leftSection={<IconUser size={18} stroke={1.5} />}
-                key={profileForm.key("nickname")}
-                {...profileForm.getInputProps("nickname")}
-                size="md"
-                radius="md"
-              />
-              <Button
-                type="submit"
-                color="dark"
-                radius="md"
-                loading={profileForm.submitting}
-              >
-                프로필 저장
-              </Button>
-            </Stack>
-          </form>
-        </Paper>
+        <Tabs value={activeTab} onChange={setActiveTab} radius="md" mb="lg">
+          <Tabs.List>
+            <Tabs.Tab value="profile" leftSection={<IconUser size={16} />}>프로필</Tabs.Tab>
+            <Tabs.Tab value="activity" leftSection={<IconPencil size={16} />}>내 활동</Tabs.Tab>
+          </Tabs.List>
 
-        {/* Change Password */}
-        <Paper className={styles.card} radius="lg" p="xl" withBorder>
-          <Title order={3} mb="md">
-            비밀번호 변경
-          </Title>
-          <form onSubmit={passwordForm.onSubmit(handlePasswordSubmit)}>
-            <Stack gap="md">
-              <PasswordInput
-                label="새 비밀번호"
-                placeholder="새 비밀번호 (6자 이상)"
-                leftSection={<IconLock size={18} stroke={1.5} />}
-                key={passwordForm.key("newPassword")}
-                {...passwordForm.getInputProps("newPassword")}
-                size="md"
-                radius="md"
-              />
-              <PasswordInput
-                label="비밀번호 확인"
-                placeholder="비밀번호를 다시 입력하세요"
-                leftSection={<IconLock size={18} stroke={1.5} />}
-                key={passwordForm.key("confirmPassword")}
-                {...passwordForm.getInputProps("confirmPassword")}
-                size="md"
-                radius="md"
-              />
-              <Button
-                type="submit"
-                color="dark"
-                radius="md"
-                loading={passwordForm.submitting}
-              >
+          <Tabs.Panel value="profile" pt="md">
+            {/* Edit Profile */}
+            <Paper className={styles.card} radius="lg" p="xl" withBorder>
+              <Title order={3} mb="md">
+                프로필 수정
+              </Title>
+              <form onSubmit={profileForm.onSubmit(handleProfileSubmit)}>
+                <Stack gap="md">
+                  <TextInput
+                    label="닉네임"
+                    placeholder="닉네임을 입력하세요"
+                    leftSection={<IconUser size={18} stroke={1.5} />}
+                    key={profileForm.key("nickname")}
+                    {...profileForm.getInputProps("nickname")}
+                    size="md"
+                    radius="md"
+                  />
+                  <Button
+                    type="submit"
+                    color="dark"
+                    radius="md"
+                    loading={profileForm.submitting}
+                  >
+                    프로필 저장
+                  </Button>
+                </Stack>
+              </form>
+            </Paper>
+
+            {/* Change Password */}
+            <Paper className={styles.card} radius="lg" p="xl" withBorder>
+              <Title order={3} mb="md">
                 비밀번호 변경
-              </Button>
-            </Stack>
-          </form>
-        </Paper>
+              </Title>
+              <form onSubmit={passwordForm.onSubmit(handlePasswordSubmit)}>
+                <Stack gap="md">
+                  <PasswordInput
+                    label="새 비밀번호"
+                    placeholder="새 비밀번호 (6자 이상)"
+                    leftSection={<IconLock size={18} stroke={1.5} />}
+                    key={passwordForm.key("newPassword")}
+                    {...passwordForm.getInputProps("newPassword")}
+                    size="md"
+                    radius="md"
+                  />
+                  <PasswordInput
+                    label="비밀번호 확인"
+                    placeholder="비밀번호를 다시 입력하세요"
+                    leftSection={<IconLock size={18} stroke={1.5} />}
+                    key={passwordForm.key("confirmPassword")}
+                    {...passwordForm.getInputProps("confirmPassword")}
+                    size="md"
+                    radius="md"
+                  />
+                  <Button
+                    type="submit"
+                    color="dark"
+                    radius="md"
+                    loading={passwordForm.submitting}
+                  >
+                    비밀번호 변경
+                  </Button>
+                </Stack>
+              </form>
+            </Paper>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="activity" pt="md">
+            {activityLoading ? (
+              <Box style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
+                <Loader color="gray" size="md" />
+              </Box>
+            ) : (
+              <Stack gap="md">
+                {/* My Posts */}
+                <Paper className={styles.card} radius="lg" p="xl" withBorder>
+                  <Title order={3} mb="md">
+                    <Group gap="xs">
+                      <IconPencil size={20} />
+                      내가 쓴 글 ({myPosts.length})
+                    </Group>
+                  </Title>
+                  {myPosts.length === 0 ? (
+                    <Text c="dimmed" size="sm" ta="center" py="lg">
+                      작성한 게시글이 없습니다
+                    </Text>
+                  ) : (
+                    <Stack gap="xs">
+                      {myPosts.map((post) => (
+                        <Link
+                          key={post.id}
+                          href={`/community/${post.board_type}/${post.id}`}
+                          className={styles.activityItem}
+                        >
+                          <div className={styles.activityTitle}>{post.title}</div>
+                          <div className={styles.activityMeta}>
+                            <Badge size="xs" variant="light" color="gray">
+                              {post.board_type === "free" ? "자유" : post.board_type === "anonymous" ? "익명" : post.board_type}
+                            </Badge>
+                            <span>{new Date(post.created_at).toLocaleDateString("ko-KR")}</span>
+                            {post.comment_count > 0 && (
+                              <span style={{ color: "var(--color-primary)" }}>
+                                <IconMessageCircle size={12} style={{ verticalAlign: "middle" }} /> {post.comment_count}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </Stack>
+                  )}
+                </Paper>
+
+                {/* My Comments */}
+                <Paper className={styles.card} radius="lg" p="xl" withBorder>
+                  <Title order={3} mb="md">
+                    <Group gap="xs">
+                      <IconMessageCircle size={20} />
+                      내가 쓴 댓글 ({myComments.length})
+                    </Group>
+                  </Title>
+                  {myComments.length === 0 ? (
+                    <Text c="dimmed" size="sm" ta="center" py="lg">
+                      작성한 댓글이 없습니다
+                    </Text>
+                  ) : (
+                    <Stack gap="xs">
+                      {myComments.map((comment) => (
+                        <Link
+                          key={comment.id}
+                          href={`/community/free/${comment.post_id}`}
+                          className={styles.activityItem}
+                        >
+                          <div className={styles.activityContent}>
+                            {comment.content.length > 80
+                              ? comment.content.slice(0, 80) + "..."
+                              : comment.content}
+                          </div>
+                          <div className={styles.activityMeta}>
+                            <span style={{ color: "var(--text-tertiary)" }}>
+                              {comment.post_title}
+                            </span>
+                            <span>{new Date(comment.created_at).toLocaleDateString("ko-KR")}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </Stack>
+                  )}
+                </Paper>
+              </Stack>
+            )}
+          </Tabs.Panel>
+        </Tabs>
 
         <Divider my="xl" />
 

@@ -96,18 +96,20 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
       {/* LIVE 호버 시 썸네일 미리보기 팝업 */}
       {showPreview && thumbnailUrl && (
         <div className={styles.previewPopup}>
-          <img src={thumbnailUrl} alt="방송 미리보기" className={styles.previewThumbnail} />
-          {broadcastUrl && (
-            <a
-              href={broadcastUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.previewLink}
-              onClick={(e) => e.stopPropagation()}
-            >
-              방송 바로가기
-            </a>
-          )}
+          <div className={styles.previewPopupInner}>
+            <img src={thumbnailUrl} alt="방송 미리보기" className={styles.previewThumbnail} />
+            {broadcastUrl && (
+              <a
+                href={broadcastUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.previewLink}
+                onClick={(e) => e.stopPropagation()}
+              >
+                방송 바로가기
+              </a>
+            )}
+          </div>
         </div>
       )}
     </div>

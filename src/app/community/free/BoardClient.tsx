@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square, Pin, Trophy, Flame } from 'lucide-react'
+import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square, Pin, Trophy, Flame, Tag } from 'lucide-react'
 import { PageLayout } from '@/components/layout'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -50,6 +50,7 @@ interface BoardConfig {
   categoryLabel: string
   searchTypes: ('all' | 'title' | 'author')[]
   showPopularBadge: boolean
+  headerTags?: string[]
 }
 
 export interface BoardClientProps {
@@ -86,7 +87,7 @@ export default function BoardClient({
   initialMonthlyBest = [],
   initialNotices = [],
 }: BoardClientProps) {
-  const { boardType, activeTab, heroTitle, heroSubtitle, categoryLabel, searchTypes, showPopularBadge } = config
+  const { boardType, activeTab, heroTitle, heroSubtitle, categoryLabel, searchTypes, showPopularBadge, headerTags } = config
   const { profile } = useAuthContext()
   const isAdmin = profile && ['admin', 'superadmin', 'moderator'].includes(profile.role)
 
@@ -97,6 +98,7 @@ export default function BoardClient({
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [searchType, setSearchType] = useState<'all' | 'title' | 'author'>('all')
   const [sortBy, setSortBy] = useState<'latest' | 'views' | 'likes'>('latest')
+  const [headerTagFilter, setHeaderTagFilter] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCount, setTotalCount] = useState(initialCount)
 
@@ -135,7 +137,8 @@ export default function BoardClient({
       page: currentPage,
       limit: POSTS_PER_PAGE,
       searchQuery: debouncedSearch,
-      searchType
+      searchType,
+      headerTag: headerTagFilter,
     })
 
     if (result.error) {
@@ -168,7 +171,7 @@ export default function BoardClient({
     }
 
     setIsLoading(false)
-  }, [currentPage, debouncedSearch, searchType, boardType, categoryLabel])
+  }, [currentPage, debouncedSearch, searchType, boardType, categoryLabel, headerTagFilter])
 
   // 검색/페이지 변경 시에만 fetch (초기 로드는 서버에서 이미 처리)
   const [isInitialRender, setIsInitialRender] = useState(true)
@@ -276,6 +279,27 @@ export default function BoardClient({
 
       <div className={styles.container}>
         <TabFilter tabs={tabs} activeTab={activeTab} />
+
+        {headerTags && headerTags.length > 0 && (
+          <div className={styles.headerTagFilter}>
+            <Tag size={14} className={styles.headerTagFilterIcon} />
+            <button
+              className={`${styles.headerTagBtn} ${headerTagFilter === null ? styles.active : ''}`}
+              onClick={() => { setHeaderTagFilter(null); setCurrentPage(1) }}
+            >
+              전체
+            </button>
+            {headerTags.map(tag => (
+              <button
+                key={tag}
+                className={`${styles.headerTagBtn} ${headerTagFilter === tag ? styles.active : ''}`}
+                onClick={() => { setHeaderTagFilter(tag); setCurrentPage(1) }}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
 
         {(weeklyBest.length > 0 || monthlyBest.length > 0 || pinnedNotices.length > 0) && (
           <div className={styles.bestSection}>

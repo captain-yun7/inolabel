@@ -120,16 +120,20 @@
 /* ─── LIVE 호버 썸네일 미리보기 ─── */
 .previewPopup {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   width: 220px;
+  z-index: 100;
+  padding-bottom: 6px; /* 카드와의 갭을 hover 영역에 포함 */
+}
+
+.previewPopupInner {
   background: var(--surface, #1a1a1a);
   border: 1px solid rgba(0, 212, 255, 0.3);
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  z-index: 100;
   animation: previewFadeIn 0.15s ease-out;
 }
 
