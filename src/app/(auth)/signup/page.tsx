@@ -107,10 +107,7 @@ export default function SignupPage() {
         if (!isValidEmail(value)) return "올바른 이메일 형식이 아닙니다";
         return null;
       },
-      soopId: (value) => {
-        if (!value) return "숲TV 아이디를 입력해주세요";
-        return null;
-      },
+      soopId: () => null,
       password: (value) => {
         if (!value) return "비밀번호를 입력해주세요";
         if (value.length < 6) return "비밀번호는 6자 이상이어야 합니다";
@@ -137,7 +134,6 @@ export default function SignupPage() {
   const fullNameValid = fullName.length >= 2;
   const nicknameValid = nickname.length >= 2 && nickname.length <= 20;
   const emailValid = isValidEmail(email);
-  const soopIdValid = soopId.length > 0;
   const passwordValid = password.length >= 6;
   const confirmPasswordValid =
     confirmPassword.length > 0 && confirmPassword === password;
@@ -435,14 +431,14 @@ export default function SignupPage() {
             {/* 숲TV 아이디 */}
             <Box>
               <TextInput
-                label="숲TV 아이디"
+                label="숲TV 아이디 (선택)"
                 placeholder="숲TV(SOOP) 아이디를 입력하세요"
                 leftSection={
                   <IconUser size={18} stroke={1.5} color="var(--text-tertiary)" />
                 }
                 rightSection={
-                  soopId.length > 0 && !form.errors.soopId
-                    ? renderValidIcon(soopIdValid)
+                  soopId.length > 0
+                    ? renderValidIcon(true)
                     : null
                 }
                 {...form.getInputProps("soopId")}
@@ -545,7 +541,6 @@ export default function SignupPage() {
                 !nicknameValid ||
                 nicknameDuplicate !== false ||
                 !emailValid ||
-                !soopIdValid ||
                 !passwordValid ||
                 !confirmPasswordValid
               }
