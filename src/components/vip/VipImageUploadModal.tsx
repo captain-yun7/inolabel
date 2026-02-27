@@ -63,21 +63,30 @@ export default function VipImageUploadModal({
     setIsUploading(true)
 
     try {
-      // 파일 업로드 API 호출
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      formData.append('folder', 'vip-signatures')
+      // 파일 업로드 - 크기에 따라 방식 선택
+      let url: string
 
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!uploadRes.ok) {
-        throw new Error('파일 업로드에 실패했습니다.')
+      if (selectedFile.size > 4 * 1024 * 1024) {
+        // 4MB 초과: Presigned URL로 직접 업로드
+        const params = new URLSearchParams({ folder: 'vip-signatures', filename: selectedFile.name, contentType: selectedFile.type })
+        const urlRes = await fetch(`/api/upload?${params}`)
+        if (!urlRes.ok) throw new Error('업로드 URL 발급 실패')
+        const { uploadUrl, publicUrl } = await urlRes.json()
+        const putRes = await fetch(uploadUrl, { method: 'PUT', body: selectedFile, headers: { 'Content-Type': selectedFile.type } })
+        if (!putRes.ok) throw new Error('이미지 업로드 실패')
+        url = publicUrl
+      } else {
+        // 4MB 이하: 서버 경유
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        formData.append('folder', 'vip-signatures')
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+        const text = await uploadRes.text()
+        let data
+        try { data = JSON.parse(text) } catch { throw new Error(uploadRes.status === 413 ? '파일이 너무 큽니다.' : '서버 오류') }
+        if (!uploadRes.ok) throw new Error(data.error || '업로드 실패')
+        url = data.url
       }
-
-      const { url } = await uploadRes.json()
 
       // VIP 이미지 레코드 생성
       const result = await createVipImage({

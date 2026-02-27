@@ -52,6 +52,19 @@ export function useImageUpload(options: UseImageUploadOptions): UseImageUploadRe
     setError(null)
   }, [])
 
+  // 안전한 JSON 파싱 (413 등 non-JSON 응답 처리)
+  const safeJsonParse = async (response: Response) => {
+    const text = await response.text()
+    try {
+      return JSON.parse(text)
+    } catch {
+      // Vercel 413 "Request Entity Too Large" 등 plain text 응답
+      throw new Error(text.includes('Request Entity Too Large') || response.status === 413
+        ? '파일 크기가 너무 큽니다. 더 작은 이미지를 사용해주세요.'
+        : `서버 오류: ${text.substring(0, 100)}`)
+    }
+  }
+
   // 큰 파일: Presigned URL로 직접 업로드
   const uploadWithPresignedUrl = async (file: File): Promise<string | null> => {
     // 1. Presigned URL 발급
@@ -62,7 +75,7 @@ export function useImageUpload(options: UseImageUploadOptions): UseImageUploadRe
     })
 
     const urlResponse = await fetch(`/api/upload?${params}`)
-    const urlResult = await urlResponse.json()
+    const urlResult = await safeJsonParse(urlResponse)
 
     if (!urlResponse.ok) {
       throw new Error(urlResult.error || 'Presigned URL 발급 실패')
@@ -95,7 +108,7 @@ export function useImageUpload(options: UseImageUploadOptions): UseImageUploadRe
       body: formData,
     })
 
-    const result = await response.json()
+    const result = await safeJsonParse(response)
 
     if (!response.ok) {
       throw new Error(result.error || '이미지 업로드에 실패했습니다.')

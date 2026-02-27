@@ -30,25 +30,34 @@ export function PostImageUpload({ onImageInsert, disabled }: PostImageUploadProp
     setError(null)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('folder', 'posts')
+      let url: string
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '업로드 실패')
+      if (file.size > 4 * 1024 * 1024) {
+        // 4MB 초과: Presigned URL로 직접 업로드
+        const params = new URLSearchParams({ folder: 'posts', filename: file.name, contentType: file.type })
+        const urlRes = await fetch(`/api/upload?${params}`)
+        if (!urlRes.ok) throw new Error('업로드 URL 발급 실패')
+        const { uploadUrl, publicUrl } = await urlRes.json()
+        const putRes = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+        if (!putRes.ok) throw new Error('이미지 업로드 실패')
+        url = publicUrl
+      } else {
+        // 4MB 이하: 서버 경유
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', 'posts')
+        const response = await fetch('/api/upload', { method: 'POST', body: formData })
+        const text = await response.text()
+        let data
+        try { data = JSON.parse(text) } catch { throw new Error(response.status === 413 ? '파일이 너무 큽니다.' : '서버 오류') }
+        if (!response.ok) throw new Error(data.error || '업로드 실패')
+        url = data.url
       }
 
       // 업로드 성공 시 마크다운 이미지 삽입
-      const markdownImg = `![이미지](${data.url})`
+      const markdownImg = `![이미지](${url})`
       onImageInsert(markdownImg)
-      setUploadedImages(prev => [...prev, data.url])
+      setUploadedImages(prev => [...prev, url])
     } catch (err) {
       setError(err instanceof Error ? err.message : '업로드 실패')
     } finally {
