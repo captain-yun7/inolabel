@@ -7,6 +7,14 @@ import { ChevronRight, ChevronLeft } from 'lucide-react'
 import { useLiveRoster } from '@/lib/hooks'
 import styles from './LiveMembers.module.css'
 
+/** social_links 값에서 BJ ID를 추출 (URL이면 파싱, ID면 그대로) */
+function extractSoopBjId(value: string | undefined | null): string | null {
+  if (!value) return null
+  if (/^[a-zA-Z0-9_]+$/.test(value)) return value
+  const match = value.match(/sooplive\.co\.kr\/(?:station\/)?([a-zA-Z0-9_]+)/)
+  return match ? match[1] : null
+}
+
 type UnitFilter = 'all' | 'excel' | 'crew'
 
 interface LiveMember {
@@ -43,7 +51,7 @@ export default function LiveMembers() {
           thumbnailUrl: liveEntry?.thumbnailUrl || null,
           isLive: Boolean(member.is_live),
           unit: member.unit,
-          sooptvId: member.social_links?.soop || member.social_links?.sooptv || member.social_links?.pandatv || null,
+          sooptvId: extractSoopBjId(member.social_links?.sooptv) || extractSoopBjId(member.social_links?.soop) || extractSoopBjId(member.social_links?.pandatv),
         }
       })
       .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0))

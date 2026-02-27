@@ -6,9 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Pin, Calendar, Eye, Tag, ChevronLeft, ChevronRight, Share2, Edit2, Trash2 } from 'lucide-react'
-import { useSupabaseContext } from '@/lib/context'
 import { useAuthContext } from '@/lib/context/AuthContext'
-import { deleteNotice } from '@/lib/actions/notices'
+import { deleteNotice, getNoticeWithAttachments, getAdjacentNotices } from '@/lib/actions/notices'
 import { formatDate } from '@/lib/utils/format'
 import { renderContent } from '@/lib/utils/htmlContent'
 import styles from './page.module.css'
@@ -49,7 +48,6 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function NoticeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const supabase = useSupabaseContext()
   const { isModerator } = useAuthContext()
   const [notice, setNotice] = useState<NoticeDetail | null>(null)
   const [prevNotice, setPrevNotice] = useState<NavNotice | null>(null)
@@ -62,23 +60,16 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
     setIsLoading(true)
     const currentId = parseInt(id)
 
-    // 현재 공지사항 조회
-    const { data, error } = await supabase
-      .from('notices')
-      .select('id, title, content, category, thumbnail_url, is_pinned, view_count, created_at')
-      .eq('id', currentId)
-      .single()
+    // 서버 액션으로 공지사항 + 첨부파일 조회 (조회수 증가 포함)
+    const [noticeResult, adjResult] = await Promise.all([
+      getNoticeWithAttachments(currentId),
+      getAdjacentNotices(currentId),
+    ])
 
-    if (error) {
-      console.error('공지사항 로드 실패:', error)
-    } else if (data) {
-      // 첨부파일 조회
-      const { data: attachmentsData } = await supabase
-        .from('notice_attachments')
-        .select('*')
-        .eq('notice_id', currentId)
-        .order('display_order', { ascending: true })
-
+    if (noticeResult.error) {
+      console.error('공지사항 로드 실패:', noticeResult.error)
+    } else if (noticeResult.data) {
+      const data = noticeResult.data
       setNotice({
         id: data.id,
         title: data.title,
@@ -88,41 +79,17 @@ export default function NoticeDetailPage({ params }: { params: Promise<{ id: str
         isPinned: data.is_pinned,
         viewCount: data.view_count || 0,
         createdAt: data.created_at,
-        attachments: (attachmentsData as Attachment[]) || [],
+        attachments: (data.attachments || []) as Attachment[],
       })
+    }
 
-      // 이전 글 조회 (현재 id보다 작은 것 중 가장 큰 id)
-      const { data: prevData } = await supabase
-        .from('notices')
-        .select('id, title')
-        .lt('id', currentId)
-        .order('id', { ascending: false })
-        .limit(1)
-        .single()
-
-      setPrevNotice(prevData ? { id: prevData.id, title: prevData.title } : null)
-
-      // 다음 글 조회 (현재 id보다 큰 것 중 가장 작은 id)
-      const { data: nextData } = await supabase
-        .from('notices')
-        .select('id, title')
-        .gt('id', currentId)
-        .order('id', { ascending: true })
-        .limit(1)
-        .single()
-
-      setNextNotice(nextData ? { id: nextData.id, title: nextData.title } : null)
-
-      // 조회수 증가 (백그라운드 처리)
-      supabase
-        .from('notices')
-        .update({ view_count: (data.view_count || 0) + 1 })
-        .eq('id', currentId)
-        .then(() => {})
+    if (adjResult.data) {
+      setPrevNotice(adjResult.data.prev)
+      setNextNotice(adjResult.data.next)
     }
 
     setIsLoading(false)
-  }, [supabase, id])
+  }, [id])
 
   useEffect(() => {
     fetchNotice()

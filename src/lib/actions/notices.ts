@@ -253,3 +253,35 @@ export async function getNoticeWithAttachments(
     } as NoticeWithAttachments
   })
 }
+
+/**
+ * 이전/다음 공지사항 조회 (네비게이션용)
+ */
+export async function getAdjacentNotices(
+  id: number
+): Promise<ActionResult<{ prev: { id: number; title: string } | null; next: { id: number; title: string } | null }>> {
+  return publicAction(async (supabase) => {
+    // 이전 글 (현재 id보다 작은 것 중 가장 큰 id)
+    const { data: prevData } = await supabase
+      .from('notices')
+      .select('id, title')
+      .lt('id', id)
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    // 다음 글 (현재 id보다 큰 것 중 가장 작은 id)
+    const { data: nextData } = await supabase
+      .from('notices')
+      .select('id, title')
+      .gt('id', id)
+      .order('id', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    return {
+      prev: prevData ? { id: prevData.id, title: prevData.title } : null,
+      next: nextData ? { id: nextData.id, title: nextData.title } : null,
+    }
+  })
+}

@@ -34,12 +34,23 @@ interface MemberCardProps {
   tierInfo?: TierInfo
 }
 
+/**
+ * social_links 값에서 BJ ID를 추출
+ * 전체 URL이면 ID만 추출, 이미 ID면 그대로 반환
+ */
+function extractSoopId(value: string | undefined): string | null {
+  if (!value) return null
+  if (/^[a-zA-Z0-9_]+$/.test(value)) return value
+  const match = value.match(/sooplive\.co\.kr\/(?:station\/)?([a-zA-Z0-9_]+)/)
+  return match ? match[1] : null
+}
+
 export function MemberCard({ member, size, onClick, isSelected, tierInfo }: MemberCardProps) {
   const leaderRoles = ['대표', '이사장', '총장', '부장', '팀장']
   const isLeader = leaderRoles.includes(member.role)
 
   const social = member.social_links as Record<string, string> | null
-  const soopId = social?.sooptv || social?.soop || social?.pandatv
+  const soopId = extractSoopId(social?.sooptv) || extractSoopId(social?.soop) || extractSoopId(social?.pandatv)
   const soopUrl = soopId ? `https://www.sooplive.co.kr/station/${soopId}` : null
   const hasSocial = social && (soopUrl || social.youtube || social.instagram)
 
