@@ -42,6 +42,7 @@ function WritePostContent() {
     title: '',
     content: '',
     is_anonymous: forceAnonymous,
+    header_tag: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingPost, setIsLoadingPost] = useState(false)
@@ -71,6 +72,7 @@ function WritePostContent() {
         title: data.title,
         content: data.content || '',
         is_anonymous: data.is_anonymous || false,
+        header_tag: data.header_tag || '',
       })
     }
     setIsLoadingPost(false)
@@ -168,12 +170,15 @@ function WritePostContent() {
     try {
       const isAnonymous = forceAnonymous || formData.is_anonymous
 
+      const headerTag = boardType === 'free' && formData.header_tag ? formData.header_tag : null
+
       if (isEditMode && editId) {
         // 수정 모드
         const result = await updatePost(parseInt(editId), {
           title: formData.title.trim(),
           content: formData.content.trim(),
           is_anonymous: isAnonymous,
+          header_tag: headerTag,
         })
 
         if (result.error) {
@@ -189,6 +194,7 @@ function WritePostContent() {
           title: formData.title.trim(),
           content: formData.content.trim(),
           is_anonymous: isAnonymous,
+          header_tag: headerTag,
         })
 
         if (result.error) {
@@ -296,6 +302,50 @@ function WritePostContent() {
                 <span className={styles.charCount}>{formData.title.length}/100</span>
               </div>
             </div>
+
+            {/* 머릿말 선택 (자유게시판만) */}
+            {boardType === 'free' && (
+              <div className={styles.formRow}>
+                <label className={styles.rowLabel}>머릿말</label>
+                <div className={styles.rowInput}>
+                  <div className={styles.headerTagSelect}>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="header-tag"
+                        value=""
+                        checked={formData.header_tag === ''}
+                        onChange={() => setFormData(prev => ({ ...prev, header_tag: '' }))}
+                      />
+                      <span className={styles.radioCustom} />
+                      <span className={styles.radioText}>선택안함</span>
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="header-tag"
+                        value="스타부"
+                        checked={formData.header_tag === '스타부'}
+                        onChange={() => setFormData(prev => ({ ...prev, header_tag: '스타부' }))}
+                      />
+                      <span className={styles.radioCustom} />
+                      <span className={styles.radioText}>스타부</span>
+                    </label>
+                    <label className={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="header-tag"
+                        value="엑셀부"
+                        checked={formData.header_tag === '엑셀부'}
+                        onChange={() => setFormData(prev => ({ ...prev, header_tag: '엑셀부' }))}
+                      />
+                      <span className={styles.radioCustom} />
+                      <span className={styles.radioText}>엑셀부</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 내용 입력 (리치에디터) */}
             <div className={styles.formRow}>

@@ -53,7 +53,7 @@ export default function SignaturesPage() {
 
   // 빠른 추가 모드
   const [quickAddMode, setQuickAddMode] = useState(false)
-  const [quickAddData, setQuickAddData] = useState({ sigNumber: 1, title: '' })
+  const [quickAddData, setQuickAddData] = useState<{ sigNumber: number | ''; title: string }>({ sigNumber: '', title: '' })
   const [isQuickAdding, setIsQuickAdding] = useState(false)
 
   // 인라인 영상 관리 상태
@@ -412,6 +412,10 @@ export default function SignaturesPage() {
 
   // 빠른 추가 핸들러
   const handleQuickAdd = useCallback(async () => {
+    if (!quickAddData.sigNumber || quickAddData.sigNumber < 1) {
+      alertHandler.showWarning('시그 번호를 입력해주세요.', '입력 오류')
+      return
+    }
     if (!quickAddData.title.trim()) {
       alertHandler.showWarning('제목을 입력해주세요.', '입력 오류')
       return
@@ -1048,11 +1052,12 @@ export default function SignaturesPage() {
                 <input
                   type="number"
                   value={quickAddData.sigNumber}
-                  onChange={(e) => setQuickAddData(prev => ({ ...prev, sigNumber: parseInt(e.target.value) || 1 }))}
+                  onChange={(e) => setQuickAddData(prev => ({ ...prev, sigNumber: e.target.value === '' ? '' : (parseInt(e.target.value) || '') }))}
                   onKeyDown={handleQuickAddKeyDown}
                   min={1}
+                  placeholder="번호"
                   style={{
-                    width: '60px',
+                    width: '100px',
                     padding: '8px 12px',
                     border: '1px solid var(--card-border)',
                     borderRadius: '4px',

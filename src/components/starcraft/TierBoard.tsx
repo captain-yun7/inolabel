@@ -17,8 +17,14 @@ const RACE_LEGEND = [
   { key: 'protoss', label: '프토', color: '#f59e0b' },
 ]
 
+export interface LiveInfoByName {
+  thumbnailUrl: string | null
+  streamUrl: string
+  soopId: string | null
+}
+
 export default function TierBoard({ tiers }: TierBoardProps) {
-  const { members } = useLiveRoster({ realtime: true })
+  const { members, liveStatusByMemberId } = useLiveRoster({ realtime: true })
   const [showLiveOnly, setShowLiveOnly] = useState(false)
 
   // 라이브 중인 멤버 이름 Set (organization name 기준)
@@ -31,6 +37,27 @@ export default function TierBoard({ tiers }: TierBoardProps) {
     })
     return names
   }, [members])
+
+  // 이름 기준 라이브 정보 매핑 (썸네일, 방송 URL 등)
+  const liveInfoByName = useMemo(() => {
+    const map: Record<string, LiveInfoByName> = {}
+    members.forEach(m => {
+      if (m.is_live) {
+        const entries = liveStatusByMemberId[m.id] || []
+        const liveEntry = entries.find(e => e.isLive)
+        if (liveEntry) {
+          const soopId = (m.social_links as Record<string, string> | null)?.sooptv ||
+                         (m.social_links as Record<string, string> | null)?.soop || null
+          map[m.name] = {
+            thumbnailUrl: liveEntry.thumbnailUrl,
+            streamUrl: liveEntry.streamUrl,
+            soopId,
+          }
+        }
+      }
+    })
+    return map
+  }, [members, liveStatusByMemberId])
 
   // 라이브 필터 적용 시 멤버 필터링
   const filteredTiers = useMemo(() => {
@@ -82,7 +109,7 @@ export default function TierBoard({ tiers }: TierBoardProps) {
       {/* 티어 보드 */}
       <div className={styles.board}>
         {filteredTiers.map((tier) => (
-          <TierRow key={tier.id} tier={tier} liveNames={liveNames} />
+          <TierRow key={tier.id} tier={tier} liveNames={liveNames} liveInfoByName={liveInfoByName} />
         ))}
       </div>
     </div>

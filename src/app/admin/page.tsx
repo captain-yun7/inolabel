@@ -2,22 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Heart, Calendar, FileText, TrendingUp, Clock, Radio, Eye, RefreshCw, Film, PenTool, MessageSquare } from 'lucide-react'
+import { Users, Calendar, FileText, Clock, Radio, Eye, RefreshCw, Film, PenTool, MessageSquare, ShoppingBag } from 'lucide-react'
 import { StatsCard, DataTable, Column } from '@/components/admin'
 import { useSupabaseContext } from '@/lib/context'
 import { useLiveRoster } from '@/lib/hooks'
 import styles from './page.module.css'
-
-// Local helper functions
-const formatCurrency = (amount: number): string => {
-  if (amount >= 100000000) {
-    return `${(amount / 100000000).toFixed(1)}억 하트`;
-  }
-  if (amount >= 10000) {
-    return `${(amount / 10000).toFixed(1)}만 하트`;
-  }
-  return `${amount.toLocaleString()} 하트`;
-};
 
 interface FormatDateOptions {
   year?: 'numeric' | '2-digit';
@@ -34,15 +23,8 @@ const formatDate = (dateStr: string, options?: FormatDateOptions): string => {
 
 interface DashboardStats {
   totalMembers: number
-  // 시즌 랭킹 통계
-  seasonDonorCount: number
-  seasonTotalAmount: number
-  // 전체 랭킹 통계
-  totalDonorCount: number
-  totalDonationAmount: number
   activeSeasons: number
   recentMembers: RecentMember[]
-  // Content stats
   totalPosts: number
   totalMedia: number
   totalSignatures: number
@@ -59,6 +41,8 @@ export default function AdminDashboardPage() {
   const supabase = useSupabaseContext()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [goodsShopVisible, setGoodsShopVisible] = useState(true)
+  const [isTogglingGoods, setIsTogglingGoods] = useState(false)
 
   // 실시간 라이브 상태
   const { members, liveStatusByMemberId, isLoading: liveLoading, refetch: refetchLive } = useLiveRoster({ realtime: true })
@@ -76,22 +60,6 @@ export default function AdminDashboardPage() {
       const { count: memberCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-
-      // 시즌 랭킹 통계 (season_donation_rankings)
-      const { data: seasonRankings } = await supabase
-        .from('season_donation_rankings')
-        .select('total_amount, donation_count')
-
-      const seasonDonorCount = seasonRankings?.length || 0
-      const seasonTotalAmount = seasonRankings?.reduce((sum, r) => sum + (r.total_amount || 0), 0) || 0
-
-      // 전체 랭킹 통계 (total_donation_rankings)
-      const { data: totalRankings } = await supabase
-        .from('total_donation_rankings')
-        .select('total_amount')
-
-      const totalDonorCount = totalRankings?.length || 0
-      const totalDonationAmount = totalRankings?.reduce((sum, r) => sum + (r.total_amount || 0), 0) || 0
 
       // 활성 시즌
       const { count: activeSeasonCount } = await supabase
@@ -113,12 +81,19 @@ export default function AdminDashboardPage() {
         supabase.from('signatures').select('*', { count: 'exact', head: true }),
       ])
 
+      // 굿즈샵 설정
+      const { data: goodsSetting } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'goods_shop_visible')
+        .single()
+
+      if (goodsSetting) {
+        setGoodsShopVisible(goodsSetting.value === 'true' || goodsSetting.value === true)
+      }
+
       setStats({
         totalMembers: memberCount || 0,
-        seasonDonorCount,
-        seasonTotalAmount,
-        totalDonorCount,
-        totalDonationAmount,
         activeSeasons: activeSeasonCount || 0,
         recentMembers: (recentMembers || []).map((m) => ({
           id: m.id,
@@ -136,6 +111,19 @@ export default function AdminDashboardPage() {
 
     setIsLoading(false)
   }, [supabase])
+
+  const handleToggleGoodsShop = async () => {
+    setIsTogglingGoods(true)
+    const newValue = !goodsShopVisible
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert({ key: 'goods_shop_visible', value: String(newValue), updated_at: new Date().toISOString() }, { onConflict: 'key' })
+
+    if (!error) {
+      setGoodsShopVisible(newValue)
+    }
+    setIsTogglingGoods(false)
+  }
 
   useEffect(() => {
     fetchStats()
@@ -185,28 +173,39 @@ export default function AdminDashboardPage() {
           color="primary"
           delay={0}
         />
-        <StatsCard
-          title="시즌 후원자"
-          value={stats?.seasonDonorCount.toLocaleString() || '0'}
-          icon={Heart}
-          color="success"
-          delay={0.1}
-        />
-        <StatsCard
-          title="시즌 후원금"
-          value={formatCurrency(stats?.seasonTotalAmount || 0)}
-          icon={TrendingUp}
-          color="warning"
-          delay={0.2}
-        />
-        <StatsCard
-          title="전체 후원금"
-          value={formatCurrency(stats?.totalDonationAmount || 0)}
-          icon={TrendingUp}
-          color="info"
-          delay={0.3}
-        />
       </div>
+
+      {/* 사이트 설정 토글 */}
+      <motion.div
+        className={styles.contentStatsGrid}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        <div
+          className={styles.contentStatCard}
+          style={{ cursor: 'pointer', opacity: isTogglingGoods ? 0.5 : 1 }}
+          onClick={handleToggleGoodsShop}
+        >
+          <ShoppingBag size={20} className={styles.contentStatIcon} />
+          <div className={styles.contentStatInfo}>
+            <span className={styles.contentStatValue}>{goodsShopVisible ? 'ON' : 'OFF'}</span>
+            <span className={styles.contentStatLabel}>레이블 굿즈샵</span>
+          </div>
+          <div style={{
+            width: 36, height: 20, borderRadius: 10,
+            background: goodsShopVisible ? '#fd68ba' : '#555',
+            position: 'relative', transition: 'background 0.2s', marginLeft: 'auto',
+          }}>
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%', background: '#fff',
+              position: 'absolute', top: 2,
+              left: goodsShopVisible ? 18 : 2,
+              transition: 'left 0.2s',
+            }} />
+          </div>
+        </div>
+      </motion.div>
 
       {/* Content Stats */}
       <motion.div

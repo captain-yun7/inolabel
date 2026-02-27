@@ -3,39 +3,60 @@
 import { useEffect, useState } from 'react'
 import styles from './YouTubeShorts.module.css'
 
-interface ShortsVideo {
+interface YouTubeVideo {
   id: string
   title: string
   thumbnail: string
   publishedAt: string
 }
 
+type TabType = 'videos' | 'shorts'
+
 export default function YouTubeShorts() {
-  const [shorts, setShorts] = useState<ShortsVideo[]>([])
+  const [activeTab, setActiveTab] = useState<TabType>('videos')
+  const [videos, setVideos] = useState<YouTubeVideo[]>([])
+  const [shorts, setShorts] = useState<YouTubeVideo[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchShorts = async () => {
+    const fetchData = async (type: TabType) => {
       try {
-        const res = await fetch('/api/youtube/shorts?limit=10')
+        const res = await fetch(`/api/youtube/shorts?limit=10&type=${type}`)
         const { data } = await res.json()
-        setShorts(data || [])
+        return data || []
       } catch (err) {
-        console.error('Failed to fetch shorts:', err)
-      } finally {
-        setIsLoading(false)
+        console.error(`Failed to fetch ${type}:`, err)
+        return []
       }
     }
 
-    fetchShorts()
+    const init = async () => {
+      setIsLoading(true)
+      const [videosData, shortsData] = await Promise.all([
+        fetchData('videos'),
+        fetchData('shorts'),
+      ])
+      setVideos(videosData)
+      setShorts(shortsData)
+      setIsLoading(false)
+    }
+
+    init()
   }, [])
+
+  const currentData = activeTab === 'videos' ? videos : shorts
+  const isShorts = activeTab === 'shorts'
 
   if (isLoading) {
     return (
       <section className={styles.section}>
         <div className={styles.header}>
-          <span className={styles.badge}>SHORTS</span>
-          <h3 className={styles.title}>유튜브 쇼츠</h3>
+          <span className={styles.badge}>YouTube</span>
+          <h3 className={styles.title}>유튜브</h3>
+          <div className={styles.tabs}>
+            <button className={`${styles.tab} ${styles.tabActive}`}>영상</button>
+            <button className={styles.tab}>쇼츠</button>
+          </div>
         </div>
         <div className={styles.scrollContainer}>
           <div className={styles.grid}>
@@ -48,53 +69,67 @@ export default function YouTubeShorts() {
     )
   }
 
-  if (shorts.length === 0) {
-    return (
-      <section className={styles.section}>
-        <div className={styles.header}>
-          <span className={styles.badge}>SHORTS</span>
-          <h3 className={styles.title}>유튜브 쇼츠</h3>
-        </div>
-        <div className={styles.empty}>
-          쇼츠 콘텐츠 준비 중입니다
-        </div>
-      </section>
-    )
-  }
-
   return (
     <section className={styles.section}>
       <div className={styles.header}>
-        <span className={styles.badge}>SHORTS</span>
-        <h3 className={styles.title}>유튜브 쇼츠</h3>
-      </div>
-      <div className={styles.scrollContainer}>
-        <div className={styles.grid}>
-          {shorts.map((video) => (
-            <a
-              key={video.id}
-              href={`https://www.youtube.com/shorts/${video.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.card}
-            >
-              <div className={styles.thumbnail}>
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  loading="lazy"
-                />
-                <div className={styles.playOverlay}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
-              <span className={styles.cardTitle}>{video.title}</span>
-            </a>
-          ))}
+        <span className={styles.badge}>YouTube</span>
+        <h3 className={styles.title}>유튜브</h3>
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${activeTab === 'videos' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('videos')}
+          >
+            영상
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'shorts' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('shorts')}
+          >
+            쇼츠
+          </button>
         </div>
       </div>
+
+      {currentData.length === 0 ? (
+        <div className={styles.empty}>
+          {isShorts ? '쇼츠 콘텐츠 준비 중입니다' : '영상 콘텐츠 준비 중입니다'}
+        </div>
+      ) : (
+        <div className={styles.scrollContainer}>
+          <div className={styles.grid}>
+            {currentData.map((video) => {
+              const videoUrl = isShorts
+                ? `https://www.youtube.com/shorts/${video.id}`
+                : `https://www.youtube.com/watch?v=${video.id}`
+
+              return (
+                <a
+                  key={video.id}
+                  href={videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.card}
+                  data-type={activeTab}
+                >
+                  <div className={isShorts ? styles.thumbnail : styles.thumbnailWide}>
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      loading="lazy"
+                    />
+                    <div className={styles.playOverlay}>
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <span className={styles.cardTitle}>{video.title}</span>
+                </a>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </section>
   )
 }

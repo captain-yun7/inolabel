@@ -670,31 +670,6 @@ export default function OrganizationPage() {
                 <div className={styles.formGroup}>
                   <label>
                     <Radio size={14} style={{ marginRight: '0.25rem' }} />
-                    PandaTV ID
-                  </label>
-                  <input
-                    type="text"
-                    value={editingMember.socialLinks?.pandatv || ''}
-                    onChange={(e) =>
-                      setEditingMember({
-                        ...editingMember,
-                        socialLinks: {
-                          ...editingMember.socialLinks,
-                          pandatv: e.target.value || undefined,
-                        },
-                      })
-                    }
-                    className={styles.input}
-                    placeholder="hj042300"
-                  />
-                  <span className={styles.helperText} style={{ color: 'var(--text-tertiary)' }}>
-                    팬더티비 아이디만 입력 (예: hj042300)
-                  </span>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label>
-                    <Radio size={14} style={{ marginRight: '0.25rem' }} />
                     SOOP TV ID
                   </label>
                   <input
@@ -715,6 +690,50 @@ export default function OrganizationPage() {
                   <span className={styles.helperText} style={{ color: 'var(--text-tertiary)' }}>
                     SOOP 방송국 URL 입력 시 자동 입력됩니다
                   </span>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>
+                    <Radio size={14} style={{ marginRight: '0.25rem' }} />
+                    Instagram
+                  </label>
+                  <input
+                    type="text"
+                    value={editingMember.socialLinks?.instagram || ''}
+                    onChange={(e) =>
+                      setEditingMember({
+                        ...editingMember,
+                        socialLinks: {
+                          ...editingMember.socialLinks,
+                          instagram: e.target.value || undefined,
+                        },
+                      })
+                    }
+                    className={styles.input}
+                    placeholder="https://www.instagram.com/username"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>
+                    <Radio size={14} style={{ marginRight: '0.25rem' }} />
+                    YouTube
+                  </label>
+                  <input
+                    type="text"
+                    value={editingMember.socialLinks?.youtube || ''}
+                    onChange={(e) =>
+                      setEditingMember({
+                        ...editingMember,
+                        socialLinks: {
+                          ...editingMember.socialLinks,
+                          youtube: e.target.value || undefined,
+                        },
+                      })
+                    }
+                    className={styles.input}
+                    placeholder="https://www.youtube.com/@channel"
+                  />
                 </div>
               </div>
 

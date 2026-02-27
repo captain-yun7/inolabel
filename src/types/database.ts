@@ -642,6 +642,7 @@ export type Database = {
         Row: {
           id: number
           board_type: 'free' | 'vip' | 'anonymous' | 'recommend' | 'meme' | 'report'
+          header_tag: string | null
           title: string
           content: string
           author_id: string
@@ -656,6 +657,7 @@ export type Database = {
         Insert: {
           id?: number
           board_type: 'free' | 'vip' | 'anonymous' | 'recommend' | 'meme' | 'report'
+          header_tag?: string | null
           title: string
           content: string
           author_id: string
@@ -670,6 +672,7 @@ export type Database = {
         Update: {
           id?: number
           board_type?: 'free' | 'vip' | 'anonymous' | 'recommend' | 'meme' | 'report'
+          header_tag?: string | null
           title?: string
           content?: string
           author_id?: string
@@ -898,6 +901,7 @@ export type Database = {
           player_name: string
           race: 'terran' | 'zerg' | 'protoss' | null
           image_url: string | null
+          soop_id: string | null
           description: string | null
           position_order: number
           added_by: string | null
@@ -910,6 +914,7 @@ export type Database = {
           player_name: string
           race?: 'terran' | 'zerg' | 'protoss' | null
           image_url?: string | null
+          soop_id?: string | null
           description?: string | null
           position_order?: number
           added_by?: string | null
@@ -922,6 +927,7 @@ export type Database = {
           player_name?: string
           race?: 'terran' | 'zerg' | 'protoss' | null
           image_url?: string | null
+          soop_id?: string | null
           description?: string | null
           position_order?: number
           added_by?: string | null
@@ -1875,6 +1881,24 @@ export type Database = {
           }
         ]
       }
+      site_settings: {
+        Row: {
+          key: string
+          value: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: string
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2046,6 +2070,7 @@ export interface StarcraftTierMember {
   player_name: string
   race: StarcraftRace | null
   image_url: string | null
+  soop_id: string | null
   description: string | null
   position_order: number
   added_by: string | null

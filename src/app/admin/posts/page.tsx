@@ -16,7 +16,7 @@ interface Post {
   content: string
   authorId: string
   authorName: string
-  boardType: 'free' | 'vip'
+  boardType: string
   viewCount: number
   commentCount: number
   isAnonymous: boolean
@@ -35,7 +35,7 @@ export default function PostsPage() {
   const { showConfirm, showError, showSuccess } = useAlert()
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [activeCategory, setActiveCategory] = useState<'all' | 'free' | 'vip'>('all')
+  const [activeCategory, setActiveCategory] = useState<string>('all')
 
   // 이미지 업로드 훅
   const { uploadImage } = useImageUpload({
@@ -369,25 +369,23 @@ export default function PostsPage() {
       </header>
 
       {/* Category Tabs */}
-      <div className={styles.typeSelector}>
-        <button
-          onClick={() => setActiveCategory('all')}
-          className={`${styles.typeButton} ${activeCategory === 'all' ? styles.active : ''}`}
-        >
-          전체
-        </button>
-        <button
-          onClick={() => setActiveCategory('free')}
-          className={`${styles.typeButton} ${activeCategory === 'free' ? styles.active : ''}`}
-        >
-          자유게시판
-        </button>
-        <button
-          onClick={() => setActiveCategory('vip')}
-          className={`${styles.typeButton} ${activeCategory === 'vip' ? styles.active : ''}`}
-        >
-          VIP게시판
-        </button>
+      <div className={styles.typeSelector} style={{ flexWrap: 'wrap' }}>
+        {[
+          { key: 'all', label: '전체' },
+          { key: 'free', label: '자유게시판' },
+          { key: 'anonymous', label: '익명게시판' },
+          { key: 'recommend', label: '컨텐츠추천' },
+          { key: 'meme', label: '짤,움짤모음' },
+          { key: 'report', label: '신고게시판' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveCategory(tab.key)}
+            className={`${styles.typeButton} ${activeCategory === tab.key ? styles.active : ''}`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <DataTable
@@ -528,21 +526,23 @@ export default function PostsPage() {
       >
         <div className={styles.formGroup}>
           <label>카테고리</label>
-          <div className={styles.typeSelector}>
-            <button
-              type="button"
-              onClick={() => setEditingPost(prev => prev ? { ...prev, boardType: 'free' } : null)}
-              className={`${styles.typeButton} ${editingPost?.boardType === 'free' ? styles.active : ''}`}
-            >
-              자유게시판
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditingPost(prev => prev ? { ...prev, boardType: 'vip' } : null)}
-              className={`${styles.typeButton} ${editingPost?.boardType === 'vip' ? styles.active : ''}`}
-            >
-              VIP게시판
-            </button>
+          <div className={styles.typeSelector} style={{ flexWrap: 'wrap' }}>
+            {[
+              { key: 'free', label: '자유게시판' },
+              { key: 'anonymous', label: '익명게시판' },
+              { key: 'recommend', label: '컨텐츠추천' },
+              { key: 'meme', label: '짤,움짤모음' },
+              { key: 'report', label: '신고게시판' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setEditingPost(prev => prev ? { ...prev, boardType: tab.key } : null)}
+                className={`${styles.typeButton} ${editingPost?.boardType === tab.key ? styles.active : ''}`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
 
