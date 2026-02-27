@@ -19,7 +19,7 @@ const r2Client = new S3Client({
   },
 })
 
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'rg-family-images'
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'inolable-images'
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || ''
 
 // 인증 헬퍼 함수

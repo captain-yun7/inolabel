@@ -3,71 +3,55 @@ import { test, expect } from '@playwright/test'
 test.describe('홈페이지', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
+    // 클라이언트 렌더링 대기
+    await page.waitForLoadState('networkidle')
   })
 
-  test('메인 페이지 로드', async ({ page }) => {
-    // 페이지 제목 확인
-    await expect(page).toHaveTitle(/RG Family/)
-    
-    // Hero 섹션 존재 확인
+  test('페이지 타이틀 확인', async ({ page }) => {
+    await expect(page).toHaveTitle(/INOLABEL/)
+  })
+
+  test('Navbar 존재 및 주요 메뉴 확인', async ({ page }) => {
+    const nav = page.locator('nav').first()
+    await expect(nav).toBeVisible()
+
+    // 주요 메뉴 버튼/링크 (nav 스코프 내에서 검색)
+    await expect(nav.getByText('이노레이블', { exact: true })).toBeVisible()
+    await expect(nav.getByText('스타크래프트', { exact: true })).toBeVisible()
+    await expect(nav.getByText('커뮤니티', { exact: true })).toBeVisible()
+    await expect(nav.getByRole('link', { name: '타임라인' })).toBeVisible()
+    await expect(nav.getByRole('link', { name: '시그목록' })).toBeVisible()
+  })
+
+  test('Hero 섹션 표시', async ({ page }) => {
     const hero = page.locator('[class*="hero"]').first()
     await expect(hero).toBeVisible()
   })
 
-  test('네비게이션 메뉴 존재', async ({ page }) => {
-    // 네비게이션 메뉴 확인
-    const nav = page.locator('nav').first()
-    await expect(nav).toBeVisible()
-    
-    // 주요 메뉴 링크 확인
-    await expect(page.getByRole('link', { name: /RG Info/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Ranking/i })).toBeVisible()
+  test('LIVE NOW / 실시간 멤버 섹션 표시', async ({ page }) => {
+    await expect(page.getByText('LIVE NOW')).toBeVisible()
+    await expect(page.getByText('실시간 멤버')).toBeVisible()
   })
 
-  test('LIVE MEMBERS 섹션', async ({ page }) => {
-    // LIVE MEMBERS 섹션 확인
-    const liveSection = page.locator('text=LIVE').first()
-    await expect(liveSection).toBeVisible()
+  test('커뮤니티 프리뷰 섹션 표시', async ({ page }) => {
+    const communitySection = page.locator('[class*="community"], [class*="Community"]').first()
+    await expect(communitySection).toBeVisible()
   })
 
-  test('공지사항 섹션', async ({ page }) => {
-    // 공지사항 섹션 확인
-    const noticeSection = page.locator('[class*="notice"]').first()
-    await expect(noticeSection).toBeVisible()
+  test('Footer 존재', async ({ page }) => {
+    const footer = page.locator('footer').first()
+    await expect(footer).toBeVisible()
   })
 
-  test('다크/라이트 모드 토글', async ({ page }) => {
-    // 테마 토글 버튼 찾기
-    const themeToggle = page.locator('[aria-label*="theme"], [class*="theme-toggle"]').first()
-    
-    if (await themeToggle.isVisible()) {
-      // 현재 테마 확인
-      const html = page.locator('html')
-      const initialTheme = await html.getAttribute('data-theme')
-      
-      // 토글 클릭
-      await themeToggle.click()
-      
-      // 테마 변경 확인
-      await expect(html).not.toHaveAttribute('data-theme', initialTheme || '')
-    }
+  test('로고 클릭 시 홈 이동', async ({ page }) => {
+    await page.goto('/rg/live')
+    await page.waitForLoadState('networkidle')
+    // nav 내부 로고 링크 클릭
+    await page.locator('nav a[href="/"]').first().click()
+    await expect(page).toHaveURL('/')
   })
-})
 
-test.describe('모바일 반응형', () => {
-  test.use({ viewport: { width: 375, height: 667 } })
-
-  test('모바일에서 메뉴 표시', async ({ page }) => {
-    await page.goto('/')
-    
-    // 햄버거 메뉴 또는 모바일 네비게이션 확인
-    const mobileMenu = page.locator('[class*="mobile-menu"], [class*="hamburger"], button[aria-label*="menu"]').first()
-    
-    // 모바일 메뉴가 있으면 클릭하여 열기
-    if (await mobileMenu.isVisible()) {
-      await mobileMenu.click()
-      // 메뉴 열림 확인
-      await expect(page.locator('[class*="menu-open"], [class*="nav-open"]').first()).toBeVisible()
-    }
+  test('비인증 상태에서 로그인 버튼 표시', async ({ page }) => {
+    await expect(page.getByText('로그인')).toBeVisible()
   })
 })
