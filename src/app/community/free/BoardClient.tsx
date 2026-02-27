@@ -333,7 +333,7 @@ export default function BoardClient({
                 {pinnedNotices.map(notice => (
                   <Link
                     key={notice.id}
-                    href={`/notices/${notice.id}`}
+                    href={`/notice/${notice.id}`}
                     className={styles.pinnedRow}
                   >
                     <Pin size={12} className={styles.pinnedIcon} />
