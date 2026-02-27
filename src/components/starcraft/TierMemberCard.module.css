@@ -117,6 +117,51 @@
   line-height: 1.5;
 }
 
+/* ─── LIVE 호버 썸네일 미리보기 ─── */
+.previewPopup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: var(--surface, #1a1a1a);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: previewFadeIn 0.15s ease-out;
+}
+
+@keyframes previewFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.previewThumbnail {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+}
+
+.previewLink {
+  display: block;
+  text-align: center;
+  padding: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #00d4ff;
+  text-decoration: none;
+  background: rgba(0, 212, 255, 0.08);
+  transition: background 0.15s;
+}
+
+.previewLink:hover {
+  background: rgba(0, 212, 255, 0.15);
+}
+
 /* ─── 반응형 ─── */
 @media (max-width: 640px) {
   .card {

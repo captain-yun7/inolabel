@@ -26,6 +26,7 @@ export default async function FreeBoardPage() {
       likeCount: p.like_count || 0,
       createdAt: p.created_at,
       category: '잡담',
+      headerTag: p.header_tag || null,
     }
   })
 

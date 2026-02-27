@@ -22,10 +22,24 @@ export default function GoodsShop() {
   const [goods, setGoods] = useState<GoodsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<GoodsItem | null>(null)
+  const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
     const fetchGoods = async () => {
       try {
+        // 굿즈샵 표시 설정 확인
+        const { data: setting } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'goods_shop_visible')
+          .single()
+
+        if (setting && (setting.value === 'false' || setting.value === false)) {
+          setIsVisible(false)
+          setIsLoading(false)
+          return
+        }
+
         const { data, error } = await supabase
           .from('goods')
           .select('*')
@@ -44,6 +58,8 @@ export default function GoodsShop() {
 
     fetchGoods()
   }, [supabase])
+
+  if (!isVisible) return null
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('ko-KR').format(price)

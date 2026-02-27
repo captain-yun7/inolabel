@@ -17,7 +17,7 @@ import {
 import { DataTable, Column } from '@/components/admin'
 import { useAdminCRUD, useAlert } from '@/lib/hooks'
 import { useSupabaseContext } from '@/lib/context'
-import { formatAmount } from '@/lib/utils/format'
+
 import styles from '../shared.module.css'
 
 interface Member {
@@ -176,21 +176,6 @@ export default function MembersPage() {
           <option value="admin">관리자</option>
           <option value="superadmin">최고관리자</option>
         </select>
-      ),
-    },
-    {
-      key: 'unit',
-      header: '부서',
-      width: '100px',
-      render: (item) => getUnitBadge(item.unit),
-    },
-    {
-      key: 'totalDonation',
-      header: '총 후원',
-      width: '120px',
-      sortable: true,
-      render: (item) => (
-        <span className={styles.amountCell}>{formatAmount(item.totalDonation, '하트')}</span>
       ),
     },
     {
@@ -386,12 +371,6 @@ export default function MembersPage() {
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{editingMember.email || '-'}</div>
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>총 후원</span>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                      {formatAmount(editingMember.totalDonation || 0, '하트')}
-                    </div>
-                  </div>
-                  <div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>가입일</span>
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
                       {editingMember.createdAt ? formatShortDate(editingMember.createdAt) : '-'}
@@ -434,23 +413,6 @@ export default function MembersPage() {
                     </select>
                   </div>
 
-                  <div className={styles.formGroup}>
-                    <label>부서</label>
-                    <select
-                      value={editingMember.unit || ''}
-                      onChange={(e) =>
-                        setEditingMember({
-                          ...editingMember,
-                          unit: e.target.value === '' ? null : (e.target.value as 'excel' | 'crew'),
-                        })
-                      }
-                      className={styles.select}
-                    >
-                      <option value="">미지정</option>
-                      <option value="excel">엑셀부</option>
-                      <option value="crew">스타부</option>
-                    </select>
-                  </div>
                 </div>
 
                 {/* 역할 설명 */}

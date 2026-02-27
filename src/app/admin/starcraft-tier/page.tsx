@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { getTiersWithMembers, addTierMember, removeTierMember, updateTierMember } from '@/lib/actions/starcraft-tier'
+import { extractBjId } from '@/lib/soop/api'
 import type { StarcraftTierWithMembers, StarcraftTierMember } from '@/types/database'
 import styles from '../shared.module.css'
 
@@ -12,8 +13,11 @@ export default function AdminStarcraftTierPage() {
   const [newPlayerName, setNewPlayerName] = useState('')
   const [newPlayerRace, setNewPlayerRace] = useState<string>('')
   const [newPlayerDesc, setNewPlayerDesc] = useState('')
-  const [editingMember, setEditingMember] = useState<StarcraftTierMember | null>(null)
+  const [newSoopUrl, setNewSoopUrl] = useState('')
+  const [editingMember, setEditingMember] = useState<(StarcraftTierMember & { _soopUrl?: string }) | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const fetchTiers = useCallback(async () => {
     setIsLoading(true)
@@ -27,19 +31,56 @@ export default function AdminStarcraftTierPage() {
     fetchTiers()
   }, [fetchTiers])
 
+  const fetchSoopProfileImage = async (soopUrl: string): Promise<{ bjId: string; imageUrl: string } | null> => {
+    const bjId = extractBjId(soopUrl.trim())
+    if (!bjId) {
+      setFetchError('유효한 SOOP 방송국 URL이 아닙니다')
+      return null
+    }
+    setIsFetchingProfile(true)
+    setFetchError(null)
+    try {
+      const response = await fetch(`/api/soop/station?bjId=${encodeURIComponent(bjId)}&action=profile-image`)
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || '프로필 이미지를 가져올 수 없습니다')
+      return { bjId, imageUrl: data.profileImage }
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : '프로필 이미지 가져오기 실패')
+      return null
+    } finally {
+      setIsFetchingProfile(false)
+    }
+  }
+
   const handleAddMember = async () => {
     if (!selectedTierId || !newPlayerName.trim()) return
     setIsSubmitting(true)
+
+    let imageUrl: string | null = null
+    let soopId: string | null = null
+
+    if (newSoopUrl.trim()) {
+      const result = await fetchSoopProfileImage(newSoopUrl)
+      if (result) {
+        imageUrl = result.imageUrl
+        soopId = result.bjId
+      }
+    }
+
     const { error } = await addTierMember({
       tier_id: selectedTierId,
       player_name: newPlayerName.trim(),
       race: (newPlayerRace || null) as StarcraftTierMember['race'],
       description: newPlayerDesc || null,
+      image_url: imageUrl,
+      soop_id: soopId,
     })
     if (!error) {
       setNewPlayerName('')
       setNewPlayerRace('')
       setNewPlayerDesc('')
+      setNewSoopUrl('')
+      setFetchError(null)
       await fetchTiers()
     } else {
       alert(error)
@@ -57,16 +98,40 @@ export default function AdminStarcraftTierPage() {
     }
   }
 
+  const handleFetchEditProfile = async () => {
+    if (!editingMember?._soopUrl?.trim()) return
+    const result = await fetchSoopProfileImage(editingMember._soopUrl)
+    if (result) {
+      setEditingMember(prev => prev ? { ...prev, image_url: result.imageUrl, soop_id: result.bjId } : null)
+    }
+  }
+
   const handleUpdateMember = async () => {
     if (!editingMember) return
     setIsSubmitting(true)
+
+    // SOOP URL이 변경된 경우 새로 fetch
+    let imageUrl = editingMember.image_url
+    let soopId = editingMember.soop_id
+
+    if (editingMember._soopUrl?.trim() && extractBjId(editingMember._soopUrl) !== editingMember.soop_id) {
+      const result = await fetchSoopProfileImage(editingMember._soopUrl)
+      if (result) {
+        imageUrl = result.imageUrl
+        soopId = result.bjId
+      }
+    }
+
     const { error } = await updateTierMember(editingMember.id, {
       player_name: editingMember.player_name,
       race: editingMember.race,
       description: editingMember.description,
+      image_url: imageUrl,
+      soop_id: soopId,
     })
     if (!error) {
       setEditingMember(null)
+      setFetchError(null)
       await fetchTiers()
     } else {
       alert(error)
@@ -143,9 +208,19 @@ export default function AdminStarcraftTierPage() {
               <option value="protoss">프로토스 (P)</option>
             </select>
           </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>SOOP 방송국 URL</label>
+            <input
+              type="text"
+              value={newSoopUrl}
+              onChange={(e) => setNewSoopUrl(e.target.value)}
+              placeholder="https://www.sooplive.co.kr/station/bjid"
+              style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--background)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '0.875rem', width: '280px' }}
+            />
+          </div>
           <button
             onClick={handleAddMember}
-            disabled={!selectedTierId || !newPlayerName.trim() || isSubmitting}
+            disabled={!selectedTierId || !newPlayerName.trim() || isSubmitting || isFetchingProfile}
             style={{
               padding: '8px 20px',
               borderRadius: '8px',
@@ -155,46 +230,87 @@ export default function AdminStarcraftTierPage() {
               fontSize: '0.875rem',
               border: 'none',
               cursor: selectedTierId && newPlayerName.trim() ? 'pointer' : 'not-allowed',
-              opacity: isSubmitting ? 0.5 : 1,
+              opacity: isSubmitting || isFetchingProfile ? 0.5 : 1,
             }}
           >
-            {isSubmitting ? '추가 중...' : '추가'}
+            {isFetchingProfile ? '프로필 가져오는 중...' : isSubmitting ? '추가 중...' : '추가'}
           </button>
         </div>
+        {fetchError && !editingMember && (
+          <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#ff5050' }}>{fetchError}</p>
+        )}
       </div>
 
       {/* 수정 모달 */}
       {editingMember && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: 'var(--surface, #1a1a1a)', borderRadius: '16px', padding: '2rem', width: '400px', maxWidth: '90vw' }}>
+          <div style={{ background: 'var(--surface, #1a1a1a)', borderRadius: '16px', padding: '2rem', width: '460px', maxWidth: '90vw' }}>
             <h3 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>멤버 수정</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <input
-                type="text"
-                value={editingMember.player_name}
-                onChange={(e) => setEditingMember({ ...editingMember, player_name: e.target.value })}
-                style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--background)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}
-              />
-              <select
-                value={editingMember.race || ''}
-                onChange={(e) => setEditingMember({ ...editingMember, race: (e.target.value || null) as StarcraftTierMember['race'] })}
-                style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--background)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}
-              >
-                <option value="">종족 없음</option>
-                <option value="terran">테란</option>
-                <option value="zerg">저그</option>
-                <option value="protoss">프로토스</option>
-              </select>
+              {/* 프로필 이미지 미리보기 */}
+              {editingMember.image_url && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                  <img
+                    src={editingMember.image_url}
+                    alt={editingMember.player_name}
+                    style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--card-border)' }}
+                  />
+                </div>
+              )}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>선수명</label>
+                <input
+                  type="text"
+                  value={editingMember.player_name}
+                  onChange={(e) => setEditingMember({ ...editingMember, player_name: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--background)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>종족</label>
+                <select
+                  value={editingMember.race || ''}
+                  onChange={(e) => setEditingMember({ ...editingMember, race: (e.target.value || null) as StarcraftTierMember['race'] })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', background: 'var(--background)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}
+                >
+                  <option value="">종족 없음</option>
+                  <option value="terran">테란</option>
+                  <option value="zerg">저그</option>
+                  <option value="protoss">프로토스</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>SOOP 방송국 URL</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    value={editingMember._soopUrl ?? (editingMember.soop_id ? `https://www.sooplive.co.kr/station/${editingMember.soop_id}` : '')}
+                    onChange={(e) => setEditingMember({ ...editingMember, _soopUrl: e.target.value })}
+                    placeholder="https://www.sooplive.co.kr/station/bjid"
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', background: 'var(--background)', border: '1px solid var(--card-border)', color: 'var(--text-primary)', fontSize: '0.875rem' }}
+                  />
+                  <button
+                    onClick={handleFetchEditProfile}
+                    disabled={isFetchingProfile}
+                    style={{ padding: '8px 12px', borderRadius: '8px', background: '#3b82f6', color: '#fff', fontSize: '0.8rem', fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', opacity: isFetchingProfile ? 0.5 : 1 }}
+                  >
+                    {isFetchingProfile ? '가져오는 중...' : '프로필 가져오기'}
+                  </button>
+                </div>
+                {fetchError && editingMember && (
+                  <p style={{ marginTop: '4px', fontSize: '0.75rem', color: '#ff5050' }}>{fetchError}</p>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <button
                   onClick={handleUpdateMember}
-                  disabled={isSubmitting}
-                  style={{ flex: 1, padding: '8px', borderRadius: '8px', background: '#fd68ba', color: '#fff', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                  disabled={isSubmitting || isFetchingProfile}
+                  style={{ flex: 1, padding: '8px', borderRadius: '8px', background: '#fd68ba', color: '#fff', fontWeight: 600, border: 'none', cursor: 'pointer', opacity: isSubmitting ? 0.5 : 1 }}
                 >
-                  저장
+                  {isSubmitting ? '저장 중...' : '저장'}
                 </button>
                 <button
-                  onClick={() => setEditingMember(null)}
+                  onClick={() => { setEditingMember(null); setFetchError(null) }}
                   style={{ flex: 1, padding: '8px', borderRadius: '8px', background: '#555', color: '#fff', fontWeight: 600, border: 'none', cursor: 'pointer' }}
                 >
                   취소
@@ -222,10 +338,20 @@ export default function AdminStarcraftTierPage() {
                   {tier.members.map((member) => (
                     <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', borderRadius: '8px', background: 'rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {member.image_url ? (
+                          <img src={member.image_url} alt="" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>?</div>
+                        )}
                         <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)' }}>{member.player_name}</span>
                         {member.race && (
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', padding: '1px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.05)' }}>
                             {member.race === 'terran' ? 'T' : member.race === 'zerg' ? 'Z' : 'P'}
+                          </span>
+                        )}
+                        {member.soop_id && (
+                          <span style={{ fontSize: '0.7rem', color: '#00d4ff', padding: '1px 6px', borderRadius: '4px', background: 'rgba(0,212,255,0.1)' }}>
+                            SOOP
                           </span>
                         )}
                       </div>

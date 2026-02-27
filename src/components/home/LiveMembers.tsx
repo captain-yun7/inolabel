@@ -13,13 +13,14 @@ interface LiveMember {
   id: number
   nickname: string
   avatarUrl: string | null
+  thumbnailUrl: string | null
   isLive: boolean
   unit: 'excel' | 'crew'
   sooptvId: string | null
 }
 
 export default function LiveMembers() {
-  const { members: rosterMembers, isLoading } = useLiveRoster({ realtime: true })
+  const { members: rosterMembers, liveStatusByMemberId, isLoading } = useLiveRoster({ realtime: true })
   const [filter, setFilter] = useState<UnitFilter>('all')
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -32,16 +33,21 @@ export default function LiveMembers() {
         seen.add(m.name)
         return true
       })
-      .map((member) => ({
-        id: member.id,
-        nickname: member.name,
-        avatarUrl: member.image_url,
-        isLive: Boolean(member.is_live),
-        unit: member.unit,
-        sooptvId: member.social_links?.soop || member.social_links?.sooptv || member.social_links?.pandatv || null,
-      }))
+      .map((member) => {
+        const liveEntries = liveStatusByMemberId[member.id] || []
+        const liveEntry = liveEntries.find(e => e.isLive)
+        return {
+          id: member.id,
+          nickname: member.name,
+          avatarUrl: member.image_url,
+          thumbnailUrl: liveEntry?.thumbnailUrl || null,
+          isLive: Boolean(member.is_live),
+          unit: member.unit,
+          sooptvId: member.social_links?.soop || member.social_links?.sooptv || member.social_links?.pandatv || null,
+        }
+      })
       .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0))
-  }, [rosterMembers])
+  }, [rosterMembers, liveStatusByMemberId])
 
   const filteredMembers = useMemo(() => {
     if (filter === 'all') return members
@@ -142,13 +148,22 @@ export default function LiveMembers() {
                   >
                     {/* Thumbnail */}
                     <div className={styles.thumbnail}>
-                      {member.avatarUrl ? (
+                      {member.isLive && member.thumbnailUrl ? (
+                        <Image
+                          src={member.thumbnailUrl}
+                          alt={`${member.nickname} 방송`}
+                          fill
+                          className={styles.thumbnailImage}
+                          sizes="240px"
+                          unoptimized
+                        />
+                      ) : member.avatarUrl ? (
                         <Image
                           src={member.avatarUrl}
                           alt={member.nickname}
                           fill
                           className={styles.thumbnailImage}
-                          sizes="180px"
+                          sizes="240px"
                         />
                       ) : (
                         <div className={styles.thumbnailPlaceholder}>

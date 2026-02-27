@@ -28,11 +28,11 @@ export default function Home() {
             <h2 className={styles.sectionTitle}>실시간 멤버</h2>
           </div>
 
-          {/* 2-Column Layout: Live Members & Community */}
-          <div className={styles.liveNoticeGrid}>
-            <LiveMembers />
-            <CommunityPreview />
-          </div>
+          {/* Live Members - Full Width */}
+          <LiveMembers />
+
+          {/* Community Preview */}
+          <CommunityPreview />
 
           {/* YouTube Shorts Section */}
           <div className={styles.sectionAlt}>

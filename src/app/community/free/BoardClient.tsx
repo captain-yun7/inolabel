@@ -24,6 +24,7 @@ interface Post {
   likeCount: number
   createdAt: string
   category?: string
+  headerTag?: string | null
 }
 
 interface BestPost {
@@ -159,6 +160,7 @@ export default function BoardClient({
             likeCount: p.like_count || 0,
             createdAt: p.created_at,
             category: categoryLabel,
+            headerTag: p.header_tag || null,
           }
         })
       )
@@ -497,7 +499,12 @@ export default function BoardClient({
                       <span className={styles.categoryBadge}>{post.category || categoryLabel}</span>
                     </div>
                     <div className={styles.cellTitle}>
-                      <h3 className={styles.postTitle}>{post.title}</h3>
+                      <h3 className={styles.postTitle}>
+                        {post.headerTag && (
+                          <span className={styles.headerTagBadge}>[{post.headerTag}]</span>
+                        )}
+                        {post.title}
+                      </h3>
                       <div className={styles.titleMeta}>
                         {post.commentCount > 0 && (
                           <span className={styles.commentCount}>
@@ -549,6 +556,9 @@ export default function BoardClient({
                     {isHot(post.viewCount, post.commentCount, post.likeCount) && <span className={styles.hotBadge}>HOT</span>}
                   </div>
                   <h3 className={styles.mobileTitle}>
+                    {post.headerTag && (
+                      <span className={styles.headerTagBadge}>[{post.headerTag}]</span>
+                    )}
                     {post.title}
                     {post.commentCount > 0 && (
                       <span className={styles.mobileCommentCount}>[{post.commentCount}]</span>

@@ -131,6 +131,14 @@
   font-weight: 500;
 }
 
+/* 머릿말 선택 */
+.headerTagSelect {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+}
+
 /* 내용 입력 */
 .contentTextarea {
   width: 100%;

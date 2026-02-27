@@ -32,6 +32,7 @@ interface Comment {
   authorId: string
   authorName: string
   authorAvatar: string | null
+  isAnonymous: boolean
   createdAt: string
 }
 
@@ -60,6 +61,7 @@ export default function PostDetailPage({
   const [post, setPost] = useState<PostDetail | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
+  const [isAnonymousComment, setIsAnonymousComment] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -132,12 +134,14 @@ export default function PostDetailPage({
     setComments(
       (commentsData || []).map((c) => {
         const commentProfile = c.profiles as JoinedProfile | null
+        const commentAnonymous = Boolean(c.is_anonymous)
         return {
           id: c.id,
           content: c.content,
           authorId: c.author_id,
-          authorName: commentProfile?.nickname || '익명',
-          authorAvatar: commentProfile?.avatar_url || null,
+          authorName: commentAnonymous ? '익명' : (commentProfile?.nickname || '익명'),
+          authorAvatar: commentAnonymous ? null : (commentProfile?.avatar_url || null),
+          isAnonymous: commentAnonymous,
           createdAt: c.created_at,
         }
       })
@@ -160,6 +164,7 @@ export default function PostDetailPage({
       post_id: postId,
       author_id: user.id,
       content: newComment.trim(),
+      is_anonymous: isAnonymousComment,
     })
 
     if (error) {
@@ -167,7 +172,8 @@ export default function PostDetailPage({
       alert('댓글 작성에 실패했습니다.')
     } else {
       setNewComment('')
-      fetchPost() // 댓글 새로고침
+      setIsAnonymousComment(false)
+      fetchPost()
     }
 
     setIsSubmitting(false)
@@ -179,8 +185,9 @@ export default function PostDetailPage({
 
     // Optimistic update
     const wasLiked = isLiked
+    const newCount = wasLiked ? likeCount - 1 : likeCount + 1
     setIsLiked(!wasLiked)
-    setLikeCount((prev) => wasLiked ? prev - 1 : prev + 1)
+    setLikeCount(newCount)
 
     if (wasLiked) {
       const { error } = await supabase
@@ -189,20 +196,26 @@ export default function PostDetailPage({
         .eq('post_id', postId)
         .eq('user_id', user.id)
       if (error) {
-        // Rollback
         setIsLiked(true)
-        setLikeCount((prev) => prev + 1)
+        setLikeCount(likeCount)
+        return
       }
     } else {
       const { error } = await supabase
         .from('post_likes')
         .insert({ post_id: postId, user_id: user.id })
       if (error) {
-        // Rollback
         setIsLiked(false)
-        setLikeCount((prev) => prev - 1)
+        setLikeCount(likeCount)
+        return
       }
     }
+
+    // DB의 like_count도 업데이트
+    await supabase
+      .from('posts')
+      .update({ like_count: Math.max(0, newCount) })
+      .eq('id', postId)
   }
 
   // 댓글 삭제 권한 확인 함수
@@ -403,14 +416,24 @@ export default function PostDetailPage({
                 className={styles.commentInput}
                 rows={3}
               />
-              <button
-                type="submit"
-                disabled={isSubmitting || !newComment.trim()}
-                className={styles.submitButton}
-              >
-                <Send size={16} />
-                등록
-              </button>
+              <div className={styles.commentFormActions}>
+                <label className={styles.anonymousToggle}>
+                  <input
+                    type="checkbox"
+                    checked={isAnonymousComment}
+                    onChange={(e) => setIsAnonymousComment(e.target.checked)}
+                  />
+                  <span>익명으로 작성</span>
+                </label>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !newComment.trim()}
+                  className={styles.submitButton}
+                >
+                  <Send size={16} />
+                  등록
+                </button>
+              </div>
             </form>
           ) : (
             <div className={styles.loginPrompt}>

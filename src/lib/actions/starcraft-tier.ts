@@ -43,6 +43,7 @@ export async function addTierMember(data: {
   player_name: string
   race?: StarcraftRace | null
   image_url?: string | null
+  soop_id?: string | null
   description?: string | null
 }): Promise<{ data: StarcraftTierMember | null; error: string | null }> {
   try {
@@ -81,6 +82,7 @@ export async function addTierMember(data: {
         player_name: data.player_name,
         race: data.race || null,
         image_url: data.image_url || null,
+        soop_id: data.soop_id || null,
         description: data.description || null,
         position_order: nextOrder,
         added_by: user.id,
@@ -134,6 +136,7 @@ export async function updateTierMember(
     player_name?: string
     race?: StarcraftRace | null
     image_url?: string | null
+    soop_id?: string | null
     description?: string | null
     tier_id?: number
     position_order?: number

@@ -411,6 +411,7 @@ class MockPostRepository implements IPostRepository {
       comment_count: data.comment_count || 0,
       is_anonymous: data.is_anonymous ?? false,
       is_deleted: false,
+      header_tag: data.header_tag ?? null,
       created_at: now,
       updated_at: now,
     }

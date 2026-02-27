@@ -189,7 +189,7 @@
 /* ─── Thumbnail Card ─── */
 .card {
   flex-shrink: 0;
-  width: 160px;
+  width: 220px;
   text-decoration: none;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -226,7 +226,7 @@
 .thumbnail {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   background: var(--overlay-light);
   overflow: hidden;
 }
@@ -306,8 +306,8 @@
 /* ─── Skeleton ─── */
 .skeleton {
   flex-shrink: 0;
-  width: 160px;
-  height: 140px;
+  width: 220px;
+  height: 170px;
   border-radius: var(--radius-lg);
   background: linear-gradient(90deg, var(--surface) 25%, var(--card-border) 50%, var(--surface) 75%);
   background-size: 200% 100%;
@@ -343,7 +343,7 @@
   }
 
   .card {
-    width: 140px;
+    width: 180px;
   }
 
   .scrollBtn {
@@ -366,7 +366,7 @@
   }
 
   .card {
-    width: 130px;
+    width: 160px;
   }
 
   .cardName {
@@ -374,7 +374,7 @@
   }
 
   .skeleton {
-    width: 130px;
-    height: 120px;
+    width: 160px;
+    height: 140px;
   }
 }
