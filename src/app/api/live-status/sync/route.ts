@@ -16,6 +16,8 @@ interface SyncResult {
   updated: number
   live: number
   errors: string[]
+  tierTotal?: number
+  tierLive?: number
 }
 
 export async function POST(request: Request) {
@@ -206,6 +208,53 @@ export async function POST(request: Request) {
       result.errors.push(`organization update (${update.id}): ${updateError.message}`)
     }
   }
+
+  // --- 스타크래프트 티어 멤버 라이브 싱크 ---
+  let tierTotal = 0
+  let tierLive = 0
+
+  const { data: tierMembers, error: tierError } = await supabase
+    .from('starcraft_tier_members')
+    .select('id, soop_id, is_live')
+    .not('soop_id', 'is', null)
+
+  if (tierError) {
+    result.errors.push(`tier members query: ${tierError.message}`)
+  } else if (tierMembers && tierMembers.length > 0) {
+    tierTotal = tierMembers.length
+    const tierBjIds = tierMembers.map(m => m.soop_id!).filter(Boolean)
+    const tierStatuses = await checkSoopMultiple(tierBjIds, 5)
+    const tierStatusMap = new Map(tierStatuses.map(s => [s.bjId, s]))
+
+    for (const member of tierMembers) {
+      const status = tierStatusMap.get(member.soop_id!)
+      if (!status) continue
+
+      const isLive = status.isLive
+      if (isLive) tierLive++
+
+      // 상태가 변경되었거나 라이브 중인 경우만 업데이트
+      if (isLive !== member.is_live || isLive) {
+        const { error: tierUpdateError } = await supabase
+          .from('starcraft_tier_members')
+          .update({
+            is_live: isLive,
+            live_title: isLive ? (status.title || null) : null,
+            live_thumbnail: isLive ? (status.thumbnailUrl || null) : null,
+            viewer_count: isLive ? (status.viewerCount || 0) : 0,
+            live_checked_at: now,
+          })
+          .eq('id', member.id)
+
+        if (tierUpdateError) {
+          result.errors.push(`tier member update (${member.id}): ${tierUpdateError.message}`)
+        }
+      }
+    }
+  }
+
+  result.tierTotal = tierTotal
+  result.tierLive = tierLive
 
   return NextResponse.json({
     message: 'Sync completed',

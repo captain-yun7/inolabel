@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import type { StarcraftTierMember } from '@/types/database'
 import styles from './TierMemberCard.module.css'
 
@@ -28,27 +29,44 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
   const raceColor = member.race ? RACE_COLOR[member.race] : undefined
   const raceLabel = member.race ? RACE_LABEL[member.race] : null
   const [showPreview, setShowPreview] = useState(false)
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number } | null>(null)
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     if (!isLive || !thumbnailUrl) return
-    hoverTimer.current = setTimeout(() => setShowPreview(true), 300)
-  }
+    hoverTimer.current = setTimeout(() => {
+      if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect()
+        const popupWidth = 280
+        const popupHeight = 220 // 대략적인 팝업 높이
+        let left = rect.left + rect.width / 2 - popupWidth / 2
+        if (left < 8) left = 8
+        if (left + popupWidth > window.innerWidth - 8) left = window.innerWidth - popupWidth - 8
+        // 위에 공간 있으면 위, 없으면 아래
+        const top = rect.top > popupHeight + 8
+          ? rect.top - popupHeight - 6
+          : rect.bottom + 6
+        setPopupPos({ top, left })
+      }
+      setShowPreview(true)
+    }, 300)
+  }, [isLive, thumbnailUrl])
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
     setShowPreview(false)
-  }
+  }, [])
 
   const soopId = member.soop_id
   const broadcastUrl = streamUrl || (soopId ? `https://www.sooplive.co.kr/${soopId}` : null)
 
   return (
     <div
+      ref={cardRef}
       className={`${styles.card} ${isLive ? styles.liveCard : ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{ position: 'relative' }}
     >
       <div className={styles.avatarWrap}>
         {member.image_url ? (
@@ -94,9 +112,13 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
         </span>
       )}
 
-      {/* LIVE 호버 시 썸네일 미리보기 팝업 */}
-      {showPreview && thumbnailUrl && (
-        <div className={styles.previewPopup}>
+      {/* LIVE 호버 시 썸네일 미리보기 팝업 (Portal → body) */}
+      {showPreview && thumbnailUrl && popupPos && createPortal(
+        <div
+          className={styles.previewPopup}
+          style={{ top: popupPos.top, left: popupPos.left }}
+          onMouseEnter={handleMouseLeave}
+        >
           <div className={styles.previewPopupInner}>
             <img src={thumbnailUrl} alt="방송 미리보기" className={styles.previewThumbnail} />
             {broadcastTitle && (
@@ -114,7 +136,8 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
               </a>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

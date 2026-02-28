@@ -1,17 +1,14 @@
 'use client'
 
 import type { StarcraftTierWithMembers } from '@/types/database'
-import type { LiveInfoByName } from './TierBoard'
 import TierMemberCard from './TierMemberCard'
 import styles from './TierRow.module.css'
 
 interface TierRowProps {
   tier: StarcraftTierWithMembers
-  isMemberLive?: (m: { player_name: string; soop_id?: string | null }) => boolean
-  getMemberLiveInfo?: (m: { player_name: string; soop_id?: string | null }) => LiveInfoByName | undefined
 }
 
-export default function TierRow({ tier, isMemberLive, getMemberLiveInfo }: TierRowProps) {
+export default function TierRow({ tier }: TierRowProps) {
   return (
     <div className={styles.row}>
       <div
@@ -26,20 +23,16 @@ export default function TierRow({ tier, isMemberLive, getMemberLiveInfo }: TierR
             <span>멤버 없음</span>
           </div>
         ) : (
-          tier.members.map((member) => {
-            const isLive = isMemberLive?.(member) || false
-            const liveInfo = isLive ? getMemberLiveInfo?.(member) : undefined
-            return (
-              <TierMemberCard
-                key={member.id}
-                member={member}
-                isLive={isLive}
-                thumbnailUrl={liveInfo?.thumbnailUrl || null}
-                streamUrl={liveInfo?.streamUrl || null}
-                broadcastTitle={liveInfo?.broadcastTitle || null}
-              />
-            )
-          })
+          tier.members.map((member) => (
+            <TierMemberCard
+              key={member.id}
+              member={member}
+              isLive={member.is_live}
+              thumbnailUrl={member.live_thumbnail}
+              streamUrl={member.soop_id ? `https://play.sooplive.co.kr/${member.soop_id}` : null}
+              broadcastTitle={member.live_title}
+            />
+          ))
         )}
       </div>
     </div>

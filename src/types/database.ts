@@ -908,6 +908,11 @@ export type Database = {
           description: string | null
           position_order: number
           added_by: string | null
+          is_live: boolean
+          live_title: string | null
+          live_thumbnail: string | null
+          viewer_count: number
+          live_checked_at: string | null
           created_at: string
           updated_at: string
         }
@@ -921,6 +926,11 @@ export type Database = {
           description?: string | null
           position_order?: number
           added_by?: string | null
+          is_live?: boolean
+          live_title?: string | null
+          live_thumbnail?: string | null
+          viewer_count?: number
+          live_checked_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -934,6 +944,11 @@ export type Database = {
           description?: string | null
           position_order?: number
           added_by?: string | null
+          is_live?: boolean
+          live_title?: string | null
+          live_thumbnail?: string | null
+          viewer_count?: number
+          live_checked_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -2077,6 +2092,11 @@ export interface StarcraftTierMember {
   description: string | null
   position_order: number
   added_by: string | null
+  is_live: boolean
+  live_title: string | null
+  live_thumbnail: string | null
+  viewer_count: number
+  live_checked_at: string | null
   created_at: string
   updated_at: string
 }
