@@ -12,18 +12,24 @@ CREATE TABLE IF NOT EXISTS site_settings (
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
 -- 누구나 읽기 가능
-CREATE POLICY IF NOT EXISTS "site_settings_read_all" ON site_settings
-  FOR SELECT USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'site_settings_read_all' AND tablename = 'site_settings') THEN
+    CREATE POLICY "site_settings_read_all" ON site_settings FOR SELECT USING (true);
+  END IF;
+END $$;
 
 -- admin/superadmin만 수정 가능
-CREATE POLICY IF NOT EXISTS "site_settings_update_admin" ON site_settings
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.role IN ('admin', 'superadmin')
-    )
-  );
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'site_settings_update_admin' AND tablename = 'site_settings') THEN
+    CREATE POLICY "site_settings_update_admin" ON site_settings FOR ALL USING (
+      EXISTS (
+        SELECT 1 FROM profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role IN ('admin', 'superadmin')
+      )
+    );
+  END IF;
+END $$;
 
 -- 초기 설정값 삽입
 INSERT INTO site_settings (key, value) VALUES
