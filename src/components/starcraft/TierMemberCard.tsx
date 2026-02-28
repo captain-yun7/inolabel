@@ -33,17 +33,33 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+      closeTimer.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    cancelClose()
+    closeTimer.current = setTimeout(() => {
+      setShowPreview(false)
+    }, 150)
+  }, [cancelClose])
+
   const handleMouseEnter = useCallback(() => {
     if (!isLive || !thumbnailUrl) return
+    cancelClose()
     hoverTimer.current = setTimeout(() => {
       if (cardRef.current) {
         const rect = cardRef.current.getBoundingClientRect()
         const popupWidth = 280
-        const popupHeight = 220 // 대략적인 팝업 높이
+        const popupHeight = 220
         let left = rect.left + rect.width / 2 - popupWidth / 2
         if (left < 8) left = 8
         if (left + popupWidth > window.innerWidth - 8) left = window.innerWidth - popupWidth - 8
-        // 위에 공간 있으면 위, 없으면 아래
         const top = rect.top > popupHeight + 8
           ? rect.top - popupHeight - 6
           : rect.bottom + 6
@@ -51,12 +67,12 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
       }
       setShowPreview(true)
     }, 300)
-  }, [isLive, thumbnailUrl])
+  }, [isLive, thumbnailUrl, cancelClose])
 
   const handleMouseLeave = useCallback(() => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    setShowPreview(false)
-  }, [])
+    scheduleClose()
+  }, [scheduleClose])
 
   const soopId = member.soop_id
   const broadcastUrl = streamUrl || (soopId ? `https://www.sooplive.co.kr/${soopId}` : null)
@@ -117,7 +133,8 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
         <div
           className={styles.previewPopup}
           style={{ top: popupPos.top, left: popupPos.left }}
-          onMouseEnter={handleMouseLeave}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
         >
           <div className={styles.previewPopupInner}>
             <img src={thumbnailUrl} alt="방송 미리보기" className={styles.previewThumbnail} />
