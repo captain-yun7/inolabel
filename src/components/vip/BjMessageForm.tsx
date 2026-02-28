@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ImageIcon, Video, Send, Loader2, Globe, Lock, Upload, Trash2, Link as LinkIcon, Film } from 'lucide-react'
 import * as tus from 'tus-js-client'
+import { uploadImageAction } from '@/lib/actions/upload'
 import { getStreamThumbnailUrl } from '@/lib/cloudflare'
 import styles from './BjMessageForm.module.css'
 
@@ -113,21 +114,14 @@ export default function BjMessageForm({
 
       setUploadProgress(30)
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const result = await uploadImageAction(formData)
 
       setUploadProgress(80)
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || '업로드에 실패했습니다.')
-      }
+      if (result.error) throw new Error(result.error)
 
-      const data = await response.json()
-      setContentUrl(data.url)
-      setPreviewUrl(data.url)
+      setContentUrl(result.url!)
+      setPreviewUrl(result.url!)
       setUploadProgress(100)
     } catch (err) {
       setError(err instanceof Error ? err.message : '업로드에 실패했습니다.')

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Upload, X, Loader2 } from 'lucide-react'
+import { uploadImageAction } from '@/lib/actions/upload'
 import styles from './ImageUpload.module.css'
 
 interface ImageUploadProps {
@@ -30,31 +31,14 @@ export function ImageUpload({
     setError(null)
 
     try {
-      let url: string
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', folder)
 
-      if (file.size > 4 * 1024 * 1024) {
-        // 4MB 초과: Presigned URL로 직접 업로드
-        const params = new URLSearchParams({ folder, filename: file.name, contentType: file.type })
-        const urlRes = await fetch(`/api/upload?${params}`)
-        if (!urlRes.ok) throw new Error('업로드 URL 발급 실패')
-        const { uploadUrl, publicUrl } = await urlRes.json()
-        const putRes = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-        if (!putRes.ok) throw new Error('이미지 업로드 실패')
-        url = publicUrl
-      } else {
-        // 4MB 이하: 서버 경유
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('folder', folder)
-        const response = await fetch('/api/upload', { method: 'POST', body: formData })
-        const text = await response.text()
-        let data
-        try { data = JSON.parse(text) } catch { throw new Error(response.status === 413 ? '파일이 너무 큽니다.' : '서버 오류') }
-        if (!response.ok) throw new Error(data.error || '업로드 실패')
-        url = data.url
-      }
+      const result = await uploadImageAction(formData)
+      if (result.error) throw new Error(result.error)
 
-      onChange(url)
+      onChange(result.url!)
     } catch (err) {
       setError(err instanceof Error ? err.message : '업로드 실패')
     } finally {

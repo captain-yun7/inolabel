@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Upload, Image as ImageIcon, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { createVipImage, deleteVipImage } from '@/lib/actions/vip-rewards'
+import { uploadImageAction } from '@/lib/actions/upload'
 import styles from './VipImageUploadModal.module.css'
 
 interface VipImageUploadModalProps {
@@ -63,30 +64,14 @@ export default function VipImageUploadModal({
     setIsUploading(true)
 
     try {
-      // 파일 업로드 - 크기에 따라 방식 선택
-      let url: string
+      // 서버 액션으로 업로드 (R2 CORS 우회, 대용량 GIF 지원)
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+      formData.append('folder', 'vip-signatures')
 
-      if (selectedFile.size > 4 * 1024 * 1024) {
-        // 4MB 초과: Presigned URL로 직접 업로드
-        const params = new URLSearchParams({ folder: 'vip-signatures', filename: selectedFile.name, contentType: selectedFile.type })
-        const urlRes = await fetch(`/api/upload?${params}`)
-        if (!urlRes.ok) throw new Error('업로드 URL 발급 실패')
-        const { uploadUrl, publicUrl } = await urlRes.json()
-        const putRes = await fetch(uploadUrl, { method: 'PUT', body: selectedFile, headers: { 'Content-Type': selectedFile.type } })
-        if (!putRes.ok) throw new Error('이미지 업로드 실패')
-        url = publicUrl
-      } else {
-        // 4MB 이하: 서버 경유
-        const formData = new FormData()
-        formData.append('file', selectedFile)
-        formData.append('folder', 'vip-signatures')
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-        const text = await uploadRes.text()
-        let data
-        try { data = JSON.parse(text) } catch { throw new Error(uploadRes.status === 413 ? '파일이 너무 큽니다.' : '서버 오류') }
-        if (!uploadRes.ok) throw new Error(data.error || '업로드 실패')
-        url = data.url
-      }
+      const uploadResult = await uploadImageAction(formData)
+      if (uploadResult.error) throw new Error(uploadResult.error)
+      const url = uploadResult.url!
 
       // VIP 이미지 레코드 생성
       const result = await createVipImage({

@@ -17,6 +17,7 @@ import {
   FormCheckbox,
 } from '@/components/admin/inline'
 import { createBanner, updateBanner, deleteBanner } from '@/lib/actions/banners'
+import { uploadImageAction } from '@/lib/actions/upload'
 import type { Banner } from '@/types/database'
 import styles from './BannerEditModal.module.css'
 
@@ -96,18 +97,10 @@ export default function BannerEditModal({
       formData.append('file', file)
       formData.append('folder', 'banners')
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const result = await uploadImageAction(formData)
+      if (result.error) throw new Error(result.error)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '업로드 실패')
-      }
-
-      setImageUrl(data.url)
+      setImageUrl(result.url!)
     } catch (error) {
       alert(error instanceof Error ? error.message : '업로드에 실패했습니다.')
       setPreviewUrl(imageUrl || null) // 실패 시 원래 이미지로 복원

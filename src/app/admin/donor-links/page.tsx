@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { useSupabaseContext } from '@/lib/context'
+import { uploadImageAction } from '@/lib/actions/upload'
 import styles from '../shared.module.css'
 import pageStyles from './page.module.css'
 
@@ -329,18 +330,14 @@ export default function DonorLinksPage() {
       formData.append('file', file)
       formData.append('folder', 'avatars')
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error)
+      const data = await uploadImageAction(formData)
+      if (data.error) throw new Error(data.error)
+      const uploadedUrl = data.url!
 
       // Update profile avatar
       const { error } = await supabase
         .from('profiles')
-        .update({ avatar_url: data.url })
+        .update({ avatar_url: uploadedUrl })
         .eq('id', avatarEntry.profile.id)
 
       if (error) throw error
@@ -348,7 +345,7 @@ export default function DonorLinksPage() {
       // Update local state
       setRankings(prev => prev.map(r =>
         r.donor_id === avatarEntry.profile?.id
-          ? { ...r, profile: r.profile ? { ...r.profile, avatar_url: data.url } : null }
+          ? { ...r, profile: r.profile ? { ...r.profile, avatar_url: uploadedUrl } : null }
           : r
       ))
 

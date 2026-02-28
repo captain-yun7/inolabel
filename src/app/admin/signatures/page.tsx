@@ -10,6 +10,7 @@ import CloudflareVideoUpload from '@/components/admin/CloudflareVideoUpload'
 import { getStreamIframeUrl } from '@/lib/cloudflare'
 import { useAdminCRUD, useAlert } from '@/lib/hooks'
 import { useSupabaseContext } from '@/lib/context'
+import { uploadImageAction } from '@/lib/actions/upload'
 import styles from '../shared.module.css'
 
 interface Signature {
@@ -492,21 +493,16 @@ export default function SignaturesPage() {
       formData.append('file', file)
       formData.append('folder', 'signatures')
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const result = await uploadImageAction(formData)
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || '업로드 실패')
+      if (result.error) {
+        throw new Error(result.error)
       }
 
       // DB 업데이트
       const { error } = await supabase
         .from('signatures')
-        .update({ thumbnail_url: data.url })
+        .update({ thumbnail_url: result.url! })
         .eq('id', targetSigId)
 
       if (error) {

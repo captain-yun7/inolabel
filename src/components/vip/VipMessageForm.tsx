@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import { uploadImageAction } from '@/lib/actions/upload'
 import {
   X,
   ImageIcon,
@@ -97,18 +98,9 @@ export default function VipMessageForm({
     formData.append('file', file)
     formData.append('folder', 'vip-messages')
 
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    })
-
-    const result = await response.json()
-
-    if (!response.ok) {
-      throw new Error(result.error || '이미지 업로드 실패')
-    }
-
-    return result.url
+    const result = await uploadImageAction(formData)
+    if (result.error) throw new Error(result.error)
+    return result.url || null
   }
 
   const uploadVideo = async (file: File): Promise<string | null> => {

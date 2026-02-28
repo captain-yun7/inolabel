@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MessageSquare, ImageIcon, Video, Save, Loader2, Globe, Lock, Upload, Trash2, Film } from 'lucide-react'
 import type { BjMessageWithMember } from '@/lib/actions/bj-messages'
+import { uploadImageAction } from '@/lib/actions/upload'
 import { getStreamThumbnailUrl } from '@/lib/cloudflare'
 import styles from './BjMessageForm.module.css'
 
@@ -65,21 +66,14 @@ export default function BjMessageEditModal({
 
       setUploadProgress(30)
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const result = await uploadImageAction(formData)
 
       setUploadProgress(80)
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || '업로드에 실패했습니다.')
-      }
+      if (result.error) throw new Error(result.error)
 
-      const data = await response.json()
-      setContentUrl(data.url)
-      setPreviewUrl(data.url)
+      setContentUrl(result.url!)
+      setPreviewUrl(result.url!)
       setUploadProgress(100)
     } catch (err) {
       setError(err instanceof Error ? err.message : '업로드에 실패했습니다.')
