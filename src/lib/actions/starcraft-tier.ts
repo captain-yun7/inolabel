@@ -173,3 +173,39 @@ export async function updateTierMember(
     return { error: '멤버 수정에 실패했습니다' }
   }
 }
+
+// 멤버 순서 일괄 업데이트 (관리자용, 드래그 정렬)
+export async function reorderTierMembers(
+  orders: { id: number; tier_id: number; position_order: number }[]
+): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createServerSupabaseClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: '로그인이 필요합니다' }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || !['admin', 'superadmin', 'moderator'].includes(profile.role)) {
+      return { error: '권한이 없습니다' }
+    }
+
+    for (const { id, tier_id, position_order } of orders) {
+      const { error } = await supabase
+        .from('starcraft_tier_members')
+        .update({ tier_id, position_order, updated_at: new Date().toISOString() })
+        .eq('id', id)
+
+      if (error) throw error
+    }
+
+    return { error: null }
+  } catch (error) {
+    console.error('reorderTierMembers error:', error)
+    return { error: '순서 변경에 실패했습니다' }
+  }
+}

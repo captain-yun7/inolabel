@@ -929,6 +929,7 @@ class MockLiveStatusRepository implements ILiveStatusRepository {
       platform: data.platform,
       stream_url: data.stream_url,
       thumbnail_url: data.thumbnail_url || null,
+      stream_title: data.stream_title || null,
       is_live: data.is_live ?? false,
       viewer_count: data.viewer_count || 0,
       last_checked: data.last_checked || getCurrentTimestamp(),

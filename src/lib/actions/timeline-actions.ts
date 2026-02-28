@@ -95,7 +95,7 @@ export async function createTimelineEvent(
 
     if (error) throw new Error(error.message)
     return event
-  }, ['/rg/history', '/admin/timeline'])
+  }, ['/history', '/admin/timeline'])
 }
 
 /**
@@ -115,7 +115,7 @@ export async function updateTimelineEvent(
 
     if (error) throw new Error(error.message)
     return event
-  }, ['/rg/history', '/admin/timeline'])
+  }, ['/history', '/admin/timeline'])
 }
 
 /**
@@ -132,7 +132,7 @@ export async function deleteTimelineEvent(
 
     if (error) throw new Error(error.message)
     return null
-  }, ['/rg/history', '/admin/timeline'])
+  }, ['/history', '/admin/timeline'])
 }
 
 /**
@@ -153,7 +153,7 @@ export async function reorderTimelineEvents(
     }
 
     return null
-  }, ['/rg/history', '/admin/timeline'])
+  }, ['/history', '/admin/timeline'])
 }
 
 /**

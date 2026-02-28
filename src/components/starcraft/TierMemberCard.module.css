@@ -7,7 +7,7 @@
   gap: 4px;
   padding: 10px 8px 8px;
   border-radius: 10px;
-  width: 80px;
+  width: 96px;
   background: transparent;
   border: 1px solid transparent;
   transition: all 0.2s ease;
@@ -38,8 +38,8 @@
 }
 
 .avatar {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   object-fit: cover;
   border: 2.5px solid var(--border-primary, rgba(200, 200, 200, 0.3));
@@ -47,15 +47,15 @@
 }
 
 .avatarPlaceholder {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: var(--surface, #f5f5f5);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.125rem;
   color: var(--text-tertiary, #999);
   border: 2.5px solid var(--border-primary, rgba(200, 200, 200, 0.3));
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -65,13 +65,13 @@
 .liveCard .avatar,
 .liveCard .avatarPlaceholder {
   border-color: #00d4ff !important;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
   animation: livePulse 2s ease-in-out infinite;
 }
 
 @keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(0, 212, 255, 0.4); }
-  50% { box-shadow: 0 0 14px rgba(0, 212, 255, 0.6); }
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(0, 212, 255, 0.7); }
 }
 
 /* LIVE 뱃지 */
@@ -80,10 +80,10 @@
   bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 1px 6px;
+  padding: 1px 7px;
   background: #00d4ff;
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   color: #000;
   line-height: 1.4;
@@ -93,7 +93,7 @@
 
 /* 이름 */
 .name {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--text-primary, #111);
   white-space: nowrap;
@@ -123,9 +123,9 @@
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  width: 220px;
+  width: 280px;
   z-index: 100;
-  padding-bottom: 6px; /* 카드와의 갭을 hover 영역에 포함 */
+  padding-bottom: 6px;
 }
 
 .previewPopupInner {
@@ -150,6 +150,17 @@
   display: block;
 }
 
+.previewTitle {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #eee);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .previewLink {
   display: block;
   text-align: center;
@@ -169,14 +180,14 @@
 /* ─── 반응형 ─── */
 @media (max-width: 640px) {
   .card {
-    width: 68px;
+    width: 76px;
     padding: 8px 6px 6px;
   }
 
   .avatar,
   .avatarPlaceholder {
-    width: 44px;
-    height: 44px;
+    width: 52px;
+    height: 52px;
   }
 
   .name {
@@ -186,5 +197,9 @@
   .raceBadge {
     font-size: 0.6rem;
     padding: 1px 6px;
+  }
+
+  .previewPopup {
+    width: 220px;
   }
 }

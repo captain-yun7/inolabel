@@ -42,8 +42,8 @@ const navItems: NavItem[] = [
   {
     label: "이노레이블",
     subItems: [
-      { label: "라이브", href: "/rg/live", description: "현재 방송 중인 멤버", icon: Radio },
-      { label: "조직도", href: "/rg/org", description: "엑셀부 / 스타부 조직", icon: Users },
+      { label: "라이브", href: "/live", description: "현재 방송 중인 멤버", icon: Radio },
+      { label: "조직도", href: "/org", description: "엑셀부 / 스타부 조직", icon: Users },
     ],
   },
   {
@@ -64,11 +64,11 @@ const navItems: NavItem[] = [
   },
   {
     label: "타임라인",
-    href: "/rg/history",
+    href: "/history",
   },
   {
     label: "시그목록",
-    href: "/rg/sig",
+    href: "/sig",
   },
 ];
 

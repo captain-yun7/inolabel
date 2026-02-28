@@ -58,8 +58,10 @@ export default function LiveMembers() {
   }, [rosterMembers, liveStatusByMemberId])
 
   const filteredMembers = useMemo(() => {
-    if (filter === 'all') return members
-    return members.filter((m) => m.unit === filter)
+    // 라이브 중인 멤버만 표시
+    const liveOnly = members.filter((m) => m.isLive)
+    if (filter === 'all') return liveOnly
+    return liveOnly.filter((m) => m.unit === filter)
   }, [members, filter])
 
   const liveCount = members.filter((m) => m.isLive).length
@@ -125,7 +127,7 @@ export default function LiveMembers() {
           ))}
         </div>
         <div className={styles.spacer} />
-        <Link href="/rg/live" className={styles.viewAll}>
+        <Link href="/live" className={styles.viewAll}>
           전체보기 <ChevronRight size={16} />
         </Link>
       </div>

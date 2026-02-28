@@ -48,7 +48,7 @@ export default function NotFound() {
           </Link>
 
           <Link
-            href="/rg/org"
+            href="/org"
             className="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
           >
             조직도 보기

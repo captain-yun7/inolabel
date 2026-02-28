@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square, Pin, Trophy, Flame, Tag } from 'lucide-react'
+import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square, Pin, Trophy, Flame, Tag, ImageIcon } from 'lucide-react'
 import { PageLayout } from '@/components/layout'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -25,6 +25,7 @@ interface Post {
   createdAt: string
   category?: string
   headerTag?: string | null
+  hasImages?: boolean
 }
 
 interface BestPost {
@@ -164,6 +165,7 @@ export default function BoardClient({
             createdAt: p.created_at,
             category: categoryLabel,
             headerTag: p.header_tag || null,
+            hasImages: /<img[^>]*>/i.test(p.content || ''),
           }
         })
       )
@@ -530,6 +532,11 @@ export default function BoardClient({
                         {post.title}
                       </h3>
                       <div className={styles.titleMeta}>
+                        {post.hasImages && (
+                          <span className={styles.imageIcon}>
+                            <ImageIcon size={12} />
+                          </span>
+                        )}
                         {post.commentCount > 0 && (
                           <span className={styles.commentCount}>
                             <MessageSquare size={12} />

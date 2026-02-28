@@ -608,6 +608,13 @@
   flex-shrink: 0;
 }
 
+.imageIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
 .commentCount {
   display: inline-flex;
   align-items: center;

@@ -27,6 +27,7 @@ interface Comment {
   id: number
   content: string
   authorName: string
+  authorRealName?: string
   createdAt: string
 }
 
@@ -115,10 +116,12 @@ export default function PostsPage() {
       setComments(
         (data || []).map((c) => {
           const profile = c.profiles as JoinedProfile | null
+          const isAnon = Boolean(c.is_anonymous)
           return {
             id: c.id,
             content: c.content,
-            authorName: c.is_anonymous ? '익명' : (profile?.nickname || '익명'),
+            authorName: isAnon ? '익명' : (profile?.nickname || '익명'),
+            authorRealName: isAnon ? (profile?.nickname || '알 수 없음') : undefined,
             createdAt: c.created_at,
           }
         })
@@ -298,11 +301,16 @@ export default function PostsPage() {
       key: 'boardType',
       header: '카테고리',
       width: '100px',
-      render: (item) => (
-        <span className={`${styles.badge} ${item.boardType === 'vip' ? styles.badgeAdmin : ''}`}>
-          {item.boardType === 'vip' ? 'VIP' : '자유'}
-        </span>
-      ),
+      render: (item) => {
+        const labels: Record<string, string> = {
+          free: '자유', vip: 'VIP', anonymous: '익명', recommend: '추천', meme: '짤모음', report: '신고',
+        }
+        return (
+          <span className={`${styles.badge} ${item.boardType === 'vip' ? styles.badgeAdmin : ''}`}>
+            {labels[item.boardType] || item.boardType}
+          </span>
+        )
+      },
     },
     {
       key: 'viewCount',
@@ -479,6 +487,11 @@ export default function PostsPage() {
                         }}>
                           <span style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
                             {comment.authorName}
+                            {comment.authorRealName && (
+                              <span style={{ color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: '0.25rem' }}>
+                                ({comment.authorRealName})
+                              </span>
+                            )}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                             {formatDate(comment.createdAt)}

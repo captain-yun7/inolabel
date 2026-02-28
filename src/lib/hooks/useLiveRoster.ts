@@ -13,6 +13,7 @@ export interface LiveStatusEntry {
   platform: LiveStatus['platform']
   streamUrl: string
   thumbnailUrl: string | null
+  streamTitle: string | null
   isLive: boolean
   viewerCount: number
   lastChecked: string
@@ -56,6 +57,7 @@ export function useLiveRoster(options: UseLiveRosterOptions = {}): UseLiveRoster
         platform: status.platform,
         streamUrl: status.stream_url,
         thumbnailUrl: status.thumbnail_url,
+        streamTitle: null,
         isLive: status.is_live,
         viewerCount: status.viewer_count,
         lastChecked: status.last_checked,
@@ -100,7 +102,7 @@ export function useLiveRoster(options: UseLiveRosterOptions = {}): UseLiveRoster
       .select(`
         id, profile_id, name, role, unit, position_order, parent_id, image_url, social_links, profile_info, is_live, is_active, current_rank, current_rank_id, total_contribution, season_contribution, total_prize, total_penalty, prize_balance, created_at,
         profiles(nickname, avatar_url),
-        live_status(member_id, platform, stream_url, thumbnail_url, is_live, viewer_count, last_checked)
+        live_status(member_id, platform, stream_url, thumbnail_url, stream_title, is_live, viewer_count, last_checked)
       `)
       .eq('is_active', true)
       .order('position_order')
@@ -120,6 +122,7 @@ export function useLiveRoster(options: UseLiveRosterOptions = {}): UseLiveRoster
         platform: LiveStatus['platform']
         stream_url: string
         thumbnail_url: string | null
+        stream_title: string | null
         is_live: boolean
         viewer_count: number
         last_checked: string
@@ -132,6 +135,7 @@ export function useLiveRoster(options: UseLiveRosterOptions = {}): UseLiveRoster
             platform: entry.platform,
             streamUrl: entry.stream_url,
             thumbnailUrl: entry.thumbnail_url,
+            streamTitle: entry.stream_title,
             isLive: entry.is_live,
             viewerCount: entry.viewer_count,
             lastChecked: entry.last_checked,
@@ -191,6 +195,7 @@ export function useLiveRoster(options: UseLiveRosterOptions = {}): UseLiveRoster
             platform: LiveStatus['platform']
             stream_url: string
             thumbnail_url: string | null
+            stream_title: string | null
             is_live: boolean
             viewer_count: number
             last_checked: string
@@ -204,6 +209,7 @@ export function useLiveRoster(options: UseLiveRosterOptions = {}): UseLiveRoster
               platform: newRecord.platform,
               streamUrl: newRecord.stream_url,
               thumbnailUrl: newRecord.thumbnail_url,
+              streamTitle: newRecord.stream_title,
               isLive: newRecord.is_live,
               viewerCount: newRecord.viewer_count,
               lastChecked: newRecord.last_checked,

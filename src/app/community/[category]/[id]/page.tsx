@@ -355,7 +355,13 @@ export default function PostDetailPage({
                     <User size={20} />
                   )}
                 </div>
-                <span>{post.authorName}</span>
+                {post.isAnonymous ? (
+                  <span>{post.authorName}</span>
+                ) : (
+                  <Link href={`/profile/${post.authorId}`} className={styles.authorLink}>
+                    {post.authorName}
+                  </Link>
+                )}
                 {isAdmin && post.isAnonymous && post.authorRealName && (
                   <span className={styles.adminRealName}>({post.authorRealName})</span>
                 )}

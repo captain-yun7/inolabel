@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Calendar, FileText, Clock, Radio, Eye, RefreshCw, Film, PenTool, MessageSquare, ShoppingBag, UserCheck } from 'lucide-react'
+import { Users, Calendar, FileText, Clock, Radio, Eye, RefreshCw, Film, PenTool, MessageSquare, ShoppingBag, UserCheck, Wifi } from 'lucide-react'
 import { StatsCard, DataTable, Column } from '@/components/admin'
 import { useSupabaseContext } from '@/lib/context'
 import { useLiveRoster } from '@/lib/hooks'
@@ -44,6 +44,8 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [goodsShopVisible, setGoodsShopVisible] = useState(true)
   const [isTogglingGoods, setIsTogglingGoods] = useState(false)
+  const [onlineCount, setOnlineCount] = useState(0)
+  const presenceChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   // 실시간 라이브 상태
   const { members, liveStatusByMemberId, isLoading: liveLoading, refetch: refetchLive } = useLiveRoster({ realtime: true })
@@ -142,6 +144,24 @@ export default function AdminDashboardPage() {
     fetchStats()
   }, [fetchStats])
 
+  // 접속중 회원수 실시간 구독
+  useEffect(() => {
+    const channel = supabase.channel('online-users')
+    presenceChannelRef.current = channel
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState()
+        setOnlineCount(Object.keys(state).length)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+      presenceChannelRef.current = null
+    }
+  }, [supabase])
+
   const formatDateTime = (dateStr: string) =>
     formatDate(dateStr, {
       month: 'short',
@@ -187,11 +207,18 @@ export default function AdminDashboardPage() {
           delay={0}
         />
         <StatsCard
+          title="접속중"
+          value={onlineCount.toLocaleString()}
+          icon={Wifi}
+          color="info"
+          delay={0.1}
+        />
+        <StatsCard
           title="24시간 활동"
           value={stats?.recentlyActiveMembers.toLocaleString() || '0'}
           icon={UserCheck}
           color="success"
-          delay={0.1}
+          delay={0.2}
         />
       </div>
 

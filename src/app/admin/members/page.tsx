@@ -27,6 +27,8 @@ interface Member {
   role: 'member' | 'vip' | 'bj' | 'moderator' | 'admin' | 'superadmin'
   unit: 'excel' | 'crew' | null
   totalDonation: number
+  accountType: 'real' | 'virtual' | 'system'
+  soopId: string | null
   createdAt: string
 }
 
@@ -76,6 +78,8 @@ export default function MembersPage() {
       role: row.role as Member['role'],
       unit: row.unit as Member['unit'],
       totalDonation: row.total_donation as number,
+      accountType: (row.account_type as Member['accountType']) || 'real',
+      soopId: (row.soop_id as string) || null,
       createdAt: row.created_at as string,
     }),
     toDbFormat: (item) => ({
@@ -146,9 +150,35 @@ export default function MembersPage() {
     )
   }
 
+  const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+    real: '실계정',
+    virtual: '가상',
+    system: '시스템',
+  }
+
   const columns: Column<Member>[] = [
     { key: 'nickname', header: '닉네임', width: '140px', sortable: true },
     { key: 'email', header: '이메일', sortable: true },
+    {
+      key: 'accountType',
+      header: '유형',
+      width: '80px',
+      render: (item) => (
+        <span className={`${styles.badge} ${item.accountType === 'real' ? styles.badgeMember : styles.badgeModerator}`}>
+          {ACCOUNT_TYPE_LABELS[item.accountType] || item.accountType}
+        </span>
+      ),
+    },
+    {
+      key: 'soopId',
+      header: 'SOOP ID',
+      width: '120px',
+      render: (item) => (
+        <span style={{ fontSize: '0.8125rem', color: item.soopId ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+          {item.soopId || '-'}
+        </span>
+      ),
+    },
     {
       key: 'unit',
       header: '소속',

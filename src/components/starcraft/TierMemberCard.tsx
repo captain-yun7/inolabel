@@ -9,6 +9,7 @@ interface TierMemberCardProps {
   isLive?: boolean
   thumbnailUrl?: string | null
   streamUrl?: string | null
+  broadcastTitle?: string | null
 }
 
 const RACE_LABEL: Record<string, string> = {
@@ -23,7 +24,7 @@ const RACE_COLOR: Record<string, string> = {
   protoss: '#f59e0b',
 }
 
-export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl }: TierMemberCardProps) {
+export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl, broadcastTitle }: TierMemberCardProps) {
   const raceColor = member.race ? RACE_COLOR[member.race] : undefined
   const raceLabel = member.race ? RACE_LABEL[member.race] : null
   const [showPreview, setShowPreview] = useState(false)
@@ -98,6 +99,9 @@ export default function TierMemberCard({ member, isLive, thumbnailUrl, streamUrl
         <div className={styles.previewPopup}>
           <div className={styles.previewPopupInner}>
             <img src={thumbnailUrl} alt="방송 미리보기" className={styles.previewThumbnail} />
+            {broadcastTitle && (
+              <p className={styles.previewTitle}>{broadcastTitle}</p>
+            )}
             {broadcastUrl && (
               <a
                 href={broadcastUrl}

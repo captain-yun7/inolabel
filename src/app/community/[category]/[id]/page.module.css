@@ -143,6 +143,16 @@
   font-size: 0.9rem;
 }
 
+.authorLink {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.authorLink:hover {
+  color: var(--primary);
+}
+
 .adminRealName {
   font-size: 0.8rem;
   color: var(--text-tertiary);

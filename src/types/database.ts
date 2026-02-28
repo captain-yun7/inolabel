@@ -834,6 +834,7 @@ export type Database = {
           platform: 'chzzk' | 'twitch' | 'youtube' | 'pandatv' | 'sooptv'
           stream_url: string
           thumbnail_url: string | null
+          stream_title: string | null
           is_live: boolean
           viewer_count: number
           last_checked: string
@@ -844,6 +845,7 @@ export type Database = {
           platform: 'chzzk' | 'twitch' | 'youtube' | 'pandatv' | 'sooptv'
           stream_url: string
           thumbnail_url?: string | null
+          stream_title?: string | null
           is_live?: boolean
           viewer_count?: number
           last_checked?: string
@@ -854,6 +856,7 @@ export type Database = {
           platform?: 'chzzk' | 'twitch' | 'youtube' | 'pandatv' | 'sooptv'
           stream_url?: string
           thumbnail_url?: string | null
+          stream_title?: string | null
           is_live?: boolean
           viewer_count?: number
           last_checked?: string

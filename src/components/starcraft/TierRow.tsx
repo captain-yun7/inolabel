@@ -7,11 +7,11 @@ import styles from './TierRow.module.css'
 
 interface TierRowProps {
   tier: StarcraftTierWithMembers
-  liveNames?: Set<string>
-  liveInfoByName?: Record<string, LiveInfoByName>
+  isMemberLive?: (m: { player_name: string; soop_id?: string | null }) => boolean
+  getMemberLiveInfo?: (m: { player_name: string; soop_id?: string | null }) => LiveInfoByName | undefined
 }
 
-export default function TierRow({ tier, liveNames, liveInfoByName }: TierRowProps) {
+export default function TierRow({ tier, isMemberLive, getMemberLiveInfo }: TierRowProps) {
   return (
     <div className={styles.row}>
       <div
@@ -27,8 +27,8 @@ export default function TierRow({ tier, liveNames, liveInfoByName }: TierRowProp
           </div>
         ) : (
           tier.members.map((member) => {
-            const isLive = liveNames?.has(member.player_name) || false
-            const liveInfo = isLive ? liveInfoByName?.[member.player_name] : undefined
+            const isLive = isMemberLive?.(member) || false
+            const liveInfo = isLive ? getMemberLiveInfo?.(member) : undefined
             return (
               <TierMemberCard
                 key={member.id}
@@ -36,6 +36,7 @@ export default function TierRow({ tier, liveNames, liveInfoByName }: TierRowProp
                 isLive={isLive}
                 thumbnailUrl={liveInfo?.thumbnailUrl || null}
                 streamUrl={liveInfo?.streamUrl || null}
+                broadcastTitle={liveInfo?.broadcastTitle || null}
               />
             )
           })

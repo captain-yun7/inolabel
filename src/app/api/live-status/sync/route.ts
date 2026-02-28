@@ -58,6 +58,7 @@ export async function POST(request: Request) {
     platform: 'pandatv' | 'sooptv'
     stream_url: string
     thumbnail_url: string | null
+    stream_title: string | null
     is_live: boolean
     viewer_count: number
     last_checked: string
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
         platform: 'pandatv',
         stream_url: `https://www.pandalive.co.kr/${member.channelId}`,
         thumbnail_url: status.thumbnailUrl || null,
+        stream_title: status.title || null,
         is_live: status.isLive,
         viewer_count: status.viewerCount || 0,
         last_checked: now,
@@ -158,6 +160,7 @@ export async function POST(request: Request) {
         platform: 'sooptv',
         stream_url: getSoopStreamUrl(member.bjId),
         thumbnail_url: status.thumbnailUrl || null,
+        stream_title: status.title || null,
         is_live: status.isLive,
         viewer_count: status.viewerCount || 0,
         last_checked: now,

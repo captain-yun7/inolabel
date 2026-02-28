@@ -60,41 +60,62 @@ const nextConfig: NextConfig = {
   // Route redirects for RG Info consolidation
   async redirects() {
     return [
+      // /rg/* -> /* redirects (URL 정리)
+      {
+        source: '/rg/org',
+        destination: '/org',
+        permanent: true,
+      },
+      {
+        source: '/rg/sig',
+        destination: '/sig',
+        permanent: true,
+      },
+      {
+        source: '/rg/history',
+        destination: '/history',
+        permanent: true,
+      },
+      {
+        source: '/rg/live',
+        destination: '/live',
+        permanent: true,
+      },
       // Legacy route redirects
       {
         source: '/organization',
-        destination: '/rg/org',
+        destination: '/org',
         permanent: true,
       },
       {
         source: '/signature',
-        destination: '/rg/sig',
+        destination: '/sig',
         permanent: true,
       },
       {
         source: '/timeline',
-        destination: '/rg/history',
+        destination: '/history',
         permanent: true,
       },
-      // /info/* -> /rg/* redirects (문서 참조 호환)
+      // /info/* redirects
       {
         source: '/info/org',
-        destination: '/rg/org',
+        destination: '/org',
         permanent: true,
       },
       {
         source: '/info/sig',
-        destination: '/rg/sig',
+        destination: '/sig',
         permanent: true,
       },
       {
         source: '/info/timeline',
-        destination: '/rg/history',
+        destination: '/history',
         permanent: true,
       },
       {
         source: '/info/live',
-        destination: '/rg/live',
+        destination: '/live',
         permanent: true,
       },
       // Ranking redirects
