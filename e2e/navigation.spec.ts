@@ -39,19 +39,19 @@ test.describe('데스크톱 네비게이션', () => {
 
   test('타임라인 직접 링크 이동', async ({ page }) => {
     await page.locator('nav').getByRole('link', { name: '타임라인' }).click()
-    await expect(page).toHaveURL('/rg/history')
+    await expect(page).toHaveURL('/history')
   })
 
   test('시그목록 직접 링크 이동', async ({ page }) => {
     await page.locator('nav').getByRole('link', { name: '시그목록' }).click()
-    await expect(page).toHaveURL('/rg/sig')
+    await expect(page).toHaveURL('/sig')
   })
 
   test('드롭다운에서 라이브 페이지 이동', async ({ page }) => {
     const nav = page.locator('nav')
     await nav.getByText('이노레이블', { exact: true }).hover()
     await nav.getByRole('link', { name: /라이브/ }).click()
-    await expect(page).toHaveURL('/rg/live')
+    await expect(page).toHaveURL('/live')
   })
 
   test('드롭다운에서 자유게시판 이동', async ({ page }) => {

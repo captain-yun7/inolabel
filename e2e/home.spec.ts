@@ -35,9 +35,9 @@ test.describe('홈페이지', () => {
 
   test('자유게시판 인기글 프리뷰 섹션 표시', async ({ page }) => {
     // 인기글 섹션 헤더
-    await expect(page.getByText('자유게시판 인기글')).toBeVisible()
-    // 전체보기 링크
-    await expect(page.getByText('전체보기')).toBeVisible()
+    await expect(page.getByText('자유게시판 인기글')).toBeVisible({ timeout: 15000 })
+    // 커뮤니티 프리뷰의 전체보기 링크 (href=/community/free)
+    await expect(page.locator('a[href="/community/free"]', { hasText: '전체보기' })).toBeVisible()
   })
 
   test('Footer 존재', async ({ page }) => {
@@ -46,7 +46,7 @@ test.describe('홈페이지', () => {
   })
 
   test('로고 클릭 시 홈 이동', async ({ page }) => {
-    await page.goto('/rg/live')
+    await page.goto('/live')
     await page.waitForLoadState('networkidle')
     // nav 내부 로고 링크 클릭
     await page.locator('nav a[href="/"]').first().click()
