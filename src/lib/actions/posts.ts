@@ -279,22 +279,23 @@ export async function createComment(
 
     if (error) throw new Error(error.message)
 
-    // 댓글 수 증가
-    const { data: post } = await supabase
-      .from('posts')
-      .select('comment_count')
-      .eq('id', data.post_id)
-      .single()
+    // 댓글 수 증가 (Service Role로 RLS 우회)
+    try {
+      const serviceClient = createServiceRoleClient()
+      const { data: post } = await serviceClient
+        .from('posts')
+        .select('comment_count')
+        .eq('id', data.post_id)
+        .single()
 
-    if (post) {
-      try {
-        await supabase
+      if (post) {
+        await serviceClient
           .from('posts')
           .update({ comment_count: (post.comment_count || 0) + 1 })
           .eq('id', data.post_id)
-      } catch {
-        // 무시
       }
+    } catch {
+      // 무시
     }
 
     return comment
@@ -360,6 +361,25 @@ export async function deleteComment(
       .eq('id', id)
 
     if (error) throw new Error(error.message)
+
+    // 댓글 수 감소
+    try {
+      const { data: post } = await serviceClient
+        .from('posts')
+        .select('comment_count')
+        .eq('id', existingComment.post_id)
+        .single()
+
+      if (post && post.comment_count > 0) {
+        await serviceClient
+          .from('posts')
+          .update({ comment_count: post.comment_count - 1 })
+          .eq('id', existingComment.post_id)
+      }
+    } catch {
+      // 무시
+    }
+
     return null
   })
 }
