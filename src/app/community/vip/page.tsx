@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { MessageSquare, Eye, Crown, Lock, Search, ChevronDown, Trash2, CheckSquare, Square } from 'lucide-react'
+import { MessageSquare, Eye, Crown, Lock, Search, ChevronDown, Trash2, CheckSquare, Square, ImageIcon } from 'lucide-react'
 import { PageLayout } from '@/components/layout'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -24,6 +24,7 @@ interface Post {
   commentCount: number
   likeCount: number
   createdAt: string
+  hasImages?: boolean
 }
 
 const POSTS_PER_PAGE = 20
@@ -105,6 +106,7 @@ export default function VipBoardPage() {
             commentCount: p.comment_count || 0,
             likeCount: p.like_count || 0,
             createdAt: p.created_at,
+            hasImages: /<img[^>]*>/i.test(p.content || ''),
           }
         })
       )
@@ -360,6 +362,11 @@ export default function VipBoardPage() {
                   <div className={styles.cellTitle}>
                     <h3 className={styles.postTitle}>{post.title}</h3>
                     <div className={styles.titleMeta}>
+                      {post.hasImages && (
+                        <span className={styles.imageIcon}>
+                          <ImageIcon size={12} />
+                        </span>
+                      )}
                       {post.commentCount > 0 && (
                         <span className={styles.commentCount}>
                           <MessageSquare size={12} />

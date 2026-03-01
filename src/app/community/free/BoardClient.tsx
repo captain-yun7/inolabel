@@ -591,6 +591,11 @@ export default function BoardClient({
                       <span className={styles.headerTagBadge}>[{post.headerTag}]</span>
                     )}
                     {post.title}
+                    {post.hasImages && (
+                      <span className={styles.mobileImageIcon}>
+                        <ImageIcon size={12} />
+                      </span>
+                    )}
                     {post.commentCount > 0 && (
                       <span className={styles.mobileCommentCount}>[{post.commentCount}]</span>
                     )}

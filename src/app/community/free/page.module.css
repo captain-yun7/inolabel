@@ -962,6 +962,14 @@
     line-height: 1.4;
   }
 
+  .mobileImageIcon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-tertiary);
+    margin-left: var(--space-1);
+    vertical-align: middle;
+  }
+
   .mobileCommentCount {
     color: var(--color-primary);
     font-weight: var(--font-bold);
