@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Upload, Image as ImageIcon, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { createVipImage, deleteVipImage } from '@/lib/actions/vip-rewards'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import styles from './VipImageUploadModal.module.css'
 
 interface VipImageUploadModalProps {
@@ -69,7 +69,7 @@ export default function VipImageUploadModal({
       formData.append('file', selectedFile)
       formData.append('folder', 'vip-signatures')
 
-      const uploadResult = await uploadImageAction(formData)
+      const uploadResult = await uploadImage(formData)
       if (uploadResult.error) throw new Error(uploadResult.error)
       const url = uploadResult.url!
 

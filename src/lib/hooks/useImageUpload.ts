@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 
 interface UseImageUploadOptions {
   /** 저장 폴더 경로 (예: 'posts', 'notices') */
@@ -25,16 +25,8 @@ const DEFAULT_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/we
 
 /**
  * 이미지 업로드 훅
- * - 서버 액션을 통해 R2에 업로드 (CORS 문제 없음)
- * - bodySizeLimit: '100mb' 설정으로 대용량 GIF 지원
- *
- * @example
- * const { uploadImage, isUploading, error } = useImageUpload({
- *   folder: 'posts',
- *   onError: (msg) => alert(msg)
- * })
- *
- * <RichEditor onImageUpload={uploadImage} />
+ * - 5MB 이하: 서버 액션으로 직접 업로드
+ * - 5MB 초과: R2 멀티파트 업로드 (Vercel body size 제한 우회)
  */
 export function useImageUpload(options: UseImageUploadOptions): UseImageUploadReturn {
   const {
@@ -50,7 +42,7 @@ export function useImageUpload(options: UseImageUploadOptions): UseImageUploadRe
     setError(null)
   }, [])
 
-  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+  const handleUpload = useCallback(async (file: File): Promise<string | null> => {
     setError(null)
     setIsUploading(true)
 
@@ -64,12 +56,12 @@ export function useImageUpload(options: UseImageUploadOptions): UseImageUploadRe
         return null
       }
 
-      // 서버 액션으로 업로드 (R2 CORS 우회, 대용량 지원)
       const formData = new FormData()
       formData.append('file', file)
       formData.append('folder', folder)
 
-      const result = await uploadImageAction(formData)
+      // uploadImage가 파일 크기에 따라 자동으로 일반/멀티파트 분기
+      const result = await uploadImage(formData)
 
       if (result.error) {
         throw new Error(result.error)
@@ -88,7 +80,7 @@ export function useImageUpload(options: UseImageUploadOptions): UseImageUploadRe
   }, [folder, allowedTypes, onError])
 
   return {
-    uploadImage,
+    uploadImage: handleUpload,
     isUploading,
     error,
     clearError,

@@ -17,7 +17,7 @@ import {
   FormCheckbox,
 } from '@/components/admin/inline'
 import { createBanner, updateBanner, deleteBanner } from '@/lib/actions/banners'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import type { Banner } from '@/types/database'
 import styles from './BannerEditModal.module.css'
 
@@ -97,7 +97,7 @@ export default function BannerEditModal({
       formData.append('file', file)
       formData.append('folder', 'banners')
 
-      const result = await uploadImageAction(formData)
+      const result = await uploadImage(formData)
       if (result.error) throw new Error(result.error)
 
       setImageUrl(result.url!)

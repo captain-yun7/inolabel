@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ImageIcon, Video, Send, Loader2, Globe, Lock, Upload, Trash2, Link as LinkIcon, Film } from 'lucide-react'
 import * as tus from 'tus-js-client'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import { getStreamThumbnailUrl } from '@/lib/cloudflare'
 import styles from './BjMessageForm.module.css'
 
@@ -114,7 +114,7 @@ export default function BjMessageForm({
 
       setUploadProgress(30)
 
-      const result = await uploadImageAction(formData)
+      const result = await uploadImage(formData)
 
       setUploadProgress(80)
 

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage as uploadImageToR2 } from '@/lib/upload-client'
 import {
   X,
   ImageIcon,
@@ -98,7 +98,7 @@ export default function VipMessageForm({
     formData.append('file', file)
     formData.append('folder', 'vip-messages')
 
-    const result = await uploadImageAction(formData)
+    const result = await uploadImageToR2(formData)
     if (result.error) throw new Error(result.error)
     return result.url || null
   }

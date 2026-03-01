@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { useSupabaseContext } from '@/lib/context'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import styles from '../shared.module.css'
 import pageStyles from './page.module.css'
 
@@ -330,7 +330,7 @@ export default function DonorLinksPage() {
       formData.append('file', file)
       formData.append('folder', 'avatars')
 
-      const data = await uploadImageAction(formData)
+      const data = await uploadImage(formData)
       if (data.error) throw new Error(data.error)
       const uploadedUrl = data.url!
 

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { ImagePlus, X, Loader2 } from 'lucide-react'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import styles from './PostImageUpload.module.css'
 
 interface PostImageUploadProps {
@@ -36,7 +36,7 @@ export function PostImageUpload({ onImageInsert, disabled }: PostImageUploadProp
       formData.append('file', file)
       formData.append('folder', 'posts')
 
-      const result = await uploadImageAction(formData)
+      const result = await uploadImage(formData)
       if (result.error) throw new Error(result.error)
       const url = result.url!
 

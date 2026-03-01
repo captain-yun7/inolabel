@@ -10,7 +10,7 @@ import CloudflareVideoUpload from '@/components/admin/CloudflareVideoUpload'
 import { getStreamIframeUrl } from '@/lib/cloudflare'
 import { useAdminCRUD, useAlert } from '@/lib/hooks'
 import { useSupabaseContext } from '@/lib/context'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import styles from '../shared.module.css'
 
 interface Signature {
@@ -493,7 +493,7 @@ export default function SignaturesPage() {
       formData.append('file', file)
       formData.append('folder', 'signatures')
 
-      const result = await uploadImageAction(formData)
+      const result = await uploadImage(formData)
 
       if (result.error) {
         throw new Error(result.error)

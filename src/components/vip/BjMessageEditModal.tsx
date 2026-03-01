@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MessageSquare, ImageIcon, Video, Save, Loader2, Globe, Lock, Upload, Trash2, Film } from 'lucide-react'
 import type { BjMessageWithMember } from '@/lib/actions/bj-messages'
-import { uploadImageAction } from '@/lib/actions/upload'
+import { uploadImage } from '@/lib/upload-client'
 import { getStreamThumbnailUrl } from '@/lib/cloudflare'
 import styles from './BjMessageForm.module.css'
 
@@ -66,7 +66,7 @@ export default function BjMessageEditModal({
 
       setUploadProgress(30)
 
-      const result = await uploadImageAction(formData)
+      const result = await uploadImage(formData)
 
       setUploadProgress(80)
 
