@@ -3,11 +3,8 @@
 import {
   S3Client,
   PutObjectCommand,
-  CreateMultipartUploadCommand,
-  UploadPartCommand,
-  CompleteMultipartUploadCommand,
-  AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { randomUUID } from 'crypto'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
@@ -39,7 +36,8 @@ function checkR2Config() {
 }
 
 /**
- * 서버 액션: 이미지 업로드 (소용량, ~5MB 이하)
+ * 서버 액션: 이미지 업로드 (소용량, ~4MB 이하)
+ * Vercel body size 제한 내에서 서버 액션으로 직접 처리
  */
 export async function uploadImageAction(
   formData: FormData
@@ -77,13 +75,14 @@ export async function uploadImageAction(
 }
 
 /**
- * 멀티파트 업로드 시작 (대용량 파일용, ~5MB 이상)
+ * 서버 액션: Presigned URL 생성 (대용량 파일용, ~4MB 이상)
+ * 클라이언트가 이 URL로 R2에 직접 PUT 업로드 → Vercel body 제한 우회
  */
-export async function startMultipartUpload(
+export async function getPresignedUploadUrl(
   folder: string,
   filename: string,
   contentType: string
-): Promise<{ uploadId?: string; key?: string; error?: string }> {
+): Promise<{ presignedUrl?: string; key?: string; publicUrl?: string; error?: string }> {
   try {
     checkR2Config()
     await requireAuth()
@@ -93,111 +92,22 @@ export async function startMultipartUpload(
     const ext = filename.split('.').pop() || 'jpg'
     const key = `${folder}/${randomUUID()}.${ext}`
 
-    const { UploadId } = await r2Client.send(new CreateMultipartUploadCommand({
+    const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: key,
       ContentType: contentType,
-    }))
+    })
 
-    if (!UploadId) return { error: '멀티파트 업로드 시작 실패' }
+    const presignedUrl = await getSignedUrl(r2Client, command, { expiresIn: 600 })
 
-    return { uploadId: UploadId, key }
-  } catch (error) {
-    console.error('Start multipart upload error:', error)
-    const msg = error instanceof Error ? error.message : '업로드 시작에 실패했습니다'
-    return { error: msg }
-  }
-}
-
-/**
- * 멀티파트 업로드 파트 전송
- */
-export async function uploadPart(
-  formData: FormData
-): Promise<{ eTag?: string; error?: string }> {
-  try {
-    checkR2Config()
-    await requireAuth()
-
-    const uploadId = formData.get('uploadId') as string
-    const key = formData.get('key') as string
-    const partNumber = Number(formData.get('partNumber'))
-    const chunk = formData.get('chunk') as File
-
-    if (!uploadId || !key || !partNumber || !chunk) {
-      return { error: '필수 파라미터가 누락되었습니다' }
+    return {
+      presignedUrl,
+      key,
+      publicUrl: `${R2_PUBLIC_URL}/${key}`,
     }
-
-    const bytes = await chunk.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    const { ETag } = await r2Client.send(new UploadPartCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-      UploadId: uploadId,
-      PartNumber: partNumber,
-      Body: buffer,
-    }))
-
-    return { eTag: ETag }
   } catch (error) {
-    console.error('Upload part error:', error)
-    const msg = error instanceof Error ? error.message : '파트 업로드에 실패했습니다'
+    console.error('Presigned URL generation error:', error)
+    const msg = error instanceof Error ? error.message : 'URL 생성에 실패했습니다'
     return { error: msg }
-  }
-}
-
-/**
- * 멀티파트 업로드 완료
- */
-export async function completeMultipartUpload(
-  uploadId: string,
-  key: string,
-  parts: { partNumber: number; eTag: string }[]
-): Promise<{ url?: string; error?: string }> {
-  try {
-    checkR2Config()
-    await requireAuth()
-
-    await r2Client.send(new CompleteMultipartUploadCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-      UploadId: uploadId,
-      MultipartUpload: {
-        Parts: parts.map(p => ({
-          PartNumber: p.partNumber,
-          ETag: p.eTag,
-        })),
-      },
-    }))
-
-    return { url: `${R2_PUBLIC_URL}/${key}` }
-  } catch (error) {
-    console.error('Complete multipart upload error:', error)
-    const msg = error instanceof Error ? error.message : '업로드 완료에 실패했습니다'
-    return { error: msg }
-  }
-}
-
-/**
- * 멀티파트 업로드 취소 (에러 시 정리)
- */
-export async function abortMultipartUpload(
-  uploadId: string,
-  key: string
-): Promise<{ error?: string }> {
-  try {
-    checkR2Config()
-
-    await r2Client.send(new AbortMultipartUploadCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-      UploadId: uploadId,
-    }))
-
-    return {}
-  } catch (error) {
-    console.error('Abort multipart upload error:', error)
-    return { error: '업로드 취소에 실패했습니다' }
   }
 }

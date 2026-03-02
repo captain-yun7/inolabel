@@ -1,18 +1,14 @@
 /**
  * 클라이언트용 이미지 업로드 유틸리티
- * - 5MB 이하: 서버 액션으로 직접 업로드
- * - 5MB 초과: R2 멀티파트 업로드 (청크 분할, Vercel body size 제한 우회)
+ * - 4MB 이하: 서버 액션으로 직접 업로드
+ * - 4MB 초과: Presigned URL + Edge 프록시로 R2 업로드 (Vercel body 제한 우회)
  */
 import {
   uploadImageAction,
-  startMultipartUpload,
-  uploadPart,
-  completeMultipartUpload,
-  abortMultipartUpload,
+  getPresignedUploadUrl,
 } from '@/lib/actions/upload'
 
-const MULTIPART_THRESHOLD = 5 * 1024 * 1024 // 5MB
-const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB
+const PRESIGNED_THRESHOLD = 4 * 1024 * 1024 // 4MB
 
 /**
  * 이미지 업로드 (파일 크기에 따라 자동 분기)
@@ -27,43 +23,35 @@ export async function uploadImage(
   if (!file) return { error: '파일이 없습니다' }
 
   // 소용량: 서버 액션 직접 호출
-  if (file.size <= MULTIPART_THRESHOLD) {
+  if (file.size <= PRESIGNED_THRESHOLD) {
     return uploadImageAction(formData)
   }
 
-  // 대용량: 멀티파트 업로드
-  const initResult = await startMultipartUpload(folder, file.name, file.type)
-  if (initResult.error || !initResult.uploadId || !initResult.key) {
-    return { error: initResult.error || '업로드 시작 실패' }
-  }
-
-  const { uploadId, key } = initResult
-  const totalParts = Math.ceil(file.size / CHUNK_SIZE)
-  const parts: { partNumber: number; eTag: string }[] = []
-
+  // 대용량: Presigned URL + Edge 프록시
   try {
-    for (let i = 0; i < totalParts; i++) {
-      const start = i * CHUNK_SIZE
-      const end = Math.min(start + CHUNK_SIZE, file.size)
-      const chunk = file.slice(start, end)
-
-      const partFormData = new FormData()
-      partFormData.append('uploadId', uploadId)
-      partFormData.append('key', key)
-      partFormData.append('partNumber', String(i + 1))
-      partFormData.append('chunk', chunk)
-
-      const partResult = await uploadPart(partFormData)
-      if (partResult.error || !partResult.eTag) {
-        throw new Error(partResult.error || `파트 ${i + 1} 업로드 실패`)
-      }
-
-      parts.push({ partNumber: i + 1, eTag: partResult.eTag })
+    // 1. 서버 액션으로 presigned URL 생성 (작은 요청)
+    const urlResult = await getPresignedUploadUrl(folder, file.name, file.type)
+    if (urlResult.error || !urlResult.presignedUrl || !urlResult.publicUrl) {
+      return { error: urlResult.error || '업로드 URL 생성 실패' }
     }
 
-    return completeMultipartUpload(uploadId, key, parts)
+    // 2. Edge 프록시를 통해 R2에 업로드 (스트리밍, 크기 제한 없음)
+    const response = await fetch('/api/upload/proxy', {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'x-upload-url': urlResult.presignedUrl,
+        'x-content-type': file.type,
+      },
+    })
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null)
+      return { error: data?.error || `업로드 실패 (${response.status})` }
+    }
+
+    return { url: urlResult.publicUrl }
   } catch (error) {
-    await abortMultipartUpload(uploadId, key)
     const msg = error instanceof Error ? error.message : '이미지 업로드에 실패했습니다'
     return { error: msg }
   }
