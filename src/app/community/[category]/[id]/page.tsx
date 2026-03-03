@@ -31,6 +31,7 @@ interface Comment {
   content: string
   authorId: string
   authorName: string
+  authorRealName?: string
   authorAvatar: string | null
   isAnonymous: boolean
   createdAt: string
@@ -135,11 +136,13 @@ export default function PostDetailPage({
       (commentsData || []).map((c) => {
         const commentProfile = c.profiles as JoinedProfile | null
         const commentAnonymous = Boolean(c.is_anonymous)
+        const realNickname = commentProfile?.nickname || '알 수 없음'
         return {
           id: c.id,
           content: c.content,
           authorId: c.author_id,
-          authorName: commentAnonymous ? '익명' : (commentProfile?.nickname || '익명'),
+          authorName: commentAnonymous ? '익명' : realNickname,
+          authorRealName: commentAnonymous ? realNickname : undefined,
           authorAvatar: commentAnonymous ? null : (commentProfile?.avatar_url || null),
           isAnonymous: commentAnonymous,
           createdAt: c.created_at,
@@ -469,6 +472,9 @@ export default function PostDetailPage({
                       )}
                     </div>
                     <span className={styles.commentAuthorName}>{comment.authorName}</span>
+                    {isAdmin && comment.isAnonymous && comment.authorRealName && (
+                      <span className={styles.adminRealName}>({comment.authorRealName})</span>
+                    )}
                     <span className={styles.commentDate}>
                       {formatDate(comment.createdAt)}
                     </span>
