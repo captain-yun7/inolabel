@@ -23,6 +23,14 @@ interface ProfileInfo {
   height?: number
   weight?: number
   birthday?: string
+  starcraftRace?: 'terran' | 'zerg' | 'protoss'
+  starcraftTierId?: number
+  starcraftTierName?: string
+}
+
+interface StarcraftTier {
+  id: number
+  name: string
 }
 
 interface OrgMember {
@@ -50,6 +58,7 @@ export default function OrganizationPage() {
   const supabase = useSupabaseContext()
   const alertHandler = useAlert()
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [tiers, setTiers] = useState<StarcraftTier[]>([])
   const [activeUnit, setActiveUnit] = useState<'excel' | 'crew'>('excel')
   const [localMembers, setLocalMembers] = useState<OrgMember[]>([])
   const [isSavingOrder, setIsSavingOrder] = useState(false)
@@ -67,9 +76,19 @@ export default function OrganizationPage() {
     setProfiles(data || [])
   }, [supabase])
 
+  // Fetch starcraft tiers
+  const fetchTiers = useCallback(async () => {
+    const { data } = await supabase
+      .from('starcraft_tiers')
+      .select('id, name')
+      .order('position_order')
+    setTiers(data || [])
+  }, [supabase])
+
   useEffect(() => {
     fetchProfiles()
-  }, [fetchProfiles])
+    fetchTiers()
+  }, [fetchProfiles, fetchTiers])
 
   const {
     items: members,
@@ -517,6 +536,65 @@ export default function OrganizationPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* 스타크래프트 종족/티어 - 스타부일 때만 표시 */}
+                {editingMember.unit === 'crew' && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1rem',
+                    padding: '1rem',
+                    background: 'var(--surface)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                  }}>
+                    <div className={styles.formGroup} style={{ margin: 0 }}>
+                      <label>스타크래프트 종족</label>
+                      <select
+                        value={editingMember.profileInfo?.starcraftRace || ''}
+                        onChange={(e) =>
+                          setEditingMember({
+                            ...editingMember,
+                            profileInfo: {
+                              ...editingMember.profileInfo,
+                              starcraftRace: (e.target.value || undefined) as ProfileInfo['starcraftRace'],
+                            },
+                          })
+                        }
+                        className={styles.select}
+                      >
+                        <option value="">선택 안함</option>
+                        <option value="terran">테란 (T)</option>
+                        <option value="zerg">저그 (Z)</option>
+                        <option value="protoss">토스 (P)</option>
+                      </select>
+                    </div>
+                    <div className={styles.formGroup} style={{ margin: 0 }}>
+                      <label>스타크래프트 티어</label>
+                      <select
+                        value={editingMember.profileInfo?.starcraftTierId || ''}
+                        onChange={(e) => {
+                          const tierId = e.target.value ? parseInt(e.target.value) : undefined
+                          const tierName = tiers.find(t => t.id === tierId)?.name
+                          setEditingMember({
+                            ...editingMember,
+                            profileInfo: {
+                              ...editingMember.profileInfo,
+                              starcraftTierId: tierId,
+                              starcraftTierName: tierName,
+                            },
+                          })
+                        }}
+                        className={styles.select}
+                      >
+                        <option value="">선택 안함</option>
+                        {tiers.map((t) => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
 
                 <div className={styles.formGroup}>
                   <label>연결된 회원 (선택)</label>
