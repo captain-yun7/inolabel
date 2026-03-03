@@ -81,7 +81,7 @@ export default function OrganizationPage() {
     const { data } = await supabase
       .from('starcraft_tiers')
       .select('id, name')
-      .order('position_order')
+      .order('display_order')
     setTiers(data || [])
   }, [supabase])
 
