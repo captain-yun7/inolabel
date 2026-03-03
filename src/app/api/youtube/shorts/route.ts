@@ -12,6 +12,7 @@ interface YouTubeVideo {
   thumbnail: string
   publishedAt: string
   channelTitle: string
+  viewCount: number
 }
 
 // 타입별 캐시 (shorts / videos)
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // 1) Search API로 영상 목록 조회
     const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search')
     searchUrl.searchParams.set('part', 'snippet')
     searchUrl.searchParams.set('channelId', channelId)
@@ -76,6 +78,25 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
 
+    const videoIds = (data.items || []).map((item: { id: { videoId: string } }) => item.id.videoId)
+
+    // 2) Videos API로 조회수 가져오기
+    const statsMap: Record<string, number> = {}
+    if (videoIds.length > 0) {
+      const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos')
+      statsUrl.searchParams.set('part', 'statistics')
+      statsUrl.searchParams.set('id', videoIds.join(','))
+      statsUrl.searchParams.set('key', YOUTUBE_API_KEY)
+
+      const statsResponse = await fetch(statsUrl.toString())
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        for (const item of statsData.items || []) {
+          statsMap[item.id] = parseInt(item.statistics?.viewCount || '0', 10)
+        }
+      }
+    }
+
     const videos: YouTubeVideo[] = (data.items || []).map((item: {
       id: { videoId: string }
       snippet: {
@@ -93,6 +114,7 @@ export async function GET(request: NextRequest) {
         || '',
       publishedAt: item.snippet.publishedAt,
       channelTitle: item.snippet.channelTitle,
+      viewCount: statsMap[item.id.videoId] || 0,
     }))
 
     // 캐시 업데이트
