@@ -27,6 +27,7 @@ export default async function FreeBoardPage() {
       createdAt: p.created_at,
       category: '잡담',
       headerTag: p.header_tag || null,
+      hasImages: /<img[^>]*>/i.test(p.content || ''),
     }
   })
 

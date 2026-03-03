@@ -18,6 +18,7 @@ export default async function RecommendBoardPage() {
       likeCount: p.like_count || 0,
       createdAt: p.created_at,
       category: '추천',
+      hasImages: /<img[^>]*>/i.test(p.content || ''),
     }
   })
 

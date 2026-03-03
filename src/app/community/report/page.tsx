@@ -18,6 +18,7 @@ export default async function ReportBoardPage() {
       likeCount: p.like_count || 0,
       createdAt: p.created_at,
       category: '신고',
+      hasImages: /<img[^>]*>/i.test(p.content || ''),
     }
   })
 

@@ -19,6 +19,7 @@ export default async function AnonymousBoardPage() {
     likeCount: p.like_count || 0,
     createdAt: p.created_at,
     category: '익명',
+    hasImages: /<img[^>]*>/i.test(p.content || ''),
   }))
 
   const mapBest = (data: typeof weeklyResult.data) =>

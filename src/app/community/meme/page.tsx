@@ -22,6 +22,7 @@ export default async function MemeBoardPage() {
       likeCount: p.like_count || 0,
       createdAt: p.created_at,
       category: '짤',
+      hasImages: /<img[^>]*>/i.test(p.content || ''),
     }
   })
 
