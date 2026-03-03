@@ -11,7 +11,7 @@ export type { OrgMember, OrganizationRecord, ProfileInfo, SocialLinks } from '@/
 const RACE_LABEL: Record<string, string> = {
   terran: '테란',
   zerg: '저그',
-  protoss: '프토',
+  protoss: '토스',
 }
 
 const RACE_COLOR: Record<string, string> = {

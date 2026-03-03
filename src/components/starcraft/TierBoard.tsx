@@ -14,7 +14,7 @@ interface TierBoardProps {
 const RACE_LEGEND = [
   { key: 'terran', label: '테란', color: '#3b82f6' },
   { key: 'zerg', label: '저그', color: '#a855f7' },
-  { key: 'protoss', label: '프토', color: '#f59e0b' },
+  { key: 'protoss', label: '토스', color: '#f59e0b' },
 ]
 
 export default function TierBoard({ tiers: initialTiers }: TierBoardProps) {
