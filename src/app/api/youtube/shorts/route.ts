@@ -18,6 +18,7 @@ interface YouTubeVideo {
 // 타입별 캐시 (shorts / videos)
 const cache: Record<string, { data: YouTubeVideo[]; timestamp: number }> = {}
 const CACHE_TTL = 10 * 60 * 1000
+const FETCH_TIMEOUT = 10_000 // 10초
 
 /**
  * YouTube 영상 목록 조회 API
@@ -65,13 +66,16 @@ export async function GET(request: NextRequest) {
       searchUrl.searchParams.set('videoDuration', 'medium')
     }
 
-    const response = await fetch(searchUrl.toString())
+    const response = await fetch(searchUrl.toString(), {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('YouTube API error:', errorText)
+      const isQuota = response.status === 403
+      console.error(`[YouTube API] ${isQuota ? 'QUOTA_EXCEEDED' : 'ERROR'} (${response.status}):`, errorText)
       return NextResponse.json(
-        { data: cached?.data.slice(0, limit) || [], error: 'YouTube API 호출 실패' },
+        { data: cached?.data.slice(0, limit) || [], error: isQuota ? 'YouTube API 일일 쿼터 초과' : 'YouTube API 호출 실패' },
         { status: 200 }
       )
     }
@@ -80,20 +84,26 @@ export async function GET(request: NextRequest) {
 
     const videoIds = (data.items || []).map((item: { id: { videoId: string } }) => item.id.videoId)
 
-    // 2) Videos API로 조회수 가져오기
+    // 2) Videos API로 조회수 가져오기 (실패해도 영상 목록은 반환)
     const statsMap: Record<string, number> = {}
     if (videoIds.length > 0) {
-      const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos')
-      statsUrl.searchParams.set('part', 'statistics')
-      statsUrl.searchParams.set('id', videoIds.join(','))
-      statsUrl.searchParams.set('key', YOUTUBE_API_KEY)
+      try {
+        const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos')
+        statsUrl.searchParams.set('part', 'statistics')
+        statsUrl.searchParams.set('id', videoIds.join(','))
+        statsUrl.searchParams.set('key', YOUTUBE_API_KEY)
 
-      const statsResponse = await fetch(statsUrl.toString())
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json()
-        for (const item of statsData.items || []) {
-          statsMap[item.id] = parseInt(item.statistics?.viewCount || '0', 10)
+        const statsResponse = await fetch(statsUrl.toString(), {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT),
+        })
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json()
+          for (const item of statsData.items || []) {
+            statsMap[item.id] = parseInt(item.statistics?.viewCount || '0', 10)
+          }
         }
+      } catch (statsError) {
+        console.error('[YouTube API] Stats fetch failed (continuing without view counts):', statsError)
       }
     }
 
@@ -122,9 +132,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: videos.slice(0, limit) })
   } catch (error) {
-    console.error('YouTube fetch error:', error)
+    const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
+    console.error(`[YouTube API] ${isTimeout ? 'TIMEOUT' : 'FETCH_ERROR'}:`, error)
     return NextResponse.json(
-      { data: cached?.data.slice(0, limit) || [], error: '영상을 불러오는 데 실패했습니다' },
+      { data: cached?.data.slice(0, limit) || [], error: isTimeout ? 'YouTube API 응답 시간 초과' : '영상을 불러오는 데 실패했습니다' },
       { status: 200 }
     )
   }

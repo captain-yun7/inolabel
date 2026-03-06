@@ -243,19 +243,35 @@ export async function getPostById(
 
     if (error) throw new Error(error.message)
 
-    // 조회수 증가
     if (data) {
-      try {
-        await supabase
-          .from('posts')
-          .update({ view_count: (data.view_count || 0) + 1 })
-          .eq('id', id)
-      } catch {
-        // 무시
-      }
+      await incrementViewCount(id)
     }
 
     return data
+  })
+}
+
+/**
+ * 게시글 조회수 증가 (Service Role로 RLS 우회)
+ */
+export async function incrementViewCount(
+  postId: number
+): Promise<ActionResult<null>> {
+  return publicAction(async () => {
+    const serviceClient = createServiceRoleClient()
+    const { data: post } = await serviceClient
+      .from('posts')
+      .select('view_count')
+      .eq('id', postId)
+      .single()
+
+    if (post) {
+      await serviceClient
+        .from('posts')
+        .update({ view_count: (post.view_count || 0) + 1 })
+        .eq('id', postId)
+    }
+    return null
   })
 }
 

@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
 
   // 실시간 라이브 상태
   const { members, liveStatusByMemberId, isLoading: liveLoading, refetch: refetchLive } = useLiveRoster({ realtime: true })
-  const liveMembers = members.filter(m => m.is_live)
+  const liveMembers = members.filter(m => m.is_live).filter((m, i, arr) => arr.findIndex(x => x.name === m.name) === i)
   const totalViewers = Object.values(liveStatusByMemberId)
     .flat()
     .filter(status => status.isLive)

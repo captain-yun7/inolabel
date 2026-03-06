@@ -5,7 +5,7 @@ import { useRouter, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Eye, Calendar, User, MessageSquare, Send, Trash2, Edit, Heart } from 'lucide-react'
-import { deletePost, deleteComment } from '@/lib/actions/posts'
+import { deletePost, deleteComment, incrementViewCount } from '@/lib/actions/posts'
 import { useSupabaseContext, useAuthContext } from '@/lib/context'
 import { formatDate } from '@/lib/utils/format'
 import { renderContent } from '@/lib/utils/htmlContent'
@@ -90,11 +90,8 @@ export default function PostDetailPage({
       return
     }
 
-    // 조회수 증가
-    await supabase
-      .from('posts')
-      .update({ view_count: (postData.view_count || 0) + 1 })
-      .eq('id', postId)
+    // 조회수 증가 (Server Action으로 service role 사용)
+    incrementViewCount(postId)
 
     const postProfile = postData.profiles as JoinedProfile | null
     const isAnonymous = Boolean(postData.is_anonymous)
@@ -199,8 +196,8 @@ export default function PostDetailPage({
         .eq('post_id', postId)
         .eq('user_id', user.id)
       if (error) {
-        setIsLiked(true)
-        setLikeCount(likeCount)
+        setIsLiked(wasLiked)
+        setLikeCount(prev => wasLiked ? prev + 1 : prev - 1)
         return
       }
     } else {
@@ -208,17 +205,12 @@ export default function PostDetailPage({
         .from('post_likes')
         .insert({ post_id: postId, user_id: user.id })
       if (error) {
-        setIsLiked(false)
-        setLikeCount(likeCount)
+        setIsLiked(wasLiked)
+        setLikeCount(prev => wasLiked ? prev + 1 : prev - 1)
         return
       }
     }
 
-    // DB의 like_count도 업데이트
-    await supabase
-      .from('posts')
-      .update({ like_count: Math.max(0, newCount) })
-      .eq('id', postId)
   }
 
   // 댓글 삭제 권한 확인 함수
