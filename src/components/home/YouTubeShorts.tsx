@@ -25,6 +25,7 @@ export default function YouTubeShorts() {
   const [videos, setVideos] = useState<YouTubeVideo[]>([])
   const [shorts, setShorts] = useState<YouTubeVideo[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -33,8 +34,9 @@ export default function YouTubeShorts() {
     const fetchData = async (type: TabType) => {
       try {
         const res = await fetch(`/api/youtube/shorts?limit=10&type=${type}`)
-        const { data } = await res.json()
-        return data || []
+        const json = await res.json()
+        if (json.error) setErrorMsg(json.error)
+        return json.data || []
       } catch (err) {
         console.error(`Failed to fetch ${type}:`, err)
         return []
@@ -43,6 +45,7 @@ export default function YouTubeShorts() {
 
     const init = async () => {
       setIsLoading(true)
+      setErrorMsg(null)
       const [videosData, shortsData] = await Promise.all([
         fetchData('videos'),
         fetchData('shorts'),
@@ -132,7 +135,9 @@ export default function YouTubeShorts() {
 
       {currentData.length === 0 ? (
         <div className={styles.empty}>
-          {isShorts ? '쇼츠 콘텐츠 준비 중입니다' : '영상 콘텐츠 준비 중입니다'}
+          {errorMsg
+            ? '일시적으로 영상을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.'
+            : isShorts ? '쇼츠 콘텐츠 준비 중입니다' : '영상 콘텐츠 준비 중입니다'}
         </div>
       ) : (
         <div className={styles.carouselWrapper}>

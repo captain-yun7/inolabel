@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { XMLParser } from 'fast-xml-parser'
 
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY
-// 쇼츠 채널 (@INOLABEL-KIMINHO)
+// 두 채널 모두에서 영상을 가져옴
 const YOUTUBE_CHANNEL_ID_SHORTS = process.env.YOUTUBE_CHANNEL_ID_SHORTS || process.env.YOUTUBE_CHANNEL_ID
-// 일반 영상 채널 (@kiminho22)
 const YOUTUBE_CHANNEL_ID_MAIN = process.env.YOUTUBE_CHANNEL_ID_MAIN
 
 interface YouTubeVideo {
@@ -15,33 +14,27 @@ interface YouTubeVideo {
   viewCount: number
 }
 
-// 타입별 캐시 (shorts / videos)
+// 타입별 캐시
 const cache: Record<string, { data: YouTubeVideo[]; timestamp: number }> = {}
-const CACHE_TTL = 10 * 60 * 1000
-const FETCH_TIMEOUT = 10_000 // 10초
+const CACHE_TTL = 6 * 60 * 60 * 1000 // 6시간
+const FETCH_TIMEOUT = 10_000
 
 /**
- * YouTube 영상 목록 조회 API
+ * YouTube RSS 기반 영상 조회 (API 키 불필요, 쿼터 제한 없음)
  *
- * GET /api/youtube/shorts?limit=10&type=shorts  - 쇼츠 (기본)
- * GET /api/youtube/shorts?limit=10&type=videos  - 일반 영상
+ * RSS 피드의 link URL로 shorts/videos 자동 구분:
+ * - /shorts/ → 쇼츠
+ * - /watch?v= → 일반 영상
+ *
+ * 조회수도 RSS media:statistics에서 가져옴
+ *
+ * GET /api/youtube/shorts?limit=10&type=shorts
+ * GET /api/youtube/shorts?limit=10&type=videos
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const limit = Math.min(Number(searchParams.get('limit')) || 10, 50)
+  const limit = Math.min(Number(searchParams.get('limit')) || 10, 15)
   const type = searchParams.get('type') === 'videos' ? 'videos' : 'shorts'
-
-  const channelId = type === 'videos' ? YOUTUBE_CHANNEL_ID_MAIN : YOUTUBE_CHANNEL_ID_SHORTS
-
-  // API 키 미설정 시 빈 배열 반환
-  if (!YOUTUBE_API_KEY || !channelId) {
-    return NextResponse.json({
-      data: [],
-      message: type === 'videos'
-        ? 'YOUTUBE_CHANNEL_ID_MAIN 환경변수를 설정하세요.'
-        : 'YouTube API가 설정되지 않았습니다. YOUTUBE_API_KEY와 YOUTUBE_CHANNEL_ID_SHORTS 환경변수를 설정하세요.',
-    })
-  }
 
   // 캐시 확인
   const cached = cache[type]
@@ -50,82 +43,33 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1) Search API로 영상 목록 조회
-    const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search')
-    searchUrl.searchParams.set('part', 'snippet')
-    searchUrl.searchParams.set('channelId', channelId)
-    searchUrl.searchParams.set('maxResults', '50')
-    searchUrl.searchParams.set('order', 'date')
-    searchUrl.searchParams.set('type', 'video')
-    searchUrl.searchParams.set('key', YOUTUBE_API_KEY)
+    // 두 채널 RSS를 모두 가져오기
+    const channelIds = [YOUTUBE_CHANNEL_ID_MAIN, YOUTUBE_CHANNEL_ID_SHORTS].filter(Boolean) as string[]
 
-    // 쇼츠는 60초 이하, 일반 영상은 medium 이상
-    if (type === 'shorts') {
-      searchUrl.searchParams.set('videoDuration', 'short')
-    } else {
-      searchUrl.searchParams.set('videoDuration', 'medium')
+    if (channelIds.length === 0) {
+      return NextResponse.json({ data: [], message: '채널 ID 환경변수를 설정하세요.' })
     }
 
-    const response = await fetch(searchUrl.toString(), {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    })
+    const allVideos: YouTubeVideo[] = []
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      const isQuota = response.status === 403
-      console.error(`[YouTube API] ${isQuota ? 'QUOTA_EXCEEDED' : 'ERROR'} (${response.status}):`, errorText)
-      return NextResponse.json(
-        { data: cached?.data.slice(0, limit) || [], error: isQuota ? 'YouTube API 일일 쿼터 초과' : 'YouTube API 호출 실패' },
-        { status: 200 }
-      )
-    }
+    const results = await Promise.allSettled(
+      channelIds.map(id => fetchRSS(id))
+    )
 
-    const data = await response.json()
-
-    const videoIds = (data.items || []).map((item: { id: { videoId: string } }) => item.id.videoId)
-
-    // 2) Videos API로 조회수 가져오기 (실패해도 영상 목록은 반환)
-    const statsMap: Record<string, number> = {}
-    if (videoIds.length > 0) {
-      try {
-        const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos')
-        statsUrl.searchParams.set('part', 'statistics')
-        statsUrl.searchParams.set('id', videoIds.join(','))
-        statsUrl.searchParams.set('key', YOUTUBE_API_KEY)
-
-        const statsResponse = await fetch(statsUrl.toString(), {
-          signal: AbortSignal.timeout(FETCH_TIMEOUT),
-        })
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json()
-          for (const item of statsData.items || []) {
-            statsMap[item.id] = parseInt(item.statistics?.viewCount || '0', 10)
-          }
-        }
-      } catch (statsError) {
-        console.error('[YouTube API] Stats fetch failed (continuing without view counts):', statsError)
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        allVideos.push(...result.value)
       }
     }
 
-    const videos: YouTubeVideo[] = (data.items || []).map((item: {
-      id: { videoId: string }
-      snippet: {
-        title: string
-        thumbnails: { high?: { url: string }; medium?: { url: string }; default?: { url: string } }
-        publishedAt: string
-        channelTitle: string
-      }
-    }) => ({
-      id: item.id.videoId,
-      title: item.snippet.title,
-      thumbnail: item.snippet.thumbnails?.high?.url
-        || item.snippet.thumbnails?.medium?.url
-        || item.snippet.thumbnails?.default?.url
-        || '',
-      publishedAt: item.snippet.publishedAt,
-      channelTitle: item.snippet.channelTitle,
-      viewCount: statsMap[item.id.videoId] || 0,
-    }))
+    const rssVideos = allVideos as RSSVideo[]
+    const filtered = type === 'shorts'
+      ? rssVideos.filter(v => v._isShort)
+      : rssVideos.filter(v => !v._isShort)
+
+    // 최신순 정렬 + _isShort 제거
+    filtered.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    const videos: YouTubeVideo[] = filtered.map(({ _isShort, ...rest }) => rest)
 
     // 캐시 업데이트
     cache[type] = { data: videos, timestamp: Date.now() }
@@ -133,10 +77,67 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: videos.slice(0, limit) })
   } catch (error) {
     const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
-    console.error(`[YouTube API] ${isTimeout ? 'TIMEOUT' : 'FETCH_ERROR'}:`, error)
+    console.error(`[YouTube RSS] ${isTimeout ? 'TIMEOUT' : 'FETCH_ERROR'}:`, error)
     return NextResponse.json(
-      { data: cached?.data.slice(0, limit) || [], error: isTimeout ? 'YouTube API 응답 시간 초과' : '영상을 불러오는 데 실패했습니다' },
+      { data: cached?.data.slice(0, limit) || [], error: '영상을 불러오는 데 실패했습니다' },
       { status: 200 }
     )
   }
+}
+
+interface RSSVideo extends YouTubeVideo {
+  _isShort: boolean
+}
+
+async function fetchRSS(channelId: string): Promise<RSSVideo[]> {
+  const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+  const response = await fetch(rssUrl, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  })
+
+  if (!response.ok) {
+    console.error(`[YouTube RSS] Channel ${channelId} error: ${response.status}`)
+    return []
+  }
+
+  const xml = await response.text()
+  const parser = new XMLParser({ ignoreAttributes: false })
+  const rss = parser.parse(xml)
+
+  const entries = rss?.feed?.entry
+  if (!entries) return []
+
+  const entryList = Array.isArray(entries) ? entries : [entries]
+  const channelTitle = rss?.feed?.author?.name || ''
+
+  return entryList.map((entry: Record<string, unknown>) => {
+    const videoId = entry['yt:videoId'] as string
+    const link = entry.link as { '@_href'?: string } | { '@_href'?: string }[]
+    const altLink = Array.isArray(link)
+      ? link.find(l => l['@_href']?.includes('youtube.com'))?.['@_href'] || ''
+      : (link?.['@_href'] || '')
+
+    // RSS link로 shorts 여부 판별
+    const isShort = altLink.includes('/shorts/')
+
+    // RSS media:statistics에서 조회수
+    const mediaGroup = entry['media:group'] as Record<string, unknown> | undefined
+    const community = mediaGroup?.['media:community'] as Record<string, unknown> | undefined
+    const stats = community?.['media:statistics'] as Record<string, string> | undefined
+    const viewCount = parseInt(stats?.['@_views'] || '0', 10)
+
+    const thumbnail = (mediaGroup?.['media:thumbnail'] as Record<string, string> | undefined)?.['@_url']
+      || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+
+    return {
+      id: videoId,
+      title: entry.title as string,
+      thumbnail,
+      publishedAt: entry.published as string,
+      channelTitle,
+      viewCount,
+      _isShort: isShort,
+    }
+  })
 }
