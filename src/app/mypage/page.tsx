@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthContext, useSupabaseContext } from "@/lib/context";
-import { updateMyProfile, changePassword } from "@/lib/actions/profiles";
+import { updateMyProfile, changePassword, deleteMyAccount } from "@/lib/actions/profiles";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import {
   TextInput,
@@ -181,6 +181,25 @@ export default function MyPage() {
 
   const handleLogout = async () => {
     await signOut();
+    router.push("/");
+  };
+
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.prompt(
+      '회원탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.\n탈퇴를 원하시면 "회원탈퇴"를 입력해주세요.'
+    );
+    if (confirmed !== "회원탈퇴") return;
+
+    setIsDeletingAccount(true);
+    const result = await deleteMyAccount();
+    if (result.error) {
+      alert(`탈퇴 실패: ${result.error}`);
+      setIsDeletingAccount(false);
+      return;
+    }
+    alert("회원탈퇴가 완료되었습니다.");
     router.push("/");
   };
 
@@ -466,6 +485,19 @@ export default function MyPage() {
           onClick={handleLogout}
         >
           로그아웃
+        </Button>
+
+        <Button
+          variant="subtle"
+          color="gray"
+          fullWidth
+          radius="md"
+          size="xs"
+          mt="sm"
+          onClick={handleDeleteAccount}
+          loading={isDeletingAccount}
+        >
+          회원탈퇴
         </Button>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, MessageSquare } from 'lucide-react'
+import { ChevronRight, MessageSquare, ImageIcon } from 'lucide-react'
 import { getBestPosts, getPosts } from '@/lib/actions/posts'
 import { formatDate } from '@/lib/utils/format'
 import styles from './CommunityPreview.module.css'
@@ -17,18 +17,28 @@ interface Post {
   comment_count: number
 }
 
-export default function CommunityPreview() {
+type BoardType = 'free' | 'vip' | 'anonymous' | 'recommend' | 'meme' | 'report'
+
+interface CommunityPreviewProps {
+  boardType?: BoardType
+  title?: string
+  limit?: number
+}
+
+function CommunityPreviewCard({ boardType = 'free', title, limit = 5 }: CommunityPreviewProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const displayTitle = title || (boardType === 'meme' ? '움짤 인기글' : '자유게시판 인기글')
+  const Icon = boardType === 'meme' ? ImageIcon : MessageSquare
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        // 서버 액션으로 인기글 조회
         const { data: popularData } = await getBestPosts({
-          boardType: 'free',
+          boardType,
           period: 'weekly',
-          limit: 8,
+          limit,
         })
 
         if (popularData && popularData.length > 0) {
@@ -42,11 +52,10 @@ export default function CommunityPreview() {
             comment_count: p.comment_count ?? 0,
           })))
         } else {
-          // 인기글 없으면 최신글 fallback
           const { data: latestResult } = await getPosts({
-            boardType: 'free',
+            boardType,
             page: 1,
-            limit: 8,
+            limit,
           })
 
           if (latestResult) {
@@ -69,23 +78,23 @@ export default function CommunityPreview() {
     }
 
     fetchPosts()
-  }, [])
+  }, [boardType, limit])
 
   return (
     <section className={styles.section}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <MessageSquare size={16} className={styles.icon} />
-          <h3>자유게시판 인기글</h3>
+          <Icon size={16} className={styles.icon} />
+          <h3>{displayTitle}</h3>
         </div>
-        <Link href="/community/free" className={styles.viewAll}>
+        <Link href={`/community/${boardType}`} className={styles.viewAll}>
           전체보기 <ChevronRight size={16} />
         </Link>
       </div>
 
       <div className={styles.list}>
         {isLoading ? (
-          Array.from({ length: 5 }).map((_, i) => (
+          Array.from({ length: limit }).map((_, i) => (
             <div key={i} className={styles.skeletonItem}>
               <div className={styles.skeletonTitle} />
               <div className={styles.skeletonMeta} />
@@ -97,7 +106,7 @@ export default function CommunityPreview() {
           posts.map((post) => (
             <Link
               key={post.id}
-              href={`/community/free/${post.id}`}
+              href={`/community/${boardType}/${post.id}`}
               className={styles.item}
             >
               <span className={styles.title}>{post.title}</span>
@@ -113,5 +122,14 @@ export default function CommunityPreview() {
         )}
       </div>
     </section>
+  )
+}
+
+export default function CommunityPreview() {
+  return (
+    <div className={styles.grid}>
+      <CommunityPreviewCard boardType="free" limit={5} />
+      <CommunityPreviewCard boardType="meme" limit={5} />
+    </div>
   )
 }
