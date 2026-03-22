@@ -211,6 +211,19 @@ export default function PostDetailPage({
       }
     }
 
+    // posts.like_count 동기화
+    const { count } = await supabase
+      .from('post_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId)
+
+    if (count !== null) {
+      await supabase
+        .from('posts')
+        .update({ like_count: count })
+        .eq('id', postId)
+      setLikeCount(count)
+    }
   }
 
   // 댓글 삭제 권한 확인 함수
