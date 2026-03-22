@@ -23,6 +23,7 @@ export default function GoodsShop() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<GoodsItem | null>(null)
   const [isVisible, setIsVisible] = useState(true)
+  const [shopTitle, setShopTitle] = useState('레이블 굿즈샵')
 
   useEffect(() => {
     const fetchGoods = async () => {
@@ -38,6 +39,16 @@ export default function GoodsShop() {
           setIsVisible(false)
           setIsLoading(false)
           return
+        }
+
+        // 섹션 제목 로드
+        const { data: titleSetting } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'goods_shop_title')
+          .maybeSingle()
+        if (titleSetting?.value && typeof titleSetting.value === 'string') {
+          setShopTitle(titleSetting.value)
         }
 
         const { data, error } = await supabase
@@ -68,7 +79,7 @@ export default function GoodsShop() {
     <section className={styles.section}>
       <div className={styles.header}>
         <ShoppingBag size={18} className={styles.headerIcon} />
-        <h3 className={styles.headerTitle}>레이블 굿즈샵</h3>
+        <h3 className={styles.headerTitle}>{shopTitle}</h3>
       </div>
 
       {isLoading ? (
