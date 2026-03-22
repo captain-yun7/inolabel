@@ -16,11 +16,35 @@ import styles from "./page.module.css";
 
 type UnitType = "excel" | "crew";
 
+interface RankSection {
+  title: string;
+  roles: string[];
+}
+
+interface RankSectionsConfig {
+  excel?: RankSection[];
+  crew?: RankSection[];
+}
+
+const DEFAULT_SECTIONS: RankSectionsConfig = {
+  excel: [
+    { title: '대표', roles: ['대표', 'R대표', 'G대표', '이사장', '총장'] },
+    { title: '차장 / 과장', roles: ['부총장', '차장', '과장'] },
+    { title: '팀장 / 실장', roles: ['팀장', '실장', '비서', '교수'] },
+  ],
+  crew: [
+    { title: '대표', roles: ['대표', 'R대표', 'G대표', '이사장', '총장'] },
+    { title: '차장 / 과장', roles: ['부총장', '차장', '과장'] },
+    { title: '팀장 / 실장', roles: ['팀장', '실장', '비서', '교수'] },
+  ],
+};
+
 export default function OrganizationPage() {
-  const { members, isLoading, getByUnit, getGroupedByRole, refresh } = useOrganization();
+  const { members, isLoading, getByUnit, getGroupedByRole, getGroupedBySections, refresh } = useOrganization();
   const { getRankByName } = useBjRanks();
   const [selectedMember, setSelectedMember] = useState<OrganizationRecord | null>(null);
   const [activeUnit, setActiveUnit] = useState<UnitType>("excel");
+  const [rankSections, setRankSections] = useState<RankSectionsConfig>(DEFAULT_SECTIONS);
 
   // 스타크래프트 티어 데이터 (crew 멤버에 종족/티어 표시용)
   const [tierMap, setTierMap] = useState<Record<string, TierInfo>>({});
@@ -52,6 +76,25 @@ export default function OrganizationPage() {
     fetchTierData();
   }, []);
 
+  // 직급 구간 설정 로드
+  useEffect(() => {
+    async function fetchRankSections() {
+      const supabase = getSupabaseClient();
+      const { data } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'org_rank_sections')
+        .maybeSingle();
+      if (data?.value) {
+        try {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          setRankSections(parsed);
+        } catch { /* use default */ }
+      }
+    }
+    fetchRankSections();
+  }, []);
+
   // 관리자 편집 기능
   const {
     isAdmin,
@@ -76,52 +119,37 @@ export default function OrganizationPage() {
   // 유닛별 멤버 분류
   const unitMembers = getByUnit(activeUnit) as OrganizationRecord[];
 
-  // 역할별 그룹화
-  const grouped = getGroupedByRole(unitMembers);
+  // 동적 직급 구간으로 그룹화
+  const sections = rankSections[activeUnit] || [];
+  const dynamicGroups: { title: string; members: OrganizationRecord[] }[] = useMemo(() => {
+    if (sections.length === 0) {
+      // 설정 없으면 기존 하드코딩 방식 폴백
+      const grouped = getGroupedByRole(unitMembers);
+      const result: { title: string; members: OrganizationRecord[] }[] = [];
+      if (grouped.leaders.length > 0) result.push({ title: [...new Set(grouped.leaders.map(m => m.role))].join(' / '), members: grouped.leaders });
+      if (grouped.directors.length > 0) result.push({ title: [...new Set(grouped.directors.map(m => m.role))].join(' / '), members: grouped.directors });
+      if (grouped.managers.length > 0) result.push({ title: [...new Set(grouped.managers.map(m => m.role))].join(' / '), members: grouped.managers });
+      if (grouped.members.length > 0) result.push({ title: [...new Set(grouped.members.map(m => m.role))].join(' / ') || '멤버', members: grouped.members });
+      return result;
+    }
+    return getGroupedBySections(unitMembers, sections);
+  }, [unitMembers, sections, getGroupedByRole, getGroupedBySections]);
 
-  // 최상위 리더: 대표 → 부장 → 팀장 순으로 폴백
-  const topLeaders =
-    grouped.leaders.length > 0
-      ? grouped.leaders
-      : grouped.directors.length > 0
-      ? grouped.directors
-      : grouped.managers;
-  // 중간 관리자: 팀장 (topLeaders가 팀장이면 빈 배열)
-  const middleManagers =
-    grouped.leaders.length > 0 || grouped.directors.length > 0
-      ? grouped.managers
-      : [];
-
-  // 일반 멤버 - 직급 순으로 정렬 (여왕 1위 → 쌉노예 12위)
-  const regularMembers = useMemo(() => {
-    return [...grouped.members].sort((a, b) => {
-      const rankA = a.current_rank ? getRankByName(a.current_rank)?.level ?? 999 : 999;
-      const rankB = b.current_rank ? getRankByName(b.current_rank)?.level ?? 999 : 999;
-      return rankA - rankB;
+  // 일반 멤버 섹션(마지막 그룹)은 직급 순 정렬
+  const sortedGroups = useMemo(() => {
+    return dynamicGroups.map((group, idx) => {
+      // 마지막 그룹(일반 멤버)은 직급전 순위로 정렬
+      if (idx === dynamicGroups.length - 1 && dynamicGroups.length > 1) {
+        const sorted = [...group.members].sort((a, b) => {
+          const rankA = a.current_rank ? getRankByName(a.current_rank)?.level ?? 999 : 999;
+          const rankB = b.current_rank ? getRankByName(b.current_rank)?.level ?? 999 : 999;
+          return rankA - rankB;
+        });
+        return { ...group, members: sorted };
+      }
+      return group;
     });
-  }, [grouped.members, getRankByName]);
-
-  // 섹션 타이틀 (역할 기반 동적 생성)
-  const getLeaderTitle = () => {
-    if (topLeaders.length === 0) return "대표";
-    const roles = [...new Set(topLeaders.map(m => m.role))];
-    return roles.join(' / ');
-  };
-  const getDirectorTitle = () => {
-    if (grouped.directors.length === 0) return "";
-    const roles = [...new Set(grouped.directors.map(m => m.role))];
-    return roles.join(' / ');
-  };
-  const getManagerTitle = () => {
-    if (middleManagers.length === 0) return "팀장";
-    const roles = [...new Set(middleManagers.map(m => m.role))];
-    return roles.join(' / ');
-  };
-  const getMemberTitle = () => {
-    if (regularMembers.length === 0) return "멤버";
-    const roles = [...new Set(regularMembers.map(m => m.role))];
-    return roles.join(' / ');
-  };
+  }, [dynamicGroups, getRankByName]);
 
   return (
     <div className={styles.container}>
@@ -172,126 +200,39 @@ export default function OrganizationPage() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                {/* Section: Leaders */}
-                {topLeaders.length > 0 && (
-                  <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                      <h2 className={styles.sectionTitle}>{getLeaderTitle()}</h2>
-                      <span className={styles.sectionCount}>{topLeaders.length}명</span>
-                    </div>
-                    <div className={`${styles.grid} ${styles.gridLeaders}`}>
-                      {topLeaders.map((member, index) => (
-                        <motion.div
-                          key={member.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          onDoubleClick={() => handleCardDoubleClick(member)}
-                        >
-                          <MemberCard
-                            member={member}
-                            size="medium"
-                            onClick={() => handleCardClick(member)}
-                            isSelected={selectedMember?.id === member.id}
-                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Section: Directors (부총장/차장/과장) */}
-                {grouped.directors.length > 0 && (
-                  <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                      <h2 className={styles.sectionTitle}>{getDirectorTitle()}</h2>
-                      <span className={styles.sectionCount}>{grouped.directors.length}명</span>
-                    </div>
-                    <div className={`${styles.grid} ${styles.gridManagers}`}>
-                      {grouped.directors.map((member, index) => (
-                        <motion.div
-                          key={member.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.04 }}
-                          onDoubleClick={() => handleCardDoubleClick(member)}
-                        >
-                          <MemberCard
-                            member={member}
-                            size="medium"
-                            onClick={() => handleCardClick(member)}
-                            isSelected={selectedMember?.id === member.id}
-                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Section: Managers (교수/팀장/실장) */}
-                {middleManagers.length > 0 && (
-                  <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                      <h2 className={styles.sectionTitle}>{getManagerTitle()}</h2>
-                      <span className={styles.sectionCount}>{middleManagers.length}명</span>
-                    </div>
-                    <div className={`${styles.grid} ${styles.gridManagers}`}>
-                      {middleManagers.map((member, index) => (
-                        <motion.div
-                          key={member.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.03 }}
-                          onDoubleClick={() => handleCardDoubleClick(member)}
-                        >
-                          <MemberCard
-                            member={member}
-                            size="medium"
-                            onClick={() => handleCardClick(member)}
-                            isSelected={selectedMember?.id === member.id}
-                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </section>
-                )}
-
-                {/* Section: Members */}
-                {regularMembers.length > 0 && (
-                  <section className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                      <h2 className={styles.sectionTitle}>{getMemberTitle()}</h2>
-                      <span className={styles.sectionCount}>{regularMembers.length}명</span>
-                    </div>
-                    <div className={`${styles.grid} ${styles.gridMembers}`}>
-                      {regularMembers.map((member, index) => (
-                        <motion.div
-                          key={member.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.02 }}
-                          onDoubleClick={() => handleCardDoubleClick(member)}
-                        >
-                          <MemberCard
-                            member={member}
-                            size="small"
-                            onClick={() => handleCardClick(member)}
-                            isSelected={selectedMember?.id === member.id}
-                            tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
-                          />
-                        </motion.div>
-                      ))}
-                    </div>
-                  </section>
-                )}
+                {/* 동적 직급 구간 섹션 */}
+                {sortedGroups.map((group, groupIdx) => (
+                  group.members.length > 0 && (
+                    <section key={group.title} className={styles.section}>
+                      <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>{group.title}</h2>
+                        <span className={styles.sectionCount}>{group.members.length}명</span>
+                      </div>
+                      <div className={`${styles.grid} ${groupIdx === 0 ? styles.gridLeaders : groupIdx === sortedGroups.length - 1 ? styles.gridMembers : styles.gridManagers}`}>
+                        {group.members.map((member, index) => (
+                          <motion.div
+                            key={member.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.03 }}
+                            onDoubleClick={() => handleCardDoubleClick(member)}
+                          >
+                            <MemberCard
+                              member={member}
+                              size={groupIdx === sortedGroups.length - 1 ? "small" : "medium"}
+                              onClick={() => handleCardClick(member)}
+                              isSelected={selectedMember?.id === member.id}
+                              tierInfo={activeUnit === 'crew' ? tierMap[member.name] : undefined}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </section>
+                  )
+                ))}
 
                 {/* Empty State */}
-                {topLeaders.length === 0 &&
-                  middleManagers.length === 0 &&
-                  regularMembers.length === 0 && (
+                {sortedGroups.every(g => g.members.length === 0) && (
                     <div className={styles.emptyState}>
                       <Users size={48} />
                       <p>해당 유닛에 멤버가 없습니다.</p>

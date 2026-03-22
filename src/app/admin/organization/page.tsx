@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Building, Plus, X, Save, Radio, Link as LinkIcon, User, List, GitBranch, Loader2 } from 'lucide-react'
+import { Building, Plus, X, Save, Radio, Link as LinkIcon, User, List, GitBranch, Loader2, Settings, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { DataTable, Column, ImageUpload, OrgTreeView } from '@/components/admin'
 import { useAdminCRUD, useAlert } from '@/lib/hooks'
@@ -52,7 +52,17 @@ interface Profile {
   nickname: string
 }
 
-type ViewMode = 'table' | 'tree'
+type ViewMode = 'table' | 'tree' | 'sections'
+
+interface RankSection {
+  title: string
+  roles: string[]
+}
+
+interface RankSectionsConfig {
+  excel?: RankSection[]
+  crew?: RankSection[]
+}
 
 export default function OrganizationPage() {
   const supabase = useSupabaseContext()
@@ -66,6 +76,69 @@ export default function OrganizationPage() {
   const [soopUrl, setSoopUrl] = useState('')
   const [isFetchingProfile, setIsFetchingProfile] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+
+  // 직급 구간 설정
+  const [rankSections, setRankSections] = useState<RankSectionsConfig>({})
+  const [isSavingSections, setIsSavingSections] = useState(false)
+
+  // 직급 구간 설정 로드
+  useEffect(() => {
+    async function fetchRankSections() {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'org_rank_sections')
+        .maybeSingle()
+      if (data?.value) {
+        try {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value
+          setRankSections(parsed)
+        } catch { /* ignore */ }
+      }
+    }
+    fetchRankSections()
+  }, [supabase])
+
+  const saveRankSections = async () => {
+    setIsSavingSections(true)
+    try {
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert({ key: 'org_rank_sections', value: rankSections }, { onConflict: 'key' })
+      if (error) throw error
+      alertHandler.showSuccess('직급 구간 설정이 저장되었습니다.', '저장 완료')
+    } catch (err) {
+      alertHandler.showError('저장 실패: ' + (err instanceof Error ? err.message : '알 수 없는 오류'), '오류')
+    } finally {
+      setIsSavingSections(false)
+    }
+  }
+
+  const getCurrentSections = (): RankSection[] => rankSections[activeUnit] || []
+
+  const updateCurrentSections = (sections: RankSection[]) => {
+    setRankSections(prev => ({ ...prev, [activeUnit]: sections }))
+  }
+
+  const addSection = () => {
+    updateCurrentSections([...getCurrentSections(), { title: '', roles: [] }])
+  }
+
+  const removeSection = (index: number) => {
+    updateCurrentSections(getCurrentSections().filter((_, i) => i !== index))
+  }
+
+  const updateSection = (index: number, field: 'title' | 'roles', value: string | string[]) => {
+    const updated = [...getCurrentSections()]
+    if (field === 'title') {
+      updated[index] = { ...updated[index], title: value as string }
+    } else {
+      updated[index] = { ...updated[index], roles: value as string[] }
+    }
+    updateCurrentSections(updated)
+  }
+
+  // uniqueRoles는 filteredMembers 이후에 정의 (아래 참고)
 
   // Fetch profiles for linking
   const fetchProfiles = useCallback(async () => {
@@ -174,6 +247,11 @@ export default function OrganizationPage() {
   }, [members])
 
   const filteredMembers = localMembers.filter((m) => m.unit === activeUnit)
+
+  // 현재 유닛의 고유 직책 목록
+  const uniqueRoles = useMemo(() => {
+    return [...new Set(filteredMembers.map(m => m.role))].sort()
+  }, [filteredMembers])
 
   // 드래그앤드롭 순서 변경 핸들러
   const handleReorder = async (reorderedItems: OrgMember[]) => {
@@ -364,6 +442,14 @@ export default function OrganizationPage() {
               <GitBranch size={16} />
               트리
             </button>
+            <button
+              onClick={() => setViewMode('sections')}
+              className={`${styles.tabButton} ${viewMode === 'sections' ? styles.active : ''}`}
+              title="직급 구간 설정"
+            >
+              <Settings size={16} />
+              구간 설정
+            </button>
           </div>
           <button onClick={openAddModal} className={styles.addButton}>
             <Plus size={18} />
@@ -400,12 +486,131 @@ export default function OrganizationPage() {
           draggable
           onReorder={handleReorder}
         />
-      ) : (
+      ) : viewMode === 'tree' ? (
         <OrgTreeView
           members={filteredMembers}
           onEdit={openEditModal}
           onDelete={handleDelete}
         />
+      ) : (
+        /* 직급 구간 설정 뷰 */
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>
+              {activeUnit === 'excel' ? '엑셀부' : '스타부'} 직급 구간 설정
+            </h2>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button onClick={addSection} className={styles.addButton} style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                <Plus size={14} />
+                구간 추가
+              </button>
+              <button
+                onClick={saveRankSections}
+                disabled={isSavingSections}
+                className={styles.addButton}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', background: 'var(--success, #22c55e)' }}
+              >
+                <Save size={14} />
+                {isSavingSections ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>
+            각 구간에 표시할 직책을 설정합니다. 어떤 구간에도 속하지 않는 직책은 &quot;기타 멤버&quot;로 표시됩니다.
+          </p>
+
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', padding: '0.75rem', background: 'var(--surface)', borderRadius: '8px' }}>
+            현재 유닛 직책 목록: {uniqueRoles.length > 0 ? uniqueRoles.join(', ') : '없음'}
+          </div>
+
+          {getCurrentSections().length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-tertiary)' }}>
+              <p>설정된 구간이 없습니다. 기본 구간(대표/차장·과장/팀장·실장/멤버)이 사용됩니다.</p>
+              <button onClick={addSection} className={styles.addButton} style={{ marginTop: '1rem' }}>
+                <Plus size={14} /> 첫 구간 추가
+              </button>
+            </div>
+          ) : (
+            getCurrentSections().map((section, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: '1rem',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', minWidth: '2rem' }}>#{idx + 1}</span>
+                  <input
+                    type="text"
+                    value={section.title}
+                    onChange={(e) => updateSection(idx, 'title', e.target.value)}
+                    placeholder="구간 이름 (예: 대표, 차장/과장)"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid var(--border)',
+                      borderRadius: '6px',
+                      background: 'var(--surface)',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.9rem',
+                    }}
+                  />
+                  <button
+                    onClick={() => removeSection(idx)}
+                    style={{
+                      padding: '0.4rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--danger, #ef4444)',
+                      cursor: 'pointer',
+                    }}
+                    title="구간 삭제"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', paddingLeft: '2.75rem' }}>
+                  {uniqueRoles.map((role) => {
+                    const isSelected = section.roles.includes(role)
+                    const isUsedElsewhere = !isSelected && getCurrentSections().some((s, i) => i !== idx && s.roles.includes(role))
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          if (isUsedElsewhere) return
+                          const newRoles = isSelected
+                            ? section.roles.filter(r => r !== role)
+                            : [...section.roles, role]
+                          updateSection(idx, 'roles', newRoles)
+                        }}
+                        disabled={isUsedElsewhere}
+                        style={{
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '4px',
+                          border: `1px solid ${isSelected ? 'var(--primary)' : isUsedElsewhere ? 'var(--border)' : 'var(--border)'}`,
+                          background: isSelected ? 'var(--primary)' : 'transparent',
+                          color: isSelected ? '#fff' : isUsedElsewhere ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+                          cursor: isUsedElsewhere ? 'not-allowed' : 'pointer',
+                          fontSize: '0.8rem',
+                          opacity: isUsedElsewhere ? 0.5 : 1,
+                        }}
+                      >
+                        {role}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       )}
 
       {/* Modal */}

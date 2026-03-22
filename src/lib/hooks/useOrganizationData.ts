@@ -45,6 +45,8 @@ interface UseOrganizationDataReturn {
     managers: T[]
     members: T[]
   }
+  /** 동적 직급 구간 설정으로 그룹화 */
+  getGroupedBySections: <T extends GroupableMember>(members: T[], sections: { title: string; roles: string[] }[]) => { title: string; members: T[] }[]
 }
 
 export function useOrganizationData(
@@ -136,6 +138,32 @@ export function useOrganizationData(
     []
   )
 
+  /**
+   * 동적 직급 구간 설정으로 멤버 그룹화
+   * sections: [{ title: string, roles: string[] }, ...]
+   */
+  const getGroupedBySections = useCallback(
+    <T extends GroupableMember>(memberList: T[], sections: { title: string; roles: string[] }[]) => {
+      const result: { title: string; members: T[] }[] = []
+      const assignedRoles = new Set<string>()
+
+      for (const section of sections) {
+        const sectionMembers = memberList.filter((m) => section.roles.includes(m.role))
+        result.push({ title: section.title, members: sectionMembers })
+        section.roles.forEach((r) => assignedRoles.add(r))
+      }
+
+      // 어떤 섹션에도 속하지 않는 멤버
+      const unassigned = memberList.filter((m) => !assignedRoles.has(m.role))
+      if (unassigned.length > 0) {
+        result.push({ title: '기타 멤버', members: unassigned })
+      }
+
+      return result
+    },
+    []
+  )
+
   return {
     members,
     isLoading,
@@ -144,6 +172,7 @@ export function useOrganizationData(
     getByUnit,
     getLiveMembers,
     getGroupedByRole,
+    getGroupedBySections,
   }
 }
 
