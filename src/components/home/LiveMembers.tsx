@@ -23,7 +23,7 @@ interface LiveMember {
   avatarUrl: string | null
   thumbnailUrl: string | null
   isLive: boolean
-  unit: 'excel' | 'crew'
+  units: Set<'excel' | 'crew'>
   sooptvId: string | null
 }
 
@@ -33,27 +33,27 @@ export default function LiveMembers() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const members: LiveMember[] = useMemo(() => {
-    // 이름 기반 중복 제거 (김인호가 excel/crew 양쪽에 있음)
-    const seen = new Set<string>()
-    return rosterMembers
-      .filter((m) => {
-        if (seen.has(m.name)) return false
-        seen.add(m.name)
-        return true
-      })
-      .map((member) => {
+    // 이름 기반 중복 병합 (김인호가 excel/crew 양쪽에 있음 → 양쪽 unit 모두 보존)
+    const memberMap = new Map<string, LiveMember>()
+    for (const member of rosterMembers) {
+      const existing = memberMap.get(member.name)
+      if (existing) {
+        existing.units.add(member.unit)
+      } else {
         const liveEntries = liveStatusByMemberId[member.id] || []
         const liveEntry = liveEntries.find(e => e.isLive)
-        return {
+        memberMap.set(member.name, {
           id: member.id,
           nickname: member.name,
           avatarUrl: member.image_url,
           thumbnailUrl: liveEntry?.thumbnailUrl || null,
           isLive: Boolean(member.is_live),
-          unit: member.unit,
+          units: new Set([member.unit]),
           sooptvId: extractSoopBjId(member.social_links?.sooptv) || extractSoopBjId(member.social_links?.soop) || extractSoopBjId(member.social_links?.pandatv),
-        }
-      })
+        })
+      }
+    }
+    return Array.from(memberMap.values())
       .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0))
   }, [rosterMembers, liveStatusByMemberId])
 
@@ -61,7 +61,7 @@ export default function LiveMembers() {
     // 라이브 중인 멤버만 표시
     const liveOnly = members.filter((m) => m.isLive)
     if (filter === 'all') return liveOnly
-    return liveOnly.filter((m) => m.unit === filter)
+    return liveOnly.filter((m) => m.units.has(filter))
   }, [members, filter])
 
   const liveCount = members.filter((m) => m.isLive).length

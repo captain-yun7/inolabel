@@ -13,6 +13,7 @@ interface Post {
   category: string | null
   created_at: string
   author_nickname: string | null
+  is_anonymous: boolean
   comment_count: number
 }
 
@@ -36,7 +37,8 @@ export default function CommunityPreview() {
             title: p.title,
             category: p.board_type,
             created_at: p.created_at,
-            author_nickname: p.author_nickname || null,
+            author_nickname: p.is_anonymous ? '익명' : (p.author_nickname || null),
+            is_anonymous: p.is_anonymous || false,
             comment_count: p.comment_count ?? 0,
           })))
         } else {
@@ -53,7 +55,8 @@ export default function CommunityPreview() {
               title: p.title,
               category: p.board_type,
               created_at: p.created_at,
-              author_nickname: p.author_nickname || null,
+              author_nickname: p.is_anonymous ? '익명' : (p.author_nickname || null),
+              is_anonymous: p.is_anonymous || false,
               comment_count: p.comment_count ?? 0,
             })))
           }
