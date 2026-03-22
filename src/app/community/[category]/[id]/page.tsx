@@ -5,7 +5,7 @@ import { useRouter, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Eye, Calendar, User, MessageSquare, Send, Trash2, Edit, Heart } from 'lucide-react'
-import { deletePost, deleteComment, incrementViewCount, createComment } from '@/lib/actions/posts'
+import { deletePost, deleteComment, incrementViewCount, createComment, toggleLike } from '@/lib/actions/posts'
 import { useSupabaseContext, useAuthContext } from '@/lib/context'
 import { formatDate } from '@/lib/utils/format'
 import { renderContent } from '@/lib/utils/htmlContent'
@@ -189,41 +189,16 @@ export default function PostDetailPage({
     setIsLiked(!wasLiked)
     setLikeCount(newCount)
 
-    if (wasLiked) {
-      const { error } = await supabase
-        .from('post_likes')
-        .delete()
-        .eq('post_id', postId)
-        .eq('user_id', user.id)
-      if (error) {
-        setIsLiked(wasLiked)
-        setLikeCount(prev => wasLiked ? prev + 1 : prev - 1)
-        return
-      }
-    } else {
-      const { error } = await supabase
-        .from('post_likes')
-        .insert({ post_id: postId, user_id: user.id })
-      if (error) {
-        setIsLiked(wasLiked)
-        setLikeCount(prev => wasLiked ? prev + 1 : prev - 1)
-        return
-      }
+    const { data, error } = await toggleLike(postId)
+    if (error || !data) {
+      // Rollback
+      setIsLiked(wasLiked)
+      setLikeCount(wasLiked ? likeCount : likeCount)
+      return
     }
 
-    // posts.like_count 동기화
-    const { count } = await supabase
-      .from('post_likes')
-      .select('*', { count: 'exact', head: true })
-      .eq('post_id', postId)
-
-    if (count !== null) {
-      await supabase
-        .from('posts')
-        .update({ like_count: count })
-        .eq('id', postId)
-      setLikeCount(count)
-    }
+    setIsLiked(data.liked)
+    setLikeCount(data.likeCount)
   }
 
   // 댓글 삭제 권한 확인 함수

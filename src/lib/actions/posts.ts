@@ -275,6 +275,53 @@ export async function incrementViewCount(
   })
 }
 
+/**
+ * 좋아요 토글 (인증 필요, Service Role로 like_count 동기화)
+ */
+export async function toggleLike(
+  postId: number
+): Promise<ActionResult<{ liked: boolean; likeCount: number }>> {
+  return authAction(async (supabase, userId) => {
+    const serviceClient = createServiceRoleClient()
+
+    // 현재 좋아요 상태 확인
+    const { data: existing } = await supabase
+      .from('post_likes')
+      .select('id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single()
+
+    if (existing) {
+      // 좋아요 취소
+      await supabase
+        .from('post_likes')
+        .delete()
+        .eq('post_id', postId)
+        .eq('user_id', userId)
+    } else {
+      // 좋아요 추가
+      await supabase
+        .from('post_likes')
+        .insert({ post_id: postId, user_id: userId })
+    }
+
+    // like_count 동기화 (Service Role로 RLS 우회)
+    const { count } = await serviceClient
+      .from('post_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId)
+
+    const likeCount = count ?? 0
+    await serviceClient
+      .from('posts')
+      .update({ like_count: likeCount })
+      .eq('id', postId)
+
+    return { liked: !existing, likeCount }
+  })
+}
+
 // ==================== Comments ====================
 
 /**
