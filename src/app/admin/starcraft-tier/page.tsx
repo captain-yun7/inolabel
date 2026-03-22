@@ -190,7 +190,7 @@ export default function AdminStarcraftTierPage() {
       }
     }
 
-    const { error } = await addTierMember({
+    const { data: newMember, error } = await addTierMember({
       tier_id: selectedTierId,
       player_name: newPlayerName.trim(),
       race: (newPlayerRace || null) as StarcraftTierMember['race'],
@@ -198,13 +198,15 @@ export default function AdminStarcraftTierPage() {
       image_url: imageUrl,
       soop_id: soopId,
     })
-    if (!error) {
+    if (!error && newMember) {
       setNewPlayerName('')
       setNewPlayerRace('')
       setNewPlayerDesc('')
       setNewSoopUrl('')
       setFetchError(null)
-      await fetchTiers()
+      setTiers(prev => prev.map(t =>
+        t.id === selectedTierId ? { ...t, members: [...t.members, newMember] } : t
+      ))
     } else {
       alert(error)
     }
@@ -215,7 +217,10 @@ export default function AdminStarcraftTierPage() {
     if (!confirm('정말 삭제하시겠습니까?')) return
     const { error } = await removeTierMember(memberId)
     if (!error) {
-      await fetchTiers()
+      setTiers(prev => prev.map(t => ({
+        ...t,
+        members: t.members.filter(m => m.id !== memberId),
+      })))
     } else {
       alert(error)
     }
@@ -252,9 +257,13 @@ export default function AdminStarcraftTierPage() {
       soop_id: soopId,
     })
     if (!error) {
+      const updatedMember = { ...editingMember, image_url: imageUrl, soop_id: soopId }
+      setTiers(prev => prev.map(t => ({
+        ...t,
+        members: t.members.map(m => m.id === updatedMember.id ? { ...m, ...updatedMember } : m),
+      })))
       setEditingMember(null)
       setFetchError(null)
-      await fetchTiers()
     } else {
       alert(error)
     }
@@ -265,7 +274,15 @@ export default function AdminStarcraftTierPage() {
     setIsSubmitting(true)
     const { error } = await updateTierMember(member.id, { tier_id: newTierId })
     if (!error) {
-      await fetchTiers()
+      setTiers(prev => prev.map(t => {
+        if (t.id === member.tier_id) {
+          return { ...t, members: t.members.filter(m => m.id !== member.id) }
+        }
+        if (t.id === newTierId) {
+          return { ...t, members: [...t.members, { ...member, tier_id: newTierId }] }
+        }
+        return t
+      }))
     } else {
       alert(error)
     }
