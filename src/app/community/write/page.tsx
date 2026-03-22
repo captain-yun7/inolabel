@@ -4,9 +4,6 @@ import { useState, Suspense, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Send, AlertCircle, FileText, Crown, UserX, Lightbulb, ImageIcon, AlertTriangle } from 'lucide-react'
-import { PageLayout } from '@/components/layout'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { RichEditor } from '@/components/ui'
 import { useAuthContext } from '@/lib/context/AuthContext'
 import { useSupabaseContext } from '@/lib/context'
@@ -215,53 +212,37 @@ function WritePostContent() {
   // 비로그인 사용자 안내
   if (!isAuthenticated) {
     return (
-      <PageLayout>
-        <div className={styles.main}>
-          <Navbar />
-          <div className={styles.writeContainer}>
-            <div className={styles.authRequired}>
-              <AlertCircle size={48} />
-              <h2>로그인이 필요합니다</h2>
-              <p>게시글을 작성하려면 먼저 로그인해주세요.</p>
-              <div className={styles.authButtons}>
-                <Link href="/login" className={styles.loginBtn}>
-                  로그인
-                </Link>
-                <Link href="/signup" className={styles.signupBtn}>
-                  회원가입
-                </Link>
-              </div>
-            </div>
+      <div className={styles.writeContainer}>
+        <div className={styles.authRequired}>
+          <AlertCircle size={48} />
+          <h2>로그인이 필요합니다</h2>
+          <p>게시글을 작성하려면 먼저 로그인해주세요.</p>
+          <div className={styles.authButtons}>
+            <Link href="/login" className={styles.loginBtn}>
+              로그인
+            </Link>
+            <Link href="/signup" className={styles.signupBtn}>
+              회원가입
+            </Link>
           </div>
-          <Footer />
         </div>
-      </PageLayout>
+      </div>
     )
   }
 
   // 수정 모드에서 데이터 로딩 중
   if (isLoadingPost) {
     return (
-      <PageLayout>
-        <div className={styles.main}>
-          <Navbar />
-          <div className={styles.writeContainer}>
-            <div className={styles.loadingState}>
-              <div className={styles.spinner} />
-              <p>게시글을 불러오는 중...</p>
-            </div>
-          </div>
-          <Footer />
+      <div className={styles.writeContainer}>
+        <div className={styles.loadingState}>
+          <div className={styles.spinner} />
+          <p>게시글을 불러오는 중...</p>
         </div>
-      </PageLayout>
+      </div>
     )
   }
 
   return (
-    <PageLayout>
-      <div className={styles.main}>
-        <Navbar />
-
         <div className={styles.writeContainer}>
           {/* 상단 헤더 */}
           <div className={styles.writeHeader}>
@@ -438,28 +419,18 @@ function WritePostContent() {
             </div>
           </form>
         </div>
-
-        <Footer />
-      </div>
-    </PageLayout>
   )
 }
 
 // Loading fallback for Suspense
 function WritePostLoading() {
   return (
-    <PageLayout>
-      <div className={styles.main}>
-        <Navbar />
-        <div className={styles.writeContainer}>
-          <div className={styles.loadingState}>
-            <div className={styles.spinner} />
-            <p>로딩 중...</p>
-          </div>
-        </div>
-        <Footer />
+    <div className={styles.writeContainer}>
+      <div className={styles.loadingState}>
+        <div className={styles.spinner} />
+        <p>로딩 중...</p>
       </div>
-    </PageLayout>
+    </div>
   )
 }
 

@@ -3,15 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { MessageSquare, Eye, Crown, Lock, Search, ChevronDown, Trash2, CheckSquare, Square, ImageIcon } from 'lucide-react'
-import { PageLayout } from '@/components/layout'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { InlineError } from '@/components/common/InlineError'
 import { useAuthContext } from '@/lib/context'
 import { useVipStatus } from '@/lib/hooks'
 import { getPosts, deleteMultiplePosts } from '@/lib/actions/posts'
 import { formatShortDate } from '@/lib/utils/format'
-import TabFilter from '@/components/community/TabFilter'
 import styles from '../free/page.module.css'
 
 interface Post {
@@ -46,14 +42,6 @@ export default function VipBoardPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSelectMode, setIsSelectMode] = useState(false)
-
-  const tabs = [
-    { label: '자유게시판', value: 'free', path: '/community/free' },
-    { label: '익명게시판', value: 'anonymous', path: '/community/anonymous' },
-    { label: '컨텐츠추천', value: 'recommend', path: '/community/recommend' },
-    { label: '짤, 움짤', value: 'meme', path: '/community/meme' },
-    { label: '신고게시판', value: 'report', path: '/community/report' },
-  ]
 
   // 검색어 디바운스 (300ms)
   useEffect(() => {
@@ -197,22 +185,7 @@ export default function VipBoardPage() {
 
 
   return (
-    <PageLayout>
-      <div className={styles.main}>
-        <Navbar />
-        {/* VIP Hero Section */}
-        <section className={`${styles.hero} ${styles.vipHero}`}>
-          <div className={styles.heroContent}>
-            <div className={styles.vipTitleRow}>
-              <Crown size={32} className={styles.vipCrown} />
-              <h1 className={styles.title}>VIP LOUNGE</h1>
-            </div>
-            <p className={styles.subtitle}>VIP 후원자 전용 프리미엄 커뮤니티</p>
-          </div>
-        </section>
-
-      <div className={styles.container}>
-        <TabFilter tabs={tabs} activeTab="vip" />
+      <>
 
         {/* 검색 영역 (VIP 권한 있을 때만) */}
         {isVip && !vipStatusLoading && (
@@ -437,9 +410,6 @@ export default function VipBoardPage() {
             </Link>
           </div>
         )}
-        </div>
-        <Footer />
-      </div>
-    </PageLayout>
+      </>
   )
 }

@@ -3,14 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Search, Eye, MessageSquare, ThumbsUp, PenLine, ChevronDown, Trash2, CheckSquare, Square, Pin, Trophy, Flame, Tag, ImageIcon } from 'lucide-react'
-import { PageLayout } from '@/components/layout'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
 import { InlineError } from '@/components/common/InlineError'
 import { useAuthContext } from '@/lib/context'
 import { getPosts, deleteMultiplePosts } from '@/lib/actions/posts'
 import { formatShortDate } from '@/lib/utils/format'
-import TabFilter from '@/components/community/TabFilter'
 import styles from './page.module.css'
 
 interface Post {
@@ -111,14 +107,6 @@ export default function BoardClient({
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSelectMode, setIsSelectMode] = useState(false)
-
-  const tabs = [
-    { label: '자유게시판', value: 'free', path: '/community/free' },
-    { label: '익명게시판', value: 'anonymous', path: '/community/anonymous' },
-    { label: '컨텐츠추천', value: 'recommend', path: '/community/recommend' },
-    { label: '짤, 움짤', value: 'meme', path: '/community/meme' },
-    { label: '신고게시판', value: 'report', path: '/community/report' },
-  ]
 
   // 검색어 디바운스 (300ms)
   useEffect(() => {
@@ -269,19 +257,7 @@ export default function BoardClient({
   }
 
   return (
-    <PageLayout>
-      <div className={styles.main}>
-        <Navbar />
-        <section className={styles.hero}>
-          <div className={styles.heroContent}>
-            <h1 className={styles.title}>{heroTitle}</h1>
-            <p className={styles.subtitle}>{heroSubtitle}</p>
-          </div>
-        </section>
-
-      <div className={styles.container}>
-        <TabFilter tabs={tabs} activeTab={activeTab} />
-
+      <>
         {headerTags && headerTags.length > 0 && (
           <div className={styles.headerTagFilter}>
             <Tag size={14} className={styles.headerTagFilterIcon} />
@@ -668,9 +644,6 @@ export default function BoardClient({
             </div>
           </>
         )}
-        </div>
-        <Footer />
-      </div>
-    </PageLayout>
+      </>
   )
 }
