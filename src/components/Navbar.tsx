@@ -298,7 +298,18 @@ export default function Navbar() {
           {/* Navigation Items */}
           {navItems.map((item) => (
             <div key={item.label} className={styles.mobileNavItem}>
-              <div className={styles.mobileNavHeader}>{item.label}</div>
+              {item.href ? (
+                <Link
+                  href={item.href}
+                  className={styles.mobileNavHeader}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <div className={styles.mobileNavHeader}>{item.label}</div>
+              )}
               {item.subItems && (
                 <div className={styles.mobileSubItems}>
                   {item.subItems.map((subItem) => (
