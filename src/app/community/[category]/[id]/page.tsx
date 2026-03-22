@@ -5,7 +5,7 @@ import { useRouter, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Eye, Calendar, User, MessageSquare, Send, Trash2, Edit, Heart } from 'lucide-react'
-import { deletePost, deleteComment, incrementViewCount } from '@/lib/actions/posts'
+import { deletePost, deleteComment, incrementViewCount, createComment } from '@/lib/actions/posts'
 import { useSupabaseContext, useAuthContext } from '@/lib/context'
 import { formatDate } from '@/lib/utils/format'
 import { renderContent } from '@/lib/utils/htmlContent'
@@ -127,6 +127,7 @@ export default function PostDetailPage({
       .from('comments')
       .select('*, profiles!author_id(id, nickname, avatar_url)')
       .eq('post_id', postId)
+      .eq('is_deleted', false)
       .order('created_at', { ascending: true })
 
     setComments(
@@ -160,15 +161,14 @@ export default function PostDetailPage({
 
     setIsSubmitting(true)
 
-    const { error } = await supabase.from('comments').insert({
+    const result = await createComment({
       post_id: postId,
-      author_id: user.id,
       content: newComment.trim(),
       is_anonymous: isAnonymousComment,
     })
 
-    if (error) {
-      console.error('댓글 작성 실패:', error)
+    if (result.error) {
+      console.error('댓글 작성 실패:', result.error)
       alert('댓글 작성에 실패했습니다.')
     } else {
       setNewComment('')

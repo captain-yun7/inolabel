@@ -21,7 +21,7 @@ function formatViewCount(count: number): string {
 type TabType = 'videos' | 'shorts'
 
 export default function YouTubeShorts() {
-  const [activeTab, setActiveTab] = useState<TabType>('videos')
+  const [activeTab, setActiveTab] = useState<TabType>('shorts')
   const [videos, setVideos] = useState<YouTubeVideo[]>([])
   const [shorts, setShorts] = useState<YouTubeVideo[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -97,8 +97,8 @@ export default function YouTubeShorts() {
           <span className={styles.badge}>YouTube</span>
           <h3 className={styles.title}>유튜브</h3>
           <div className={styles.tabs}>
-            <button className={`${styles.tab} ${styles.tabActive}`}>영상</button>
-            <button className={styles.tab}>쇼츠</button>
+            <button className={styles.tab}>영상</button>
+            <button className={`${styles.tab} ${styles.tabActive}`}>쇼츠</button>
           </div>
         </div>
         <div className={styles.scrollContainer}>

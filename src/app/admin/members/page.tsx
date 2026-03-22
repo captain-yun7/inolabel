@@ -17,6 +17,7 @@ import {
 import { DataTable, Column } from '@/components/admin'
 import { useAdminCRUD, useAlert } from '@/lib/hooks'
 import { useSupabaseContext } from '@/lib/context'
+import { deleteProfile } from '@/lib/actions/profiles'
 
 import styles from '../shared.module.css'
 
@@ -65,7 +66,7 @@ export default function MembersPage() {
     openEditModal,
     closeModal,
     handleSave,
-    handleDelete,
+    handleDelete: _handleDelete,
     refetch,
   } = useAdminCRUD<Member>({
     tableName: 'profiles',
@@ -89,6 +90,18 @@ export default function MembersPage() {
     }),
     alertHandler,
   })
+
+  // 회원 삭제 (서버 액션 사용 - 연관 데이터 cascade 정리)
+  const handleDelete = useCallback(async (member: Member) => {
+    if (!confirm(`"${member.nickname}" 회원을 삭제하시겠습니까?\n연관된 게시글, 댓글 등이 모두 삭제됩니다.`)) return false
+    const result = await deleteProfile(member.id)
+    if (result.error) {
+      alertHandler.showError(result.error, '삭제 실패')
+      return false
+    }
+    await refetch()
+    return true
+  }, [refetch, alertHandler])
 
   // 통계 계산
   const stats = useMemo(() => {

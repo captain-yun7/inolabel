@@ -1,6 +1,7 @@
 'use server'
 
 import { adminAction, authAction, publicAction, type ActionResult } from './index'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import type { InsertTables, UpdateTables, Profile } from '@/types/database'
 
 type ProfileInsert = InsertTables<'profiles'>
@@ -45,13 +46,42 @@ export async function updateProfileByAdmin(
 }
 
 /**
- * 프로필 삭제 (Admin)
+ * 프로필 삭제 (Admin) - 연관 데이터 cascade 정리 후 삭제
  */
 export async function deleteProfile(
   id: string
 ): Promise<ActionResult<null>> {
-  return adminAction(async (supabase) => {
-    const { error } = await supabase
+  return adminAction(async () => {
+    const serviceClient = createServiceRoleClient()
+
+    // FK 참조하는 테이블의 연관 데이터를 먼저 정리
+    // 1. 댓글 삭제 (comments.author_id)
+    await serviceClient.from('comments').delete().eq('author_id', id)
+    // 2. 게시글 좋아요 삭제 (post_likes.user_id) - CASCADE 있지만 확실하게
+    await serviceClient.from('post_likes').delete().eq('user_id', id)
+    // 3. 게시글 삭제 (posts.author_id)
+    await serviceClient.from('posts').delete().eq('author_id', id)
+    // 4. VIP 메시지 댓글 삭제 (vip_message_comments.author_id)
+    await serviceClient.from('vip_message_comments').delete().eq('author_id', id)
+    // 5. VIP 개인 메시지 삭제 (vip_personal_messages)
+    await serviceClient.from('vip_personal_messages').delete().eq('vip_profile_id', id)
+    await serviceClient.from('vip_personal_messages').delete().eq('author_id', id)
+    // 6. BJ 감사 메시지 삭제 (bj_thank_you_messages.vip_profile_id)
+    await serviceClient.from('bj_thank_you_messages').delete().eq('vip_profile_id', id)
+    // 7. VIP 리워드 삭제 (vip_rewards.profile_id)
+    await serviceClient.from('vip_rewards').delete().eq('profile_id', id)
+    // 8. nullable FK들은 NULL로 설정
+    await serviceClient.from('organization').update({ profile_id: null }).eq('profile_id', id)
+    await serviceClient.from('donations').update({ donor_id: null }).eq('donor_id', id)
+    await serviceClient.from('schedules').update({ created_by: null }).eq('created_by', id)
+    await serviceClient.from('notices').update({ author_id: null }).eq('author_id', id)
+    await serviceClient.from('rank_battle_records').update({ donor_id: null }).eq('donor_id', id)
+    await serviceClient.from('total_donation_rankings').update({ donor_id: null }).eq('donor_id', id)
+    await serviceClient.from('season_donation_rankings').update({ donor_id: null }).eq('donor_id', id)
+    // payment_logs, donation_requests, signatures_images는 스키마에 없으면 skip
+
+    // 프로필 삭제
+    const { error } = await serviceClient
       .from('profiles')
       .delete()
       .eq('id', id)
