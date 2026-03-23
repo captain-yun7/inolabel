@@ -178,7 +178,7 @@ export default function GoodsAdminPage() {
     if (!shopUrl.trim()) return
 
     const confirmed = await showConfirm(
-      '쇼핑몰에서 상품을 가져옵니다.\n새 상품은 "숨김" 상태로 추가되며, 표시할 상품을 직접 선택할 수 있습니다.\n계속하시겠습니까?',
+      '쇼핑몰에서 상품을 다시 가져옵니다.\n기존 상품은 모두 삭제되고 새로 등록됩니다.\n(새 상품은 "숨김" 상태로 추가)\n계속하시겠습니까?',
       { title: '상품 동기화' }
     )
     if (!confirmed) return
@@ -191,30 +191,26 @@ export default function GoodsAdminPage() {
       if (json.error) {
         showError(json.error, '동기화 실패')
       } else if (json.products && json.products.length > 0) {
-        // 기존 상품명 목록 (중복 방지)
-        const existingNames = new Set(goods.map(g => g.name))
-        const newProducts = json.products.filter(
-          (p: { name: string }) => !existingNames.has(p.name)
-        )
+        // 기존 상품 전체 삭제
+        for (const item of goods) {
+          await deleteGoods(item.id)
+        }
 
-        if (newProducts.length === 0) {
-          showSuccess('새로운 상품이 없습니다. 이미 모두 등록되어 있습니다.', '동기화 완료')
+        // 새 상품 일괄 등록 (is_active: false)
+        const { error } = await bulkCreateGoods(
+          json.products.map((product: { name: string; price: number; image_url: string; url: string }) => ({
+            name: product.name,
+            price: product.price || 0,
+            image_url: product.image_url || '',
+            purchase_url: product.url || shopUrl,
+            is_active: false,
+          }))
+        )
+        if (error) {
+          showError('상품 저장 실패: ' + error, '오류')
         } else {
-          const { error } = await bulkCreateGoods(
-            newProducts.map((product: { name: string; price: number; image_url: string; url: string }) => ({
-              name: product.name,
-              price: product.price || 0,
-              image_url: product.image_url || '',
-              purchase_url: product.url || shopUrl,
-              is_active: false,
-            }))
-          )
-          if (error) {
-            showError('상품 저장 실패: ' + error, '오류')
-          } else {
-            showSuccess(`새 상품 ${newProducts.length}개가 추가되었습니다. 표시할 상품을 선택해주세요.`, '동기화 완료')
-            await fetchGoods()
-          }
+          showSuccess(`기존 상품 삭제 후 ${json.products.length}개 상품이 새로 등록되었습니다.\n표시할 상품을 선택해주세요.`, '동기화 완료')
+          await fetchGoods()
         }
       } else {
         showError('상품을 찾을 수 없습니다.', '동기화 결과')

@@ -11,7 +11,8 @@ import { extractBjId } from '@/lib/soop/api'
 import styles from '../shared.module.css'
 
 interface SocialLinks {
-  pandatv?: string
+  pandatv?: string  // 레거시 - 기존 데이터 호환용
+  soop?: string
   sooptv?: string
   youtube?: string
   instagram?: string
@@ -396,20 +397,23 @@ export default function OrganizationPage() {
     { key: 'role', header: '직책', width: '100px' },
     {
       key: 'socialLinks',
-      header: 'PandaTV',
-      render: (item) => item.socialLinks?.pandatv ? (
-        <a
-          href={`https://www.pandalive.co.kr/play/${item.socialLinks.pandatv}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-        >
-          <LinkIcon size={14} />
-          {item.socialLinks.pandatv}
-        </a>
-      ) : (
-        <span style={{ color: 'var(--text-tertiary)' }}>-</span>
-      ),
+      header: 'SOOP ID',
+      render: (item) => {
+        const soopId = item.socialLinks?.sooptv || item.socialLinks?.soop
+        return soopId ? (
+          <a
+            href={`https://www.sooplive.co.kr/station/${soopId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#00d4ff', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+          >
+            <LinkIcon size={14} />
+            {soopId}
+          </a>
+        ) : (
+          <span style={{ color: 'var(--text-tertiary)' }}>-</span>
+        )
+      },
     },
   ]
 

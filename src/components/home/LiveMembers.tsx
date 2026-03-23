@@ -25,6 +25,7 @@ interface LiveMember {
   isLive: boolean
   units: Set<'excel' | 'crew'>
   sooptvId: string | null
+  viewerCount: number
 }
 
 export default function LiveMembers() {
@@ -50,11 +51,12 @@ export default function LiveMembers() {
           isLive: Boolean(member.is_live),
           units: new Set([member.unit]),
           sooptvId: extractSoopBjId(member.social_links?.sooptv) || extractSoopBjId(member.social_links?.soop) || extractSoopBjId(member.social_links?.pandatv),
+          viewerCount: liveEntry?.viewerCount || 0,
         })
       }
     }
     return Array.from(memberMap.values())
-      .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0))
+      .sort((a, b) => (b.isLive ? 1 : 0) - (a.isLive ? 1 : 0) || b.viewerCount - a.viewerCount)
   }, [rosterMembers, liveStatusByMemberId])
 
   const filteredMembers = useMemo(() => {

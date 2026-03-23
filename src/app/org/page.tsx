@@ -15,6 +15,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
 type UnitType = "excel" | "crew";
+type SortMode = "default" | "live";
 
 interface RankSection {
   title: string;
@@ -44,6 +45,7 @@ export default function OrganizationPage() {
   const { getRankByName } = useBjRanks();
   const [selectedMember, setSelectedMember] = useState<OrganizationRecord | null>(null);
   const [activeUnit, setActiveUnit] = useState<UnitType>("excel");
+  const [sortMode, setSortMode] = useState<SortMode>("default");
   const [rankSections, setRankSections] = useState<RankSectionsConfig>(DEFAULT_SECTIONS);
 
   // 스타크래프트 티어 데이터 (crew 멤버에 종족/티어 표시용)
@@ -135,21 +137,26 @@ export default function OrganizationPage() {
     return getGroupedBySections(unitMembers, sections);
   }, [unitMembers, sections, getGroupedByRole, getGroupedBySections]);
 
-  // 일반 멤버 섹션(마지막 그룹)은 직급 순 정렬
+  // 그룹 내 정렬 (기본: 직급순, 방송중: 라이브 멤버 상단)
   const sortedGroups = useMemo(() => {
     return dynamicGroups.map((group, idx) => {
-      // 마지막 그룹(일반 멤버)은 직급전 순위로 정렬
-      if (idx === dynamicGroups.length - 1 && dynamicGroups.length > 1) {
-        const sorted = [...group.members].sort((a, b) => {
+      let sorted = [...group.members];
+
+      if (sortMode === 'live') {
+        // 방송중 멤버를 상단으로
+        sorted.sort((a, b) => (b.is_live ? 1 : 0) - (a.is_live ? 1 : 0));
+      } else if (idx === dynamicGroups.length - 1 && dynamicGroups.length > 1) {
+        // 기본 모드: 마지막 그룹(일반 멤버)은 직급전 순위로 정렬
+        sorted.sort((a, b) => {
           const rankA = a.current_rank ? getRankByName(a.current_rank)?.level ?? 999 : 999;
           const rankB = b.current_rank ? getRankByName(b.current_rank)?.level ?? 999 : 999;
           return rankA - rankB;
         });
-        return { ...group, members: sorted };
       }
-      return group;
+
+      return { ...group, members: sorted };
     });
-  }, [dynamicGroups, getRankByName]);
+  }, [dynamicGroups, getRankByName, sortMode]);
 
   return (
     <div className={styles.container}>
@@ -177,6 +184,34 @@ export default function OrganizationPage() {
           >
             <span className={styles.unitName}>STAR UNIT</span>
             <span className={styles.unitCount}>{getByUnit("crew").length}명</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Sort Mode Toggle */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--surface, #1a1a1a)', borderRadius: '8px', padding: '4px', border: '1px solid var(--card-border, rgba(255,255,255,0.1))' }}>
+          <button
+            onClick={() => setSortMode('default')}
+            style={{
+              padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+              fontSize: '0.8rem', fontWeight: 600, transition: 'all 0.2s',
+              background: sortMode === 'default' ? 'var(--color-primary, #fd68ba)' : 'transparent',
+              color: sortMode === 'default' ? '#fff' : 'var(--text-tertiary)',
+            }}
+          >
+            기본순
+          </button>
+          <button
+            onClick={() => setSortMode('live')}
+            style={{
+              padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+              fontSize: '0.8rem', fontWeight: 600, transition: 'all 0.2s',
+              background: sortMode === 'live' ? '#00d4ff' : 'transparent',
+              color: sortMode === 'live' ? '#fff' : 'var(--text-tertiary)',
+            }}
+          >
+            🔴 방송중 우선
           </button>
         </div>
       </div>

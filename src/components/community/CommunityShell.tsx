@@ -13,7 +13,6 @@ const tabs = [
   { label: '컨텐츠추천', value: 'recommend', path: '/community/recommend' },
   { label: '짤, 움짤', value: 'meme', path: '/community/meme' },
   { label: '신고게시판', value: 'report', path: '/community/report' },
-  { label: 'VIP 라운지', value: 'vip', path: '/community/vip' },
 ]
 
 const boardMeta: Record<string, { title: string; subtitle: string }> = {
@@ -22,7 +21,6 @@ const boardMeta: Record<string, { title: string; subtitle: string }> = {
   recommend: { title: '컨텐츠추천', subtitle: '좋은 컨텐츠를 추천해주세요' },
   meme: { title: '짤, 움짤', subtitle: '재미있는 짤과 움짤을 공유하세요' },
   report: { title: '신고게시판', subtitle: '부적절한 활동을 신고해주세요' },
-  vip: { title: 'VIP LOUNGE', subtitle: 'VIP 후원자 전용 프리미엄 커뮤니티' },
 }
 
 function getBoardFromPath(pathname: string) {

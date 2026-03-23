@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { XMLParser } from 'fast-xml-parser'
+import { createClient } from '@supabase/supabase-js'
 
 // 두 채널 모두에서 영상을 가져옴
 const YOUTUBE_CHANNEL_ID_SHORTS = process.env.YOUTUBE_CHANNEL_ID_SHORTS || process.env.YOUTUBE_CHANNEL_ID
@@ -62,6 +63,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // RSS에서 하나도 못 가져왔으면 DB 캐시에서 읽기
+    if (allVideos.length === 0) {
+      const dbData = await loadFromDB(type)
+      if (dbData.length > 0) {
+        console.log(`[YouTube RSS] RSS 실패 → DB 캐시에서 ${type} ${dbData.length}개 로드`)
+        return NextResponse.json({ data: dbData.slice(0, limit), source: 'db_cache' })
+      }
+    }
+
     const rssVideos = allVideos as RSSVideo[]
     const filtered = type === 'shorts'
       ? rssVideos.filter(v => v._isShort)
@@ -71,17 +81,62 @@ export async function GET(request: NextRequest) {
     filtered.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     const videos: YouTubeVideo[] = filtered.map(({ _isShort, ...rest }) => rest)
 
-    // 캐시 업데이트
+    // 캐시 업데이트 (메모리 + DB)
     cache[type] = { data: videos, timestamp: Date.now() }
+    if (videos.length > 0) {
+      saveToDB(type, videos).catch(err => console.error('[YouTube DB Cache] 저장 실패:', err))
+    }
 
     return NextResponse.json({ data: videos.slice(0, limit) })
   } catch (error) {
     const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
     console.error(`[YouTube RSS] ${isTimeout ? 'TIMEOUT' : 'FETCH_ERROR'}:`, error)
+
+    // RSS 실패 시 DB 캐시에서 읽기
+    const dbData = await loadFromDB(type)
+    if (dbData.length > 0) {
+      console.log(`[YouTube RSS] 에러 → DB 캐시에서 ${type} ${dbData.length}개 로드`)
+      return NextResponse.json({ data: dbData.slice(0, limit), source: 'db_cache' })
+    }
+
     return NextResponse.json(
       { data: cached?.data.slice(0, limit) || [], error: '영상을 불러오는 데 실패했습니다' },
       { status: 200 }
     )
+  }
+}
+
+// DB 캐시 (site_settings 활용)
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
+}
+
+async function saveToDB(type: string, videos: YouTubeVideo[]) {
+  const supabase = getSupabaseAdmin()
+  if (!supabase) return
+  await supabase.from('site_settings').upsert(
+    { key: `youtube_cache_${type}`, value: JSON.stringify({ videos, updated_at: new Date().toISOString() }) },
+    { onConflict: 'key' }
+  )
+}
+
+async function loadFromDB(type: string): Promise<YouTubeVideo[]> {
+  const supabase = getSupabaseAdmin()
+  if (!supabase) return []
+  const { data } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', `youtube_cache_${type}`)
+    .maybeSingle()
+  if (!data?.value) return []
+  try {
+    const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value
+    return parsed.videos || []
+  } catch {
+    return []
   }
 }
 

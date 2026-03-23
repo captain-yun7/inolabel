@@ -3,7 +3,7 @@
 import { useState, Suspense, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Send, AlertCircle, FileText, Crown, UserX, Lightbulb, ImageIcon, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Send, AlertCircle, FileText, UserX, Lightbulb, ImageIcon, AlertTriangle } from 'lucide-react'
 import { RichEditor } from '@/components/ui'
 import { useAuthContext } from '@/lib/context/AuthContext'
 import { useSupabaseContext } from '@/lib/context'
@@ -16,10 +16,10 @@ function WritePostContent() {
   const searchParams = useSearchParams()
   const supabase = useSupabaseContext()
   const { isAuthenticated, profile } = useAuthContext()
-  const { isVip: isVipByRank, isLoading: vipLoading } = useVipStatus()
+  useVipStatus() // 훅 호출 유지 (다른 곳에서 사용 가능)
 
   // URL에서 게시판 타입 가져오기 (기본: free)
-  type BoardType = 'free' | 'vip' | 'anonymous' | 'recommend' | 'meme' | 'report'
+  type BoardType = 'free' | 'anonymous' | 'recommend' | 'meme' | 'report'
   const boardParam = searchParams.get('board') as BoardType | null
   const boardType = boardParam || 'free'
 
@@ -27,10 +27,6 @@ function WritePostContent() {
   const editId = searchParams.get('edit')
   const isEditMode = !!editId
 
-  // VIP 게시판 접근 권한 체크 (Role 기반 OR Rank 기반)
-  const VIP_ROLES = ['vip', 'moderator', 'admin', 'superadmin']
-  const isVipByRole = profile?.role && VIP_ROLES.includes(profile.role)
-  const canAccessVip = isVipByRole || isVipByRank
 
   // 익명게시판은 강제 익명
   const forceAnonymous = boardType === 'anonymous'
@@ -90,24 +86,12 @@ function WritePostContent() {
 
   // VIP 게시판 접근 권한 없으면 자유게시판으로 리다이렉트
   // VIP 상태 로딩 완료 후에만 체크
-  useEffect(() => {
-    if (!vipLoading && boardType === 'vip' && !canAccessVip && isAuthenticated) {
-      router.replace('/community/write?board=free')
-    }
-  }, [boardType, canAccessVip, isAuthenticated, vipLoading, router])
-
   const boardInfo: Record<BoardType, { name: string; icon: typeof FileText; description: string; color: string }> = {
     free: {
       name: '자유게시판',
       icon: FileText,
       description: '자유롭게 소통하는 공간입니다',
       color: 'var(--color-primary)',
-    },
-    vip: {
-      name: 'VIP 라운지',
-      icon: Crown,
-      description: 'VIP 회원 전용 게시판입니다',
-      color: '#ffd700',
     },
     anonymous: {
       name: '익명게시판',
@@ -154,11 +138,6 @@ function WritePostContent() {
 
     if (!formData.content.trim()) {
       setError('내용을 입력해주세요.')
-      return
-    }
-
-    if (boardType === 'vip' && !canAccessVip) {
-      setError('VIP 라운지는 VIP 등급 이상만 작성할 수 있습니다.')
       return
     }
 

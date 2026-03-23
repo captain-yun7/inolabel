@@ -64,7 +64,10 @@ export function StationNoticesSidebar({ member, onClose }: StationNoticesSidebar
       .then((res) => res.json())
       .then((json) => {
         if (!cancelled) {
-          setPosts(json.data?.posts || [])
+          const rawPosts: SoopBoardPost[] = json.data?.posts || []
+          // 시간순 정렬 (최신 먼저)
+          rawPosts.sort((a, b) => new Date(b.write_dt).getTime() - new Date(a.write_dt).getTime())
+          setPosts(rawPosts)
         }
       })
       .catch(() => {
