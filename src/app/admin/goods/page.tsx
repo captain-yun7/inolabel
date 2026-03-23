@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Plus, X, Save, Trash2, ExternalLink, Settings } from 'lucide-react'
-import Image from 'next/image'
+/* eslint-disable @next/next/no-img-element */
 import { useSupabaseContext } from '@/lib/context'
 import { useAlert } from '@/lib/hooks'
 import { getGoods, createGoods, updateGoods, deleteGoods, bulkCreateGoods } from '@/lib/actions/goods'
@@ -297,7 +297,7 @@ export default function GoodsAdminPage() {
             >
               <div style={{ position: 'relative', width: '100%', aspectRatio: '1', background: 'var(--surface)' }}>
                 {item.image_url && (
-                  <Image src={item.image_url} alt={item.name} fill style={{ objectFit: 'cover' }} sizes="240px" />
+                  <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} referrerPolicy="no-referrer" />
                 )}
               </div>
               <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -396,7 +396,7 @@ export default function GoodsAdminPage() {
                   />
                   {editingItem.image_url && (
                     <div style={{ marginTop: '0.5rem', width: '120px', height: '120px', position: 'relative', borderRadius: '6px', overflow: 'hidden' }}>
-                      <Image src={editingItem.image_url} alt="미리보기" fill style={{ objectFit: 'cover' }} sizes="120px" />
+                      <img src={editingItem.image_url} alt="미리보기" style={{ width: '100%', height: '100%', objectFit: 'cover' }} referrerPolicy="no-referrer" />
                     </div>
                   )}
                 </div>

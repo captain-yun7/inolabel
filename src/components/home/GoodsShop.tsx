@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
+/* eslint-disable @next/next/no-img-element */
 import { X, ShoppingBag, ExternalLink } from 'lucide-react'
 import { useSupabaseContext } from '@/lib/context'
 import styles from './GoodsShop.module.css'
@@ -99,12 +99,11 @@ export default function GoodsShop() {
             <div key={item.id} className={styles.card}>
               {/* Product Image */}
               <div className={styles.imageWrapper}>
-                <Image
+                <img
                   src={item.image_url}
                   alt={item.name}
-                  fill
                   className={styles.productImage}
-                  sizes="(max-width: 768px) 50vw, 240px"
+                  referrerPolicy="no-referrer"
                 />
               </div>
 
@@ -144,12 +143,11 @@ export default function GoodsShop() {
               <X size={16} />
             </button>
             <div className={styles.pipImage}>
-              <Image
+              <img
                 src={selectedItem.detail_image_url || selectedItem.image_url}
                 alt={selectedItem.name}
-                fill
                 className={styles.productImage}
-                sizes="360px"
+                referrerPolicy="no-referrer"
               />
             </div>
             <div className={styles.pipInfo}>
