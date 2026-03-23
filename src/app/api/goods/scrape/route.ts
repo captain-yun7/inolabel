@@ -21,20 +21,27 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
-      },
-      signal: AbortSignal.timeout(10000),
-    })
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+      'Accept-Language': 'ko-KR,ko;q=0.9',
+    }
+
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) })
 
     if (!res.ok) {
       return NextResponse.json({ error: `페이지 로드 실패 (${res.status})` }, { status: 400 })
     }
 
     const html = await res.text()
+
+    // imweb 플랫폼 감지 → AJAX API로 상품 목록 가져오기
+    const imwebProducts = await tryImwebScrape(html, url, headers)
+    if (imwebProducts.length > 0) {
+      return NextResponse.json({ products: imwebProducts, source: url })
+    }
+
+    // 일반 HTML 파싱
     const products = parseProducts(html, url)
 
     return NextResponse.json({ products, source: url })
@@ -44,10 +51,74 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * imweb 플랫폼 상품 크롤링
+ * imweb은 상품 목록을 AJAX(/ajax/get_shop_list_view.cm)로 로드함
+ */
+async function tryImwebScrape(
+  html: string,
+  pageUrl: string,
+  headers: Record<string, string>,
+): Promise<ScrapedProduct[]> {
+  // imweb 플랫폼 감지
+  const isImweb = html.includes('imweb.me') || html.includes('get_shop_list_view.cm')
+  if (!isImweb) return []
+
+  // 카테고리 ID 추출
+  const categoryMatch = html.match(/category['"\s:]+['"]([^'"]+)['"]/i)
+  if (!categoryMatch) return []
+
+  const categoryId = categoryMatch[1]
+  const origin = new URL(pageUrl).origin
+
+  // imweb 상품 목록 AJAX 호출
+  const ajaxRes = await fetch(`${origin}/ajax/get_shop_list_view.cm`, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest',
+      'Referer': pageUrl,
+    },
+    body: `category=${encodeURIComponent(categoryId)}&page=1&product_page_no=1&per=100`,
+    signal: AbortSignal.timeout(10000),
+  })
+
+  if (!ajaxRes.ok) return []
+
+  const json = await ajaxRes.json()
+  if (!json.html) return []
+
+  // data-product-properties JSON에서 상품 정보 추출
+  const products: ScrapedProduct[] = []
+  const propMatches = json.html.matchAll(/data-product-properties='(\{[^']+\})'/g)
+
+  for (const match of propMatches) {
+    try {
+      const decoded = match[1]
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+      const prop = JSON.parse(decoded)
+
+      if (prop.name) {
+        products.push({
+          name: prop.name,
+          price: prop.price || prop.original_price || 0,
+          image_url: prop.image_url || '',
+          url: prop.idx ? `${pageUrl}?idx=${prop.idx}` : pageUrl,
+        })
+      }
+    } catch { /* ignore parse error */ }
+  }
+
+  return products
+}
+
 function parseProducts(html: string, baseUrl: string): ScrapedProduct[] {
   const products: ScrapedProduct[] = []
 
-  // 일반적인 상품 패턴 매칭 (다양한 쇼핑몰 대응)
   // Pattern 1: Open Graph 기반 단일 상품
   const ogTitle = html.match(/<meta\s+(?:property|name)="og:title"\s+content="([^"]+)"/i)?.[1]
   const ogImage = html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i)?.[1]
@@ -73,13 +144,6 @@ function parseProducts(html: string, baseUrl: string): ScrapedProduct[] {
     } catch { /* ignore parse errors */ }
   }
 
-  // Pattern 3: 상품 리스트 패턴 (카드형)
-  // 일반적인 상품 목록 패턴: .product-item, .goods-item 등
-  const productPatterns = [
-    // <a>나 <div> 안에 이미지 + 이름 + 가격
-    /<(?:a|div)[^>]*class="[^"]*(?:product|goods|item|card)[^"]*"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[\s\S]*?<\/(?:a|div)>/gi,
-  ]
-
   // OG 태그 기반 단일 상품이 있고 JSON-LD에서 못 찾았으면
   if (ogTitle && ogImage && products.length === 0) {
     products.push({
@@ -92,7 +156,6 @@ function parseProducts(html: string, baseUrl: string): ScrapedProduct[] {
 
   // 가격 패턴 매칭 (한국 쇼핑몰)
   if (products.length === 0) {
-    // 간단한 가격+이미지+제목 매칭
     const titleMatch = html.match(/<title>([^<]+)<\/title>/i)?.[1]
     const imgMatch = html.match(/<img[^>]+src="(https?:\/\/[^"]+(?:jpg|jpeg|png|webp)[^"]*)"/i)?.[1]
     const priceMatch = html.match(/(?:가격|price|판매가)[^<]*?(\d{1,3}(?:,\d{3})*)\s*원/i)?.[1]
