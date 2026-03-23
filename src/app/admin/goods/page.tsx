@@ -34,9 +34,10 @@ export default function GoodsAdminPage() {
   const [sectionTitle, setSectionTitle] = useState('레이블 굿즈샵')
   const [isSavingTitle, setIsSavingTitle] = useState(false)
 
-  // 크롤링
-  const [scrapeUrl, setScrapeUrl] = useState('')
-  const [isScraping, setIsScraping] = useState(false)
+  // 동기화
+  const [shopUrl, setShopUrl] = useState('https://doublecheckstores.com/88')
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [isSavingUrl, setIsSavingUrl] = useState(false)
 
   const fetchGoods = useCallback(async () => {
     setIsLoading(true)
@@ -48,19 +49,25 @@ export default function GoodsAdminPage() {
     setIsLoading(false)
   }, [])
 
-  // 섹션 제목 로드
+  // 섹션 제목 + 쇼핑몰 URL 로드
   useEffect(() => {
-    async function loadTitle() {
+    async function loadSettings() {
       const { data } = await supabase
         .from('site_settings')
-        .select('value')
-        .eq('key', 'goods_shop_title')
-        .maybeSingle()
-      if (data?.value && typeof data.value === 'string') {
-        setSectionTitle(data.value)
+        .select('key, value')
+        .in('key', ['goods_shop_title', 'goods_shop_url'])
+      if (data) {
+        for (const row of data) {
+          if (row.key === 'goods_shop_title' && typeof row.value === 'string') {
+            setSectionTitle(row.value)
+          }
+          if (row.key === 'goods_shop_url' && typeof row.value === 'string') {
+            setShopUrl(row.value)
+          }
+        }
       }
     }
-    loadTitle()
+    loadSettings()
   }, [supabase])
 
   useEffect(() => {
@@ -154,40 +161,63 @@ export default function GoodsAdminPage() {
     await fetchGoods()
   }
 
-  const handleScrape = async () => {
-    if (!scrapeUrl.trim()) return
-    setIsScraping(true)
+  const saveShopUrl = async () => {
+    setIsSavingUrl(true)
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert({ key: 'goods_shop_url', value: shopUrl }, { onConflict: 'key' })
+    if (error) {
+      showError('URL 저장 실패', '오류')
+    } else {
+      showSuccess('쇼핑몰 URL이 저장되었습니다.', '저장 완료')
+    }
+    setIsSavingUrl(false)
+  }
+
+  const handleSync = async () => {
+    if (!shopUrl.trim()) return
+
+    const confirmed = await showConfirm(
+      '기존 상품을 모두 삭제하고 쇼핑몰에서 새로 가져옵니다.\n계속하시겠습니까?',
+      { title: '상품 동기화', variant: 'danger' }
+    )
+    if (!confirmed) return
+
+    setIsSyncing(true)
     try {
-      const res = await fetch(`/api/goods/scrape?url=${encodeURIComponent(scrapeUrl.trim())}`)
+      const res = await fetch(`/api/goods/scrape?url=${encodeURIComponent(shopUrl.trim())}`)
       const json = await res.json()
 
       if (json.error) {
-        showError(json.error, '크롤링 실패')
+        showError(json.error, '동기화 실패')
       } else if (json.products && json.products.length > 0) {
-        // 크롤링된 상품들을 서버 액션으로 DB에 저장
+        // 기존 상품 전체 삭제
+        for (const item of goods) {
+          await deleteGoods(item.id)
+        }
+        // 새 상품 일괄 저장
         const { error } = await bulkCreateGoods(
           json.products.map((product: { name: string; price: number; image_url: string; url: string }) => ({
             name: product.name,
             price: product.price || 0,
             image_url: product.image_url || '',
-            purchase_url: product.url || scrapeUrl,
+            purchase_url: product.url || shopUrl,
             is_active: true,
           }))
         )
         if (error) {
           showError('상품 저장 실패: ' + error, '오류')
         } else {
-          showSuccess(`${json.products.length}개 상품이 추가되었습니다.`, '크롤링 완료')
-          setScrapeUrl('')
+          showSuccess(`${json.products.length}개 상품이 동기화되었습니다.`, '동기화 완료')
           await fetchGoods()
         }
       } else {
-        showError('상품을 찾을 수 없습니다.', '크롤링 결과')
+        showError('상품을 찾을 수 없습니다.', '동기화 결과')
       }
     } catch {
-      showError('크롤링 중 오류가 발생했습니다.', '오류')
+      showError('동기화 중 오류가 발생했습니다.', '오류')
     } finally {
-      setIsScraping(false)
+      setIsSyncing(false)
     }
   }
 
@@ -236,7 +266,7 @@ export default function GoodsAdminPage() {
         </button>
       </div>
 
-      {/* URL 크롤링 */}
+      {/* 쇼핑몰 URL + 동기화 */}
       <div style={{
         display: 'flex',
         gap: '0.5rem',
@@ -250,9 +280,9 @@ export default function GoodsAdminPage() {
         <ExternalLink size={16} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
         <input
           type="url"
-          value={scrapeUrl}
-          onChange={(e) => setScrapeUrl(e.target.value)}
-          placeholder="외부 쇼핑몰 URL 입력 (예: doublecheckstores.com/88)"
+          value={shopUrl}
+          onChange={(e) => setShopUrl(e.target.value)}
+          placeholder="쇼핑몰 URL"
           style={{
             flex: 1,
             padding: '0.5rem 0.75rem',
@@ -264,12 +294,28 @@ export default function GoodsAdminPage() {
           }}
         />
         <button
-          onClick={handleScrape}
-          disabled={isScraping || !scrapeUrl.trim()}
-          className={styles.addButton}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+          onClick={saveShopUrl}
+          disabled={isSavingUrl}
+          style={{
+            padding: '0.5rem 0.75rem',
+            fontSize: '0.8rem',
+            borderRadius: '6px',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
         >
-          {isScraping ? '크롤링 중...' : '크롤링'}
+          {isSavingUrl ? '저장 중...' : 'URL 저장'}
+        </button>
+        <button
+          onClick={handleSync}
+          disabled={isSyncing || !shopUrl.trim()}
+          className={styles.addButton}
+          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+        >
+          {isSyncing ? '동기화 중...' : '🔄 상품 동기화'}
         </button>
       </div>
 
