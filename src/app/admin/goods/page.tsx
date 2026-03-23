@@ -6,6 +6,7 @@ import { ShoppingBag, Plus, X, Save, Trash2, ExternalLink, Settings } from 'luci
 import Image from 'next/image'
 import { useSupabaseContext } from '@/lib/context'
 import { useAlert } from '@/lib/hooks'
+import { getGoods, createGoods, updateGoods, deleteGoods, bulkCreateGoods } from '@/lib/actions/goods'
 import styles from '../shared.module.css'
 
 interface GoodsItem {
@@ -39,16 +40,13 @@ export default function GoodsAdminPage() {
 
   const fetchGoods = useCallback(async () => {
     setIsLoading(true)
-    const { data, error } = await supabase
-      .from('goods')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { data, error } = await getGoods()
 
     if (!error && data) {
-      setGoods(data)
+      setGoods(data as GoodsItem[])
     }
     setIsLoading(false)
-  }, [supabase])
+  }, [])
 
   // 섹션 제목 로드
   useEffect(() => {
@@ -109,9 +107,9 @@ export default function GoodsAdminPage() {
     })
     if (!confirmed) return
 
-    const { error } = await supabase.from('goods').delete().eq('id', item.id)
+    const { error } = await deleteGoods(item.id)
     if (error) {
-      showError('삭제 실패: ' + error.message, '오류')
+      showError('삭제 실패: ' + error, '오류')
     } else {
       await fetchGoods()
     }
@@ -135,16 +133,16 @@ export default function GoodsAdminPage() {
     }
 
     if (isNew) {
-      const { error } = await supabase.from('goods').insert(payload)
+      const { error } = await createGoods(payload)
       if (error) {
-        showError('추가 실패: ' + error.message, '오류')
+        showError('추가 실패: ' + error, '오류')
         setIsSaving(false)
         return
       }
     } else if (editingItem.id) {
-      const { error } = await supabase.from('goods').update(payload).eq('id', editingItem.id)
+      const { error } = await updateGoods(editingItem.id, payload)
       if (error) {
-        showError('수정 실패: ' + error.message, '오류')
+        showError('수정 실패: ' + error, '오류')
         setIsSaving(false)
         return
       }
@@ -166,19 +164,23 @@ export default function GoodsAdminPage() {
       if (json.error) {
         showError(json.error, '크롤링 실패')
       } else if (json.products && json.products.length > 0) {
-        // 크롤링된 상품들을 DB에 저장
-        for (const product of json.products) {
-          await supabase.from('goods').insert({
+        // 크롤링된 상품들을 서버 액션으로 DB에 저장
+        const { error } = await bulkCreateGoods(
+          json.products.map((product: { name: string; price: number; image_url: string; url: string }) => ({
             name: product.name,
             price: product.price || 0,
             image_url: product.image_url || '',
             purchase_url: product.url || scrapeUrl,
             is_active: true,
-          })
+          }))
+        )
+        if (error) {
+          showError('상품 저장 실패: ' + error, '오류')
+        } else {
+          showSuccess(`${json.products.length}개 상품이 추가되었습니다.`, '크롤링 완료')
+          setScrapeUrl('')
+          await fetchGoods()
         }
-        showSuccess(`${json.products.length}개 상품이 추가되었습니다.`, '크롤링 완료')
-        setScrapeUrl('')
-        await fetchGoods()
       } else {
         showError('상품을 찾을 수 없습니다.', '크롤링 결과')
       }
