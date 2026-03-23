@@ -178,8 +178,8 @@ export default function GoodsAdminPage() {
     if (!shopUrl.trim()) return
 
     const confirmed = await showConfirm(
-      '기존 상품을 모두 삭제하고 쇼핑몰에서 새로 가져옵니다.\n계속하시겠습니까?',
-      { title: '상품 동기화', variant: 'danger' }
+      '쇼핑몰에서 상품을 가져옵니다.\n새 상품은 "숨김" 상태로 추가되며, 표시할 상품을 직접 선택할 수 있습니다.\n계속하시겠습니까?',
+      { title: '상품 동기화' }
     )
     if (!confirmed) return
 
@@ -191,25 +191,30 @@ export default function GoodsAdminPage() {
       if (json.error) {
         showError(json.error, '동기화 실패')
       } else if (json.products && json.products.length > 0) {
-        // 기존 상품 전체 삭제
-        for (const item of goods) {
-          await deleteGoods(item.id)
-        }
-        // 새 상품 일괄 저장
-        const { error } = await bulkCreateGoods(
-          json.products.map((product: { name: string; price: number; image_url: string; url: string }) => ({
-            name: product.name,
-            price: product.price || 0,
-            image_url: product.image_url || '',
-            purchase_url: product.url || shopUrl,
-            is_active: true,
-          }))
+        // 기존 상품명 목록 (중복 방지)
+        const existingNames = new Set(goods.map(g => g.name))
+        const newProducts = json.products.filter(
+          (p: { name: string }) => !existingNames.has(p.name)
         )
-        if (error) {
-          showError('상품 저장 실패: ' + error, '오류')
+
+        if (newProducts.length === 0) {
+          showSuccess('새로운 상품이 없습니다. 이미 모두 등록되어 있습니다.', '동기화 완료')
         } else {
-          showSuccess(`${json.products.length}개 상품이 동기화되었습니다.`, '동기화 완료')
-          await fetchGoods()
+          const { error } = await bulkCreateGoods(
+            newProducts.map((product: { name: string; price: number; image_url: string; url: string }) => ({
+              name: product.name,
+              price: product.price || 0,
+              image_url: product.image_url || '',
+              purchase_url: product.url || shopUrl,
+              is_active: false,
+            }))
+          )
+          if (error) {
+            showError('상품 저장 실패: ' + error, '오류')
+          } else {
+            showSuccess(`새 상품 ${newProducts.length}개가 추가되었습니다. 표시할 상품을 선택해주세요.`, '동기화 완료')
+            await fetchGoods()
+          }
         }
       } else {
         showError('상품을 찾을 수 없습니다.', '동기화 결과')
@@ -351,7 +356,27 @@ export default function GoodsAdminPage() {
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   {new Intl.NumberFormat('ko-KR').format(item.price)}원
                 </span>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button
+                    onClick={async () => {
+                      const { error } = await updateGoods(item.id, { is_active: !item.is_active })
+                      if (!error) {
+                        setGoods(prev => prev.map(g => g.id === item.id ? { ...g, is_active: !g.is_active } : g))
+                      }
+                    }}
+                    style={{
+                      padding: '0.4rem 0.6rem',
+                      border: `1px solid ${item.is_active ? '#22c55e' : 'var(--border)'}`,
+                      borderRadius: '4px',
+                      background: item.is_active ? 'rgba(34,197,94,0.1)' : 'transparent',
+                      color: item.is_active ? '#22c55e' : 'var(--text-tertiary)',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.is_active ? '표시중' : '숨김'}
+                  </button>
                   <button
                     onClick={() => handleEdit(item)}
                     style={{
