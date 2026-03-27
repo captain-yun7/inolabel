@@ -18,6 +18,7 @@ interface GoodsItem {
   detail_image_url: string | null
   purchase_url: string | null
   is_active: boolean
+  sort_order: number
 }
 
 export default function GoodsAdminPage() {
@@ -35,7 +36,7 @@ export default function GoodsAdminPage() {
   const [isSavingTitle, setIsSavingTitle] = useState(false)
 
   // 동기화
-  const [shopUrl, setShopUrl] = useState('https://doublecheckstores.com/88')
+  const [shopUrl, setShopUrl] = useState('https://doublecheckstores.com')
   const [isSyncing, setIsSyncing] = useState(false)
   const [isSavingUrl, setIsSavingUrl] = useState(false)
 
@@ -88,6 +89,7 @@ export default function GoodsAdminPage() {
   }
 
   const handleAdd = () => {
+    const maxOrder = goods.length > 0 ? Math.max(...goods.map(g => g.sort_order ?? 0)) + 1 : 1
     setEditingItem({
       name: '',
       price: 0,
@@ -96,6 +98,7 @@ export default function GoodsAdminPage() {
       detail_image_url: '',
       purchase_url: '',
       is_active: true,
+      sort_order: maxOrder,
     })
     setIsNew(true)
     setIsModalOpen(true)
@@ -137,6 +140,7 @@ export default function GoodsAdminPage() {
       detail_image_url: editingItem.detail_image_url || null,
       purchase_url: editingItem.purchase_url || null,
       is_active: editingItem.is_active ?? true,
+      sort_order: editingItem.sort_order ?? 0,
     }
 
     if (isNew) {
@@ -346,6 +350,13 @@ export default function GoodsAdminPage() {
                 {item.image_url && (
                   <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }} referrerPolicy="no-referrer" />
                 )}
+                <div style={{
+                  position: 'absolute', top: 6, left: 6,
+                  background: 'rgba(0,0,0,0.6)', color: '#fff',
+                  borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 700,
+                }}>
+                  #{item.sort_order}
+                </div>
               </div>
               <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{item.name}</span>
@@ -493,6 +504,16 @@ export default function GoodsAdminPage() {
                     className={styles.input}
                     rows={3}
                     style={{ resize: 'vertical' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem', display: 'block', color: 'var(--text-secondary)' }}>표시 순서 (숫자가 작을수록 앞에 표시)</label>
+                  <input
+                    type="number"
+                    value={editingItem.sort_order ?? 0}
+                    onChange={(e) => setEditingItem({ ...editingItem, sort_order: parseInt(e.target.value) || 0 })}
+                    className={styles.input}
+                    min={0}
                   />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
