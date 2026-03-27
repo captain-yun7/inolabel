@@ -50,6 +50,7 @@ function getMemberBjId(member: OrganizationRecord): string | null {
 export default function LivePage() {
   const { members, isLoading } = useLiveRoster({ realtime: true });
   const [unitFilter, setUnitFilter] = useState<UnitFilter>("all");
+  const [sortBy, setSortBy] = useState<"viewers" | "recent">("viewers");
   const [notices, setNotices] = useState<MemberNotice[]>([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
 
@@ -117,10 +118,27 @@ export default function LivePage() {
       : membersWithLive.filter((m) => m.unit === unitFilter);
   }, [membersWithLive, unitFilter]);
 
-  // 라이브 중인 멤버만
+  // 라이브 중인 멤버만 (정렬 포함)
   const liveMembers = useMemo(() => {
-    return filteredMembers.filter((m) => m.is_live);
-  }, [filteredMembers]);
+    const live = filteredMembers.filter((m) => m.is_live);
+    if (sortBy === "viewers") {
+      return [...live].sort(
+        (a, b) =>
+          ((b as { _soopStatus?: SoopLiveStatus | null })._soopStatus?.viewerCount ?? 0) -
+          ((a as { _soopStatus?: SoopLiveStatus | null })._soopStatus?.viewerCount ?? 0)
+      );
+    }
+    // recent: 방송 시작시간 최신순
+    return [...live].sort((a, b) => {
+      const ta = (a as { _soopStatus?: SoopLiveStatus | null })._soopStatus?.startTime
+        ? new Date((a as { _soopStatus?: SoopLiveStatus | null })._soopStatus!.startTime!).getTime()
+        : 0;
+      const tb = (b as { _soopStatus?: SoopLiveStatus | null })._soopStatus?.startTime
+        ? new Date((b as { _soopStatus?: SoopLiveStatus | null })._soopStatus!.startTime!).getTime()
+        : 0;
+      return tb - ta;
+    });
+  }, [filteredMembers, sortBy]);
 
   const liveCount = liveMembers.length;
 
@@ -295,6 +313,20 @@ export default function LivePage() {
                 {unit === "all" ? "전체" : unit === "excel" ? "엑셀부" : "스타부"}
               </button>
             ))}
+          </div>
+          <div className={styles.sortFilter}>
+            <button
+              onClick={() => setSortBy("viewers")}
+              className={`${styles.sortButton} ${sortBy === "viewers" ? styles.active : ""}`}
+            >
+              참여인원순
+            </button>
+            <button
+              onClick={() => setSortBy("recent")}
+              className={`${styles.sortButton} ${sortBy === "recent" ? styles.active : ""}`}
+            >
+              최근방송순
+            </button>
           </div>
           <div className={styles.statsBar}>
             <div className={styles.liveIndicator}>

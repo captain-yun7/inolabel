@@ -83,6 +83,37 @@
   color: white;
 }
 
+.sortFilter {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+}
+
+.sortButton {
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sortButton:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.sortButton.active {
+  background: var(--color-primary);
+  color: white;
+}
+
 .statsBar {
   display: flex;
   align-items: center;

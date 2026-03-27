@@ -55,7 +55,8 @@ export default function GoodsShop() {
           .from('goods')
           .select('*')
           .eq('is_active', true)
-          .order('created_at', { ascending: false })
+          .order('sort_order', { ascending: true })
+          .order('id', { ascending: true })
 
         if (!error && data) {
           setGoods(data)

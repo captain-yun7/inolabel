@@ -10,6 +10,7 @@ interface GoodsPayload {
   detail_image_url?: string | null
   purchase_url?: string | null
   is_active?: boolean
+  sort_order?: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,7 +24,8 @@ function db() {
 export async function getGoods() {
   const { data, error } = await db()
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('sort_order', { ascending: true })
+    .order('id', { ascending: true })
 
   return { data: data as GoodsItem[] | null, error: error?.message || null }
 }
@@ -37,9 +39,21 @@ interface GoodsItem {
   detail_image_url: string | null
   purchase_url: string | null
   is_active: boolean
+  sort_order: number
 }
 
 export async function createGoods(payload: GoodsPayload) {
+  // sort_order 미지정시 현재 최대값 + 1
+  let sortOrder = payload.sort_order ?? 0
+  if (!payload.sort_order) {
+    const { data: maxRow } = await db()
+      .select('sort_order')
+      .order('sort_order', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    sortOrder = maxRow ? (maxRow.sort_order || 0) + 1 : 1
+  }
+
   const { data, error } = await db()
     .insert({
       name: payload.name,
@@ -49,6 +63,7 @@ export async function createGoods(payload: GoodsPayload) {
       detail_image_url: payload.detail_image_url || null,
       purchase_url: payload.purchase_url || null,
       is_active: payload.is_active ?? true,
+      sort_order: sortOrder,
     })
     .select()
     .single()
