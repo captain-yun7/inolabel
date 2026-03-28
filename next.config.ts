@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com https://*.sentry.io https://*.ingest.sentry.io https://upload.videodelivery.net https://upload.cloudflarestream.com https://*.r2.cloudflarestorage.com",
               "media-src 'self' https://*.supabase.co https://*.cloudflarestream.com https://videodelivery.net blob: data:",
-              "frame-src 'self' https://iframe.videodelivery.net https://*.cloudflarestream.com https://www.youtube.com https://vod.sooplive.co.kr",
+              "frame-src 'self' https://iframe.videodelivery.net https://*.cloudflarestream.com https://www.youtube.com https://vod.sooplive.co.kr https://vod.sooplive.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

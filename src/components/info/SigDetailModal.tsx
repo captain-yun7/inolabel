@@ -48,12 +48,12 @@ function getEmbedUrl(url: string, cloudflareUid?: string | null): string {
     return `https://player.vimeo.com/video/${vimeoMatch[1]}`
   }
 
-  // SOOP VOD
-  const soopVodRegex = /vod\.sooplive\.co\.kr\/(?:player\/)?(\d+)/
+  // SOOP VOD (sooplive.co.kr → sooplive.com 리다이렉트 방지, sooplive.com 직접 사용)
+  const soopVodRegex = /vod\.sooplive\.(?:co\.kr|com)\/(?:player\/)?(\d+)/
   const soopMatch = url.match(soopVodRegex)
 
   if (soopMatch && !url.includes('/embed')) {
-    return `https://vod.sooplive.co.kr/player/${soopMatch[1]}/embed`
+    return `https://vod.sooplive.com/player/${soopMatch[1]}/embed`
   }
 
   return url
