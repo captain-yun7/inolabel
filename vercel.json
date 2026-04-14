@@ -9,6 +9,10 @@
     {
       "path": "/api/live-status/sync",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/youtube/sync",
+      "schedule": "0 * * * *"
     }
   ]
 }
