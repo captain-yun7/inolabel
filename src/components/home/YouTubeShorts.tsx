@@ -33,7 +33,7 @@ export default function YouTubeShorts() {
   useEffect(() => {
     const fetchData = async (type: TabType) => {
       try {
-        const res = await fetch(`/api/youtube/shorts?limit=10&type=${type}`)
+        const res = await fetch(`/api/youtube/shorts?limit=15&type=${type}`)
         const json = await res.json()
         if (json.error) setErrorMsg(json.error)
         return json.data || []
