@@ -7,7 +7,7 @@ const YOUTUBE_CHANNEL_INOLABEL = process.env.YOUTUBE_CHANNEL_INOLABEL
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const FETCH_TIMEOUT = 20_000
-const MAX_PER_CHANNEL = 50 // 채널당 최근 50개 영상까지 조회
+const MAX_PER_CHANNEL = 100 // 채널당 최근 100개 영상까지 조회 (일반 영상 15개 충분히 확보용)
 const SHORTS_URL_CHECK_TIMEOUT = 5_000
 
 interface YouTubeVideoRecord {
@@ -118,50 +118,59 @@ export async function GET(request: Request) {
 /**
  * YouTube Data API v3로 채널 최근 영상 조회
  * 1. 채널 uploads 플레이리스트 ID 추출 (UC... → UU...)
- * 2. playlistItems로 영상 ID 50개 조회
- * 3. videos.list로 duration, 조회수, 썸네일 등 상세 정보 조회
+ * 2. playlistItems로 영상 ID 조회 (MAX_PER_CHANNEL개, 50개씩 페이지네이션)
+ * 3. videos.list로 조회수, 썸네일 등 상세 정보 배치 조회
+ * 4. /shorts/{id} HEAD 요청으로 shorts/video 구분
  */
 async function fetchChannelVideosViaAPI(channelId: string, apiKey: string): Promise<YouTubeVideoRecord[]> {
   // uploads 플레이리스트 ID: UC{rest} → UU{rest}
   const uploadsPlaylistId = 'UU' + channelId.substring(2)
 
-  // 1. 플레이리스트에서 영상 ID 목록 조회
-  const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${uploadsPlaylistId}&maxResults=${MAX_PER_CHANNEL}&part=contentDetails&key=${apiKey}`
-  const playlistRes = await fetch(playlistUrl, {
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
-  })
-  if (!playlistRes.ok) {
-    const errText = await playlistRes.text()
-    throw new Error(`playlistItems HTTP ${playlistRes.status}: ${errText.slice(0, 200)}`)
+  // 1. 플레이리스트에서 영상 ID 목록 조회 (페이지네이션, 최대 MAX_PER_CHANNEL)
+  const videoIds: string[] = []
+  let pageToken: string | undefined
+  while (videoIds.length < MAX_PER_CHANNEL) {
+    const remaining = Math.min(50, MAX_PER_CHANNEL - videoIds.length)
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${uploadsPlaylistId}&maxResults=${remaining}&part=contentDetails&key=${apiKey}${pageToken ? `&pageToken=${pageToken}` : ''}`
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`playlistItems HTTP ${res.status}: ${errText.slice(0, 200)}`)
+    }
+    const json = await res.json() as {
+      items?: Array<{ contentDetails: { videoId: string } }>
+      nextPageToken?: string
+    }
+    const ids = (json.items || []).map(item => item.contentDetails.videoId)
+    videoIds.push(...ids)
+    pageToken = json.nextPageToken
+    if (!pageToken || ids.length === 0) break
   }
-  const playlistData = await playlistRes.json() as {
-    items?: Array<{ contentDetails: { videoId: string } }>
-  }
-  const videoIds = (playlistData.items || []).map(item => item.contentDetails.videoId)
   if (videoIds.length === 0) return []
 
-  // 2. 영상 상세 정보 (조회수, 썸네일 등) 배치 조회
-  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoIds.join(',')}&part=snippet,statistics&key=${apiKey}`
-  const videosRes = await fetch(videosUrl, {
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
-  })
-  if (!videosRes.ok) {
-    const errText = await videosRes.text()
-    throw new Error(`videos HTTP ${videosRes.status}: ${errText.slice(0, 200)}`)
+  // 2. 영상 상세 정보 (조회수, 썸네일 등) 50개씩 배치 조회
+  type VideoItem = {
+    id: string
+    snippet: {
+      title: string
+      channelTitle: string
+      publishedAt: string
+      thumbnails: Record<string, { url: string } | undefined>
+    }
+    statistics: { viewCount?: string }
   }
-  const videosData = await videosRes.json() as {
-    items?: Array<{
-      id: string
-      snippet: {
-        title: string
-        channelTitle: string
-        publishedAt: string
-        thumbnails: Record<string, { url: string } | undefined>
-      }
-      statistics: { viewCount?: string }
-    }>
+  const items: VideoItem[] = []
+  for (let i = 0; i < videoIds.length; i += 50) {
+    const chunk = videoIds.slice(i, i + 50)
+    const url = `https://www.googleapis.com/youtube/v3/videos?id=${chunk.join(',')}&part=snippet,statistics&key=${apiKey}`
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT) })
+    if (!res.ok) {
+      const errText = await res.text()
+      throw new Error(`videos HTTP ${res.status}: ${errText.slice(0, 200)}`)
+    }
+    const json = await res.json() as { items?: VideoItem[] }
+    items.push(...(json.items || []))
   }
-  const items = videosData.items || []
 
   // 3. 각 영상이 shorts인지 URL로 확인 (병렬 HEAD 요청)
   const shortsMap = await checkShortsByURL(items.map(v => v.id))
