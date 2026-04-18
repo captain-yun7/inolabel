@@ -8,7 +8,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const FETCH_TIMEOUT = 20_000
 const MAX_PER_CHANNEL = 50 // 채널당 최근 50개 영상까지 조회
-const SHORTS_DURATION_MAX = 180 // 3분 이하면 쇼츠로 간주
+const SHORTS_URL_CHECK_TIMEOUT = 5_000
 
 interface YouTubeVideoRecord {
   video_id: string
@@ -27,8 +27,10 @@ interface YouTubeVideoRecord {
  * 두 채널(김인호TV, 김인호의 이노레이블)에서 최근 50개 영상을
  * YouTube Data API v3로 조회하여 youtube_videos 테이블에 upsert
  *
- * 쇼츠/영상 구분: videos.list의 duration을 파싱해
- * 180초 이하는 'shorts', 초과는 'video'로 분류
+ * 쇼츠/영상 구분: youtube.com/shorts/{id} URL로 HEAD 요청
+ * - 쇼츠: 200 OK
+ * - 일반 영상: 303 리다이렉트 (/watch?v=...)
+ * YouTube 자체 판별 방식이라 duration 기반보다 정확함
  *
  * Vercel Cron으로 3시간마다 호출
  * GET /api/youtube/sync
@@ -138,8 +140,8 @@ async function fetchChannelVideosViaAPI(channelId: string, apiKey: string): Prom
   const videoIds = (playlistData.items || []).map(item => item.contentDetails.videoId)
   if (videoIds.length === 0) return []
 
-  // 2. 영상 상세 정보 (duration, 조회수 등) 배치 조회
-  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoIds.join(',')}&part=snippet,contentDetails,statistics&key=${apiKey}`
+  // 2. 영상 상세 정보 (조회수, 썸네일 등) 배치 조회
+  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoIds.join(',')}&part=snippet,statistics&key=${apiKey}`
   const videosRes = await fetch(videosUrl, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT),
   })
@@ -156,14 +158,15 @@ async function fetchChannelVideosViaAPI(channelId: string, apiKey: string): Prom
         publishedAt: string
         thumbnails: Record<string, { url: string } | undefined>
       }
-      contentDetails: { duration: string }
       statistics: { viewCount?: string }
     }>
   }
+  const items = videosData.items || []
 
-  return (videosData.items || []).map(v => {
-    const durationSec = parseISO8601Duration(v.contentDetails.duration)
-    const isShort = durationSec > 0 && durationSec <= SHORTS_DURATION_MAX
+  // 3. 각 영상이 shorts인지 URL로 확인 (병렬 HEAD 요청)
+  const shortsMap = await checkShortsByURL(items.map(v => v.id))
+
+  return items.map(v => {
     const thumb = v.snippet.thumbnails.maxres?.url
       || v.snippet.thumbnails.standard?.url
       || v.snippet.thumbnails.high?.url
@@ -173,7 +176,7 @@ async function fetchChannelVideosViaAPI(channelId: string, apiKey: string): Prom
       video_id: v.id,
       channel_id: channelId,
       channel_title: v.snippet.channelTitle || null,
-      content_type: isShort ? 'shorts' : 'video',
+      content_type: shortsMap[v.id] ? 'shorts' : 'video',
       title: v.snippet.title,
       thumbnail: thumb,
       view_count: parseInt(v.statistics.viewCount || '0', 10),
@@ -183,13 +186,27 @@ async function fetchChannelVideosViaAPI(channelId: string, apiKey: string): Prom
 }
 
 /**
- * ISO 8601 duration (e.g. "PT1H2M3S") → 초 단위 변환
+ * youtube.com/shorts/{id} URL로 HEAD 요청하여 쇼츠 여부 판별
+ * - 200 OK → 쇼츠
+ * - 3xx 리다이렉트 → 일반 영상
  */
-function parseISO8601Duration(iso: string): number {
-  const match = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/)
-  if (!match) return 0
-  const h = parseInt(match[1] || '0', 10)
-  const m = parseInt(match[2] || '0', 10)
-  const s = parseInt(match[3] || '0', 10)
-  return h * 3600 + m * 60 + s
+async function checkShortsByURL(videoIds: string[]): Promise<Record<string, boolean>> {
+  const result: Record<string, boolean> = {}
+
+  await Promise.allSettled(videoIds.map(async id => {
+    try {
+      const res = await fetch(`https://www.youtube.com/shorts/${id}`, {
+        method: 'HEAD',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(SHORTS_URL_CHECK_TIMEOUT),
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      })
+      result[id] = res.status === 200
+    } catch {
+      // 네트워크 실패시 일반 영상으로 간주 (fallback)
+      result[id] = false
+    }
+  }))
+
+  return result
 }
