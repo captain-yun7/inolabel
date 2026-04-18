@@ -288,8 +288,8 @@ export default function YouTubeManagePage() {
             <strong style={{ color: 'var(--text-secondary)' }}>환경변수 설정</strong>
             <div style={{ marginTop: '0.5rem' }}>
               <code>YOUTUBE_API_KEY</code> - YouTube Data API v3 키<br />
-              <code>YOUTUBE_CHANNEL_ID_SHORTS</code> - 쇼츠 채널 ID<br />
-              <code>YOUTUBE_CHANNEL_ID_MAIN</code> - 메인 채널 ID
+              <code>YOUTUBE_CHANNEL_KIM</code> - 김인호 채널 ID<br />
+              <code>YOUTUBE_CHANNEL_INOLABEL</code> - INOLABEL 채널 ID
             </div>
           </div>
 
