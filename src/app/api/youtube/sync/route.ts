@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
-import { XMLParser } from 'fast-xml-parser'
 import { createClient } from '@supabase/supabase-js'
 
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY
 const YOUTUBE_CHANNEL_KIM = process.env.YOUTUBE_CHANNEL_KIM
 const YOUTUBE_CHANNEL_INOLABEL = process.env.YOUTUBE_CHANNEL_INOLABEL
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-const FETCH_TIMEOUT = 15_000
+const FETCH_TIMEOUT = 20_000
+const MAX_PER_CHANNEL = 50 // 채널당 최근 50개 영상까지 조회
+const SHORTS_DURATION_MAX = 180 // 3분 이하면 쇼츠로 간주
 
 interface YouTubeVideoRecord {
   video_id: string
@@ -22,30 +24,31 @@ interface YouTubeVideoRecord {
 /**
  * YouTube 채널 동기화 cron API
  *
- * 두 채널(김인호TV, 김인호의 이노레이블)의 RSS를 가져와서
- * youtube_videos 테이블에 upsert
+ * 두 채널(김인호TV, 김인호의 이노레이블)에서 최근 50개 영상을
+ * YouTube Data API v3로 조회하여 youtube_videos 테이블에 upsert
+ *
+ * 쇼츠/영상 구분: videos.list의 duration을 파싱해
+ * 180초 이하는 'shorts', 초과는 'video'로 분류
  *
  * Vercel Cron으로 3시간마다 호출
- *
  * GET /api/youtube/sync
  */
 export async function GET(request: Request) {
-  // Vercel Cron 인증 (프로덕션)
   const authHeader = request.headers.get('authorization')
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  if (!YOUTUBE_API_KEY) {
+    return NextResponse.json({ error: 'YOUTUBE_API_KEY 환경변수가 설정되지 않았습니다.' }, { status: 500 })
+  }
   if (!YOUTUBE_CHANNEL_KIM || !YOUTUBE_CHANNEL_INOLABEL) {
     return NextResponse.json({
       error: 'YOUTUBE_CHANNEL_KIM 또는 YOUTUBE_CHANNEL_INOLABEL 환경변수가 설정되지 않았습니다.',
     }, { status: 500 })
   }
-
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-    return NextResponse.json({
-      error: 'Supabase 환경변수가 설정되지 않았습니다.',
-    }, { status: 500 })
+    return NextResponse.json({ error: 'Supabase 환경변수가 설정되지 않았습니다.' }, { status: 500 })
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -61,7 +64,7 @@ export async function GET(request: Request) {
   const allRecords: YouTubeVideoRecord[] = []
 
   const results = await Promise.allSettled(
-    channels.map(ch => fetchChannelVideos(ch.id))
+    channels.map(ch => fetchChannelVideosViaAPI(ch.id, YOUTUBE_API_KEY!))
   )
 
   for (let i = 0; i < results.length; i++) {
@@ -83,7 +86,6 @@ export async function GET(request: Request) {
     )
   }
 
-  // video_id 기준 upsert (중복 자동 제거)
   const { error: upsertError, count } = await supabase
     .from('youtube_videos')
     .upsert(allRecords, { onConflict: 'video_id', count: 'exact' })
@@ -96,62 +98,98 @@ export async function GET(request: Request) {
     )
   }
 
+  const stats = {
+    total: allRecords.length,
+    videos: allRecords.filter(r => r.content_type === 'video').length,
+    shorts: allRecords.filter(r => r.content_type === 'shorts').length,
+  }
+
   return NextResponse.json({
     synced: allRecords.length,
     upserted: count,
+    stats,
     errors: errors.length > 0 ? errors : undefined,
-    message: `${allRecords.length}개 영상 동기화 완료`,
+    message: `${allRecords.length}개 영상 동기화 완료 (video ${stats.videos} / shorts ${stats.shorts})`,
   })
 }
 
-async function fetchChannelVideos(channelId: string): Promise<YouTubeVideoRecord[]> {
-  const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-  const response = await fetch(rssUrl, {
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-    cache: 'no-store',
-  })
+/**
+ * YouTube Data API v3로 채널 최근 영상 조회
+ * 1. 채널 uploads 플레이리스트 ID 추출 (UC... → UU...)
+ * 2. playlistItems로 영상 ID 50개 조회
+ * 3. videos.list로 duration, 조회수, 썸네일 등 상세 정보 조회
+ */
+async function fetchChannelVideosViaAPI(channelId: string, apiKey: string): Promise<YouTubeVideoRecord[]> {
+  // uploads 플레이리스트 ID: UC{rest} → UU{rest}
+  const uploadsPlaylistId = 'UU' + channelId.substring(2)
 
-  if (!response.ok) {
-    throw new Error(`RSS HTTP ${response.status}`)
+  // 1. 플레이리스트에서 영상 ID 목록 조회
+  const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?playlistId=${uploadsPlaylistId}&maxResults=${MAX_PER_CHANNEL}&part=contentDetails&key=${apiKey}`
+  const playlistRes = await fetch(playlistUrl, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+  })
+  if (!playlistRes.ok) {
+    const errText = await playlistRes.text()
+    throw new Error(`playlistItems HTTP ${playlistRes.status}: ${errText.slice(0, 200)}`)
+  }
+  const playlistData = await playlistRes.json() as {
+    items?: Array<{ contentDetails: { videoId: string } }>
+  }
+  const videoIds = (playlistData.items || []).map(item => item.contentDetails.videoId)
+  if (videoIds.length === 0) return []
+
+  // 2. 영상 상세 정보 (duration, 조회수 등) 배치 조회
+  const videosUrl = `https://www.googleapis.com/youtube/v3/videos?id=${videoIds.join(',')}&part=snippet,contentDetails,statistics&key=${apiKey}`
+  const videosRes = await fetch(videosUrl, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+  })
+  if (!videosRes.ok) {
+    const errText = await videosRes.text()
+    throw new Error(`videos HTTP ${videosRes.status}: ${errText.slice(0, 200)}`)
+  }
+  const videosData = await videosRes.json() as {
+    items?: Array<{
+      id: string
+      snippet: {
+        title: string
+        channelTitle: string
+        publishedAt: string
+        thumbnails: Record<string, { url: string } | undefined>
+      }
+      contentDetails: { duration: string }
+      statistics: { viewCount?: string }
+    }>
   }
 
-  const xml = await response.text()
-  const parser = new XMLParser({ ignoreAttributes: false })
-  const rss = parser.parse(xml)
-
-  const entries = rss?.feed?.entry
-  if (!entries) return []
-
-  const entryList = Array.isArray(entries) ? entries : [entries]
-  const channelTitle = (rss?.feed?.author?.name as string) || ''
-
-  return entryList.map((entry: Record<string, unknown>) => {
-    const videoId = entry['yt:videoId'] as string
-    const link = entry.link as { '@_href'?: string } | { '@_href'?: string }[]
-    const altLink = Array.isArray(link)
-      ? link.find(l => l['@_href']?.includes('youtube.com'))?.['@_href'] || ''
-      : (link?.['@_href'] || '')
-
-    const isShort = altLink.includes('/shorts/')
-
-    const mediaGroup = entry['media:group'] as Record<string, unknown> | undefined
-    const community = mediaGroup?.['media:community'] as Record<string, unknown> | undefined
-    const stats = community?.['media:statistics'] as Record<string, string> | undefined
-    const viewCount = parseInt(stats?.['@_views'] || '0', 10)
-
-    const thumbnail = (mediaGroup?.['media:thumbnail'] as Record<string, string> | undefined)?.['@_url']
-      || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+  return (videosData.items || []).map(v => {
+    const durationSec = parseISO8601Duration(v.contentDetails.duration)
+    const isShort = durationSec > 0 && durationSec <= SHORTS_DURATION_MAX
+    const thumb = v.snippet.thumbnails.maxres?.url
+      || v.snippet.thumbnails.standard?.url
+      || v.snippet.thumbnails.high?.url
+      || `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`
 
     return {
-      video_id: videoId,
+      video_id: v.id,
       channel_id: channelId,
-      channel_title: channelTitle || null,
-      content_type: isShort ? 'shorts' as const : 'video' as const,
-      title: entry.title as string,
-      thumbnail,
-      view_count: viewCount,
-      published_at: entry.published as string,
+      channel_title: v.snippet.channelTitle || null,
+      content_type: isShort ? 'shorts' : 'video',
+      title: v.snippet.title,
+      thumbnail: thumb,
+      view_count: parseInt(v.statistics.viewCount || '0', 10),
+      published_at: v.snippet.publishedAt,
     }
   })
+}
+
+/**
+ * ISO 8601 duration (e.g. "PT1H2M3S") → 초 단위 변환
+ */
+function parseISO8601Duration(iso: string): number {
+  const match = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/)
+  if (!match) return 0
+  const h = parseInt(match[1] || '0', 10)
+  const m = parseInt(match[2] || '0', 10)
+  const s = parseInt(match[3] || '0', 10)
+  return h * 3600 + m * 60 + s
 }
