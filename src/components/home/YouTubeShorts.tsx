@@ -74,7 +74,7 @@ export default function YouTubeShorts() {
     if (!el) return
     el.addEventListener('scroll', updateScrollButtons, { passive: true })
     return () => el.removeEventListener('scroll', updateScrollButtons)
-  }, [updateScrollButtons])
+  }, [updateScrollButtons, isLoading, activeTab])
 
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
