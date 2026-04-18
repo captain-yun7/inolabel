@@ -1917,6 +1917,48 @@ export type Database = {
         }
         Relationships: []
       }
+      youtube_videos: {
+        Row: {
+          id: number
+          video_id: string
+          channel_id: string
+          channel_title: string | null
+          content_type: 'video' | 'shorts'
+          title: string
+          thumbnail: string | null
+          view_count: number
+          published_at: string
+          fetched_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          video_id: string
+          channel_id: string
+          channel_title?: string | null
+          content_type: 'video' | 'shorts'
+          title: string
+          thumbnail?: string | null
+          view_count?: number
+          published_at: string
+          fetched_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          video_id?: string
+          channel_id?: string
+          channel_title?: string | null
+          content_type?: 'video' | 'shorts'
+          title?: string
+          thumbnail?: string | null
+          view_count?: number
+          published_at?: string
+          fetched_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
